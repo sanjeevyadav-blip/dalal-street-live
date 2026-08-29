@@ -1318,7 +1318,7 @@
         if (score >= 0) scored.push([score, sym, name]);
       });
       scored.sort((a,b) => a[0]-b[0]);
-      renderSuggestions(scored.slice(0,10).map((,sym,name]) => [sym,name]));
+      renderSuggestions(scored.slice(0,10).map(([,sym,name]) => [sym,name]));
     });
     input.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowDown'){ e.preventDefault(); activeIdx = Math.min(activeIdx+1, currentMatches.length-1); highlight(); }
