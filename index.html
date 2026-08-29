@@ -551,7 +551,7 @@
 
   async function fetchNews(companyName){
     const q = encodeURIComponent(companyName + ' stock');
-    const url = 'https://news.google.com/rss/search?q=' + q + '&hl=en-IN&gl=IN&ceid=IN:en';
+    const url = 'https://www.bing.com/news/search?q=' + q + '&format=RSS';
     const xml = await fetchTextThroughProxy(url);
     const doc = new DOMParser().parseFromString(xml, 'text/xml');
     const items = Array.from(doc.querySelectorAll('item')).slice(0,10).map(item => {
