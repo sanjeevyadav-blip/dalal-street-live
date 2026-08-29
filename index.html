@@ -464,7 +464,7 @@
     for (let i = 0; i < PROXIES.length; i++){
       const idx = (goodProxy + i) % PROXIES.length;
       try {
-        const res = await withTimeout(fetch(PROXIES[idx](targetUrl), { cache:'no-store' }), 8000);
+        const res = await withTimeout(fetch(PROXIES[idx](targetUrl), { cache:'no-store' }), 5000);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         goodProxy = idx;
@@ -474,6 +474,19 @@
     throw lastErr || new Error('All proxies failed');
   }
   function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  // Runs `worker` over `items` with at most `concurrency` in flight at once —
+  // much faster than one-at-a-time, without hammering the free proxies all at once.
+  async function runPool(items, worker, concurrency){
+    let i = 0;
+    const runners = new Array(Math.min(concurrency, items.length)).fill(0).map(async () => {
+      while (i < items.length){
+        const idx = i++;
+        await worker(items[idx], idx);
+      }
+    });
+    await Promise.all(runners);
+  }
 
   async function fetchQuote(symbol){
     const h = await fetchHistory(symbol, '5d', '1d');
@@ -526,7 +539,7 @@
     for (let i = 0; i < PROXIES.length; i++){
       const idx = (goodProxy + i) % PROXIES.length;
       try {
-        const res = await withTimeout(fetch(PROXIES[idx](targetUrl), { cache:'no-store' }), 8000);
+        const res = await withTimeout(fetch(PROXIES[idx](targetUrl), { cache:'no-store' }), 5000);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const text = await res.text();
         goodProxy = idx;
@@ -801,12 +814,11 @@
     if (refreshing) return; refreshing = true;
     let anyFailure = false;
     const symbols = INDICES.map(i => i.symbol).concat(watchlist);
-    for (const sym of symbols){
+    await runPool(symbols, async (sym) => {
       try { quoteCache[sym] = await fetchQuote(sym); }
       catch (err){ anyFailure = true; if (quoteCache[sym]) quoteCache[sym].stale = true; }
       renderIndices(); renderWatchlist(); renderTicker();
-      await sleep(180);
-    }
+    }, 5);
     if (anyFailure) showError('Some prices couldn\'t be refreshed — the free CORS relay may be rate-limited right now. Showing last known values where available.');
     else clearError();
     document.getElementById('lastUpdated').textContent = 'Last updated ' + new Date().toLocaleTimeString('en-IN', { hour12:false });
@@ -855,6 +867,7 @@
   }
 
   function renderDetailCore(symbol, hist, niftyHist){
+ 
     const meta = hist.meta;
     const closes = hist.closes, highs = hist.highs, lows = hist.lows, dates = hist.dates;
     const price = meta.regularMarketPrice != null ? meta.regularMarketPrice : closes[closes.length-1];
@@ -1305,7 +1318,7 @@
         if (score >= 0) scored.push([score, sym, name]);
       });
       scored.sort((a,b) => a[0]-b[0]);
-      renderSuggestions(scored.slice(0,10).map(([,sym,name]) => [sym,name]));
+      renderSuggestions(scored.slice(0,10).map((,sym,name]) => [sym,name]));
     });
     input.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowDown'){ e.preventDefault(); activeIdx = Math.min(activeIdx+1, currentMatches.length-1); highlight(); }
@@ -1369,7 +1382,7 @@
     const btn = document.getElementById(btnId);
     btn.disabled = true; btn.textContent = 'Loading…';
     tbody.innerHTML = tickers.map(t => `<tr id="row-${t}"><td class="sym">${t}</td><td colspan="6" class="loading-dots">fetching…</td></tr>`).join('');
-    for (const t of tickers){
+    await runPool(tickers, async (t) => {
       try {
         const r = await fetchScreenerRow(t);
         const row = document.getElementById('row-'+t);
@@ -1378,8 +1391,7 @@
         const row = document.getElementById('row-'+t);
         if (row) row.outerHTML = `<tr><td class="sym">${t}</td><td colspan="6" style="color:var(--cream-dim);">Couldn't load — try refreshing this group.</td></tr>`;
       }
-      await sleep(220);
-    }
+    }, 4);
     tbody.querySelectorAll('tr[data-sym]').forEach(tr => tr.addEventListener('click', () => loadStockDetail(tr.getAttribute('data-sym'))));
     btn.disabled = false; btn.textContent = 'Refresh';
   }
