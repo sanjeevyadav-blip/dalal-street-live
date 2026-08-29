@@ -244,6 +244,44 @@
   table.book tbody tr:hover{ background:rgba(255,255,255,0.015); }
   .loading-dots{ color:var(--cream-dim); font-family:var(--mono); }
 
+  /* ---------- Peer comparison ---------- */
+  .peer-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .peer-label{ font-family:var(--serif); font-size:15px; font-weight:600; color:var(--gold); }
+  .peer-sub{ font-size:11.5px; color:var(--cream-dim); }
+  table.peer-table td{ font-size:13px; padding:9px 8px; }
+  table.peer-table td.num{ font-family:var(--mono); }
+  table.peer-table td.num.up{ color:var(--gain); } table.peer-table td.num.down{ color:var(--loss); }
+  table.peer-table tbody tr{ cursor:pointer; }
+  table.peer-table tr.peer-self{ background:rgba(201,162,75,0.09); }
+  table.peer-table tr.peer-self td.sym{ color:var(--gold); }
+
+  /* ---------- IPO ---------- */
+  section.ipo{ margin-top:34px; }
+  .ipo-controls{ display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .ipo-controls button{
+    background:var(--gold); color:#1a1305; border:none; font-weight:600;
+    padding:9px 16px; border-radius:8px; cursor:pointer; font-size:13.5px;
+  }
+  .ipo-controls button:hover{ background:#dbb35c; }
+  .ipo-controls button:disabled{ opacity:0.6; cursor:default; }
+  .ipo-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }
+  .ipo-card{
+    background:var(--panel); border:1px solid var(--hair); border-radius:12px; padding:16px 18px; cursor:pointer;
+  }
+  .ipo-card:hover{ border-color:var(--gold); }
+  .ipo-card .name{ font-family:var(--serif); font-size:16px; font-weight:600; line-height:1.3; }
+  .ipo-card .sym{ font-family:var(--mono); font-size:11.5px; color:var(--cream-dim); margin-top:3px; }
+  .ipo-card .band{ font-family:var(--mono); font-size:19px; margin-top:10px; color:var(--gold); }
+  .ipo-card .rowline{ display:flex; justify-content:space-between; font-size:12px; color:var(--cream-dim); margin-top:8px; font-family:var(--mono); }
+  .pill{
+    display:inline-block; font-size:10px; letter-spacing:0.07em; text-transform:uppercase;
+    padding:3px 9px; border-radius:999px; border:1px solid var(--hair); margin-top:8px;
+  }
+  .pill.open{ color:var(--gain); border-color:rgba(76,175,109,0.4); background:rgba(76,175,109,0.1); }
+  .pill.upcoming{ color:var(--info); border-color:rgba(110,155,201,0.4); background:rgba(110,155,201,0.1); }
+  .pill.closed{ color:var(--cream-dim); }
+  .ipo-detail-card{ background:var(--panel); border:1px solid var(--hair); border-radius:14px; padding:22px; margin-top:16px; }
+
   /* ---------- Screener ---------- */
   section.screener{ margin-top:34px; }
   .screener-note{
@@ -332,6 +370,19 @@
         <thead><tr><th>Symbol</th><th>Last price</th><th>Change</th><th>% Change</th><th></th></tr></thead>
         <tbody id="watchlistBody"></tbody>
       </table>
+    </section>
+
+    <section class="ipo">
+      <div class="section-head">
+        <h2>IPO watch</h2>
+        <span class="hint">Live from NSE — open, upcoming and recently closed issues</span>
+      </div>
+      <div class="ipo-controls">
+        <button id="loadIpos">Load IPOs</button>
+        <span class="hint" id="ipoMeta"></span>
+      </div>
+      <div id="ipoBlock"><div class="note-inline">Not loaded yet — click "Load IPOs" to pull the current NSE issue list.</div></div>
+      <div id="ipoDetail"></div>
     </section>
 
     <section class="screener">
@@ -448,8 +499,13 @@
     ['TORNTPHARM','Torrent Pharmaceuticals'],['GLENMARK','Glenmark Pharmaceuticals'],['PAYTM','One97 (Paytm)'],
   ];
 
+  // Your own Cloudflare Worker (see worker.js). Paste its URL here — no
+  // trailing slash, e.g. 'https://dalal-proxy.yourname.workers.dev'.
+  // Leave as '' to fall back to the free public relays, which are unreliable.
+  const WORKER_URL = 'https://dalal-proxy.sanjeev-yadav.workers.dev';
+
   const PROXIES = [
-    (u) => 'https://dalal-proxy.sanjeev-yadav.workers.dev/?url=' + encodeURIComponent(u),
+    ...(WORKER_URL ? [(u) => WORKER_URL + '/?url=' + encodeURIComponent(u)] : []),
     (u) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
     (u) => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
   ];
@@ -525,7 +581,7 @@
   }
 
   async function fetchFundamentals(symbol){
-    const modules = 'summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend';
+    const modules = 'summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,earningsTrend,majorHoldersBreakdown,incomeStatementHistory,balanceSheetHistory,cashflowStatementHistory,earnings,price';
     const url = 'https://query2.finance.yahoo.com/v10/finance/quoteSummary/' + encodeURIComponent(symbol) + '?modules=' + modules;
     const data = await fetchJsonThroughProxy(url);
     const result = data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result[0];
@@ -742,6 +798,84 @@
     return { p, r1: 2*p-L, r2: p+(H-L), s1: 2*p-H, s2: p-(H-L) };
   }
 
+  // ================= Peer groups (for like-for-like comparison) =================
+  // Grouped by broad business line so comparisons are meaningful. Not an official
+  // index classification — just a sensible peer set for each name.
+  const PEER_GROUPS = [
+    ['IT Services', ['TCS','INFY','HCLTECH','WIPRO','TECHM','LTIM','MPHASIS','COFORGE','PERSISTENT']],
+    ['Private Banks', ['HDFCBANK','ICICIBANK','KOTAKBANK','AXISBANK','INDUSINDBK','IDFCFIRSTB']],
+    ['PSU Banks', ['SBIN','BANKBARODA','PNB','CANBK']],
+    ['NBFC / Finance', ['BAJFINANCE','BAJAJFINSV','CHOLAFIN','MUTHOOTFIN','PFC','RECLTD','HDFCAMC']],
+    ['Insurance', ['HDFCLIFE','SBILIFE','ICICIPRULI','ICICIGI','LICI']],
+    ['Oil, Gas & Energy', ['RELIANCE','ONGC','BPCL','IOC','GAIL']],
+    ['Power & Utilities', ['NTPC','POWERGRID','TATAPOWER','ADANIGREEN','ADANIPOWER']],
+    ['Metals & Mining', ['TATASTEEL','JSWSTEEL','HINDALCO','VEDL','SAIL','NMDC','COALINDIA']],
+    ['Automobiles', ['MARUTI','TATAMOTORS','M&M','EICHERMOT','HEROMOTOCO','BAJAJ-AUTO','TVSMOTOR','ASHOKLEY']],
+    ['Auto Components', ['MOTHERSON','BHARATFORG','BOSCHLTD','ESCORTS']],
+    ['Pharma', ['SUNPHARMA','DRREDDY','CIPLA','DIVISLAB','LUPIN','AUROPHARMA','TORNTPHARM','ALKEM','GLENMARK','BIOCON']],
+    ['FMCG', ['HINDUNILVR','ITC','NESTLEIND','BRITANNIA','DABUR','MARICO','GODREJCP','COLPAL','TATACONSUM','PGHH']],
+    ['Cement & Construction', ['ULTRACEMCO','GRASIM','AMBUJACEM','ACC','LT']],
+    ['Paints & Chemicals', ['ASIANPAINT','BERGEPAINT','PIDILITIND','SRF','PIIND','UPL']],
+    ['Consumer & Retail', ['DMART','TRENT','TITAN','JUBLFOOD','HAVELLS']],
+    ['Telecom & Internet', ['BHARTIARTL','ZOMATO','PAYTM','IRCTC','INDIGO']],
+    ['Capital Goods & Defence', ['SIEMENS','ABB','CUMMINSIND','HAL','BEL']],
+    ['Healthcare Services', ['APOLLOHOSP']],
+  ];
+
+  function peersFor(ticker){
+    const t = ticker.replace(/\.(NS|BO)$/,'');
+    for (const [label, members] of PEER_GROUPS){
+      if (members.includes(t)) return { label, peers: members.filter(m => m !== t).slice(0,6) };
+    }
+    return null;
+  }
+
+  // ================= Day-trading metrics =================
+  // All derived from price/volume. Descriptive levels, not trade signals.
+  function openingRange(intraday, minutes){
+    // Opening Range = high/low of the first N minutes of the session.
+    const bars = Math.max(1, Math.round(minutes / 5)); // 5-minute bars
+    const n = Math.min(bars, intraday.closes.length);
+    if (!n) return null;
+    return {
+      high: Math.max(...intraday.highs.slice(0, n)),
+      low: Math.min(...intraday.lows.slice(0, n)),
+      bars: n
+    };
+  }
+  function vwapSeries(intraday){
+    let num = 0, den = 0;
+    const out = [];
+    for (let i = 0; i < intraday.closes.length; i++){
+      const typical = (intraday.highs[i] + intraday.lows[i] + intraday.closes[i]) / 3;
+      num += typical * intraday.volumes[i];
+      den += intraday.volumes[i];
+      out.push(den > 0 ? num / den : null);
+    }
+    return out;
+  }
+  function gapPct(todayOpen, prevClose){
+    if (todayOpen == null || !prevClose) return null;
+    return ((todayOpen - prevClose) / prevClose) * 100;
+  }
+  function relativeVolume(todayVol, avgVol){
+    if (!avgVol) return null;
+    return todayVol / avgVol;
+  }
+
+  // ================= IPO data (NSE) =================
+  async function fetchIpos(){
+    const url = 'https://www.nseindia.com/api/all-upcoming-issues?category=ipo';
+    const data = await fetchJsonThroughProxy(url);
+    return Array.isArray(data) ? data : [];
+  }
+  function parseIpoDate(s){
+    // NSE returns e.g. "28-Aug-2026"
+    if (!s) return null;
+    const d = new Date(s.replace(/-/g, ' '));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   // ================= Rendering: indices =================
   function renderIndices(){
     const grid = document.getElementById('indicesGrid');
@@ -854,12 +988,41 @@
 
     renderDetailCore(symbol, hist, niftyHist);
 
-    // Best-effort extras, rendered when/if they arrive
-    fetchFundamentals(symbol).then(f => { if (currentDetailSymbol === symbol) renderFundamentals(f); })
-      .catch(() => { if (currentDetailSymbol === symbol) renderFundamentalsUnavailable(); });
+    // Context the peer + intraday panels need, computed from the 2y history we already have.
+    const _c = hist.closes, _h = hist.highs, _l = hist.lows;
+    const _price = hist.meta.regularMarketPrice != null ? hist.meta.regularMarketPrice : _c[_c.length-1];
+    const _prevClose = hist.meta.previousClose != null ? hist.meta.previousClose
+      : (hist.meta.chartPreviousClose != null ? hist.meta.chartPreviousClose : _c[_c.length-2]);
+    const _oneY = _c.slice(-252);
+    const detailCtx = {
+      prevClose: _prevClose,
+      avgVol20: average(hist.volumes.slice(-20)),
+      atr14: atrLast(_h, _l, _c, 14),
+      pivots: pivotPoints(_h, _l, _c),
+      price: _price,
+      chg1y: _oneY.length > 1 ? ((_price / _oneY[0]) - 1) * 100 : null,
+      rsi: rsiLast(_c, 14)
+    };
 
-    fetchHistory(symbol, '1d', '5m').then(intraday => { if (currentDetailSymbol === symbol) renderIntradayVWAP(intraday); })
-      .catch(() => {});
+    // Best-effort extras, rendered when/if they arrive
+    fetchFundamentals(symbol).then(f => {
+      if (currentDetailSymbol !== symbol) return;
+      renderFundamentals(f);
+      renderPeers(symbol, detailCtx, f);
+    }).catch(() => {
+      if (currentDetailSymbol !== symbol) return;
+      renderFundamentalsUnavailable();
+      renderPeers(symbol, detailCtx, null);
+    });
+
+    fetchHistory(symbol, '1d', '5m').then(intraday => {
+      if (currentDetailSymbol !== symbol) return;
+      renderIntradayVWAP(intraday);
+      renderIntradayDesk(intraday, detailCtx);
+    }).catch(() => {
+      const b = document.getElementById('intradayBlock');
+      if (b) b.innerHTML = `<div class="note-inline">Intraday bars unavailable right now — Yahoo only serves them around and after market hours.</div>`;
+    });
 
     const companyLabel = (hist.meta.longName || hist.meta.shortName || symbol.replace(/\.(NS|BO)$/,''));
     fetchNews(companyLabel).then(items => { if (currentDetailSymbol === symbol) renderNews(items); })
@@ -867,7 +1030,6 @@
   }
 
   function renderDetailCore(symbol, hist, niftyHist){
- 
     const meta = hist.meta;
     const closes = hist.closes, highs = hist.highs, lows = hist.lows, dates = hist.dates;
     const price = meta.regularMarketPrice != null ? meta.regularMarketPrice : closes[closes.length-1];
@@ -1004,6 +1166,12 @@
           <div class="sub">Reference levels only — not a forecast of where price will go</div></div>
       </div>
 
+      <div class="section-label"><span>Day-trading desk</span><span class="rule-line"></span></div>
+      <div id="intradayBlock"><div class="note-inline">Loading intraday session data…</div></div>
+
+      <div class="section-label"><span>Peer comparison</span><span class="rule-line"></span></div>
+      <div id="peerBlock"><div class="note-inline">Loading industry peers…</div></div>
+
       <div class="section-label"><span>Recent news</span><span class="rule-line"></span></div>
       <div id="newsBlock" class="news-list"><div class="note-inline">Fetching recent headlines…</div></div>
 
@@ -1034,6 +1202,7 @@
 
   function renderFundamentals(f){
     const sd = f.summaryDetail || {}, ks = f.defaultKeyStatistics || {}, fd = f.financialData || {};
+    const mh = f.majorHoldersBreakdown || null;
     const grid = document.getElementById('fundamentalsGrid');
     if (!grid) return;
     const marketCap = val(sd.marketCap) || val(ks.enterpriseValue);
@@ -1058,6 +1227,30 @@
       ['Earnings growth (YoY)', val(fd.earningsGrowth)!=null ? fmtPct(val(fd.earningsGrowth)*100,2) : '—', ''],
       ['Analyst mean target', val(fd.targetMeanPrice)!=null ? '₹'+fmtNum(val(fd.targetMeanPrice),2) : '—', ''],
       ['Analyst recommendation', fd.recommendationKey ? fd.recommendationKey.replace(/_/g,' ') : '—', val(fd.numberOfAnalystOpinions)!=null ? val(fd.numberOfAnalystOpinions)+' analysts' : ''],
+      ['Analyst target range', (val(fd.targetLowPrice)!=null && val(fd.targetHighPrice)!=null) ? '₹'+fmtNum(val(fd.targetLowPrice),0)+' – ₹'+fmtNum(val(fd.targetHighPrice),0) : '—', 'Low to high of published targets'],
+      ['Enterprise value', val(ks.enterpriseValue)!=null ? fmtCr(val(ks.enterpriseValue)) : '—', 'Market cap plus net debt'],
+      ['EV / EBITDA', fmtNum(val(ks.enterpriseToEbitda),2), 'Valuation independent of capital structure'],
+      ['EV / Revenue', fmtNum(val(ks.enterpriseToRevenue),2), ''],
+      ['Price / Sales', fmtNum(val(sd.priceToSalesTrailing12Months),2), ''],
+      ['Book value / share', val(ks.bookValue)!=null ? '₹'+fmtNum(val(ks.bookValue),2) : '—', ''],
+      ['Total revenue (TTM)', val(fd.totalRevenue)!=null ? fmtCr(val(fd.totalRevenue)) : '—', ''],
+      ['EBITDA', val(fd.ebitda)!=null ? fmtCr(val(fd.ebitda)) : '—', ''],
+      ['Gross margin', val(fd.grossMargins)!=null ? fmtPct(val(fd.grossMargins)*100,2) : '—', ''],
+      ['EBITDA margin', val(fd.ebitdaMargins)!=null ? fmtPct(val(fd.ebitdaMargins)*100,2) : '—', ''],
+      ['Total cash', val(fd.totalCash)!=null ? fmtCr(val(fd.totalCash)) : '—', val(fd.totalCashPerShare)!=null ? '₹'+fmtNum(val(fd.totalCashPerShare),2)+' per share' : ''],
+      ['Total debt', val(fd.totalDebt)!=null ? fmtCr(val(fd.totalDebt)) : '—', ''],
+      ['Quick ratio', fmtNum(val(fd.quickRatio),2), 'Liquidity excluding inventory'],
+      ['Operating cash flow', val(fd.operatingCashflow)!=null ? fmtCr(val(fd.operatingCashflow)) : '—', ''],
+      ['Free cash flow', val(fd.freeCashflow)!=null ? fmtCr(val(fd.freeCashflow)) : '—', 'Cash left after capital spending'],
+      ['Revenue / share', val(fd.revenuePerShare)!=null ? '₹'+fmtNum(val(fd.revenuePerShare),2) : '—', ''],
+      ['Shares outstanding', val(ks.sharesOutstanding)!=null ? fmtNum(val(ks.sharesOutstanding)/1e7,2)+' Cr' : '—', ''],
+      ['Float', val(ks.floatShares)!=null ? fmtNum(val(ks.floatShares)/1e7,2)+' Cr' : '—', 'Freely tradable shares'],
+      ['Promoter / insider holding', mh && val(mh.insidersPercentHeld)!=null ? fmtPct(val(mh.insidersPercentHeld)*100,2) : '—', ''],
+      ['Institutional holding', mh && val(mh.institutionsPercentHeld)!=null ? fmtPct(val(mh.institutionsPercentHeld)*100,2) : '—', ''],
+      ['52-week change', val(ks['52WeekChange'])!=null ? fmtPct(val(ks['52WeekChange'])*100,1) : '—', ''],
+      ['Vs Nifty (52w)', val(ks.SandP52WeekChange)!=null ? fmtPct(val(ks.SandP52WeekChange)*100,1) : '—', 'Benchmark move over the same period'],
+      ['Payout ratio', val(sd.payoutRatio)!=null ? fmtPct(val(sd.payoutRatio)*100,1) : '—', 'Share of earnings paid as dividend'],
+      ['Short ratio', fmtNum(val(ks.shortRatio),2), ''],
     ];
     grid.innerHTML = items.map(([k,v,sub]) => `<div class="metric"><div class="k">${k}</div><div class="v">${v}</div>${sub?`<div class="sub">${sub}</div>`:''}</div>`).join('');
 
@@ -1095,6 +1288,177 @@
   function renderNewsUnavailable(){
     const block = document.getElementById('newsBlock');
     if (block) block.innerHTML = `<div class="note-inline">Couldn't reach the news feed right now (the relay may be rate-limited) — try reopening this stock in a moment.</div>`;
+  }
+
+  function renderIntradayDesk(intraday, ctx){
+    const block = document.getElementById('intradayBlock');
+    if (!block) return;
+    const n = intraday.closes.length;
+    if (!n){
+      block.innerHTML = `<div class="note-inline">No intraday bars available — this is normal outside market hours or right at the open.</div>`;
+      return;
+    }
+    const vw = vwapSeries(intraday);
+    const vwap = vw[vw.length-1];
+    const last = intraday.closes[n-1];
+    const dayOpen = intraday.opens[0];
+    const sessHigh = Math.max(...intraday.highs);
+    const sessLow = Math.min(...intraday.lows);
+    const orb = openingRange(intraday, 15);
+    const gap = gapPct(dayOpen, ctx.prevClose);
+    const dayVol = intraday.volumes.reduce((a,b)=>a+b,0);
+    const rvol = relativeVolume(dayVol, ctx.avgVol20);
+    const atr = ctx.atr14;
+    const p = ctx.pivots;
+
+    const vwapSide = vwap == null ? '—' :
+      (last >= vwap ? '<span class="up">above VWAP</span>' : '<span class="down">below VWAP</span>');
+    const vwapDist = vwap ? ((last - vwap)/vwap*100) : null;
+
+    const orbState = !orb ? '—' :
+      (last > orb.high ? '<span class="up">above opening range</span>'
+       : last < orb.low ? '<span class="down">below opening range</span>'
+       : 'inside opening range');
+
+    const rangeUsed = (sessHigh - sessLow);
+    const atrUsedPct = atr ? (rangeUsed / atr) * 100 : null;
+
+    block.innerHTML = `
+      <div class="metric-grid">
+        <div class="metric"><div class="k">VWAP</div><div class="v">${vwap==null?'—':'₹'+fmtNum(vwap,2)}</div>
+          <div class="sub">Price ${vwapSide}${vwapDist!=null?' by '+fmtNum(Math.abs(vwapDist),2)+'%':''}</div></div>
+        <div class="metric"><div class="k">Opening range (15m)</div><div class="v" style="font-size:14px;">${orb?'₹'+fmtNum(orb.low,2)+' – ₹'+fmtNum(orb.high,2):'—'}</div>
+          <div class="sub">${orbState}</div></div>
+        <div class="metric"><div class="k">Gap at open</div><div class="v ${gap>=0?'up':'down'}">${gap==null?'—':fmtPct(gap,2)}</div>
+          <div class="sub">Open vs previous close</div></div>
+        <div class="metric"><div class="k">Relative volume</div><div class="v ${rvol>=1?'up':'down'}">${rvol==null?'—':fmtNum(rvol,2)+'x'}</div>
+          <div class="sub">Session volume vs 20-day average</div></div>
+        <div class="metric"><div class="k">Session range</div><div class="v" style="font-size:14px;">₹${fmtNum(sessLow,2)} – ₹${fmtNum(sessHigh,2)}</div>
+          <div class="sub">${atrUsedPct!=null?fmtNum(atrUsedPct,0)+'% of a typical (ATR) day used':''}</div></div>
+        <div class="metric"><div class="k">Bars so far</div><div class="v">${n}</div><div class="sub">5-minute intervals</div></div>
+        <div class="metric" style="grid-column:span 2;"><div class="k">Intraday pivot levels</div>
+          <div class="v" style="font-size:13px;">S2 ${fmtNum(p.s2,0)} · S1 ${fmtNum(p.s1,0)} · <b>P ${fmtNum(p.p,0)}</b> · R1 ${fmtNum(p.r1,0)} · R2 ${fmtNum(p.r2,0)}</div>
+          <div class="sub">Classic pivots from the previous session</div></div>
+        <div class="metric" style="grid-column:span 2;"><div class="k">Expected daily move (ATR-14)</div>
+          <div class="v" style="font-size:14px;">± ₹${atr==null?'—':fmtNum(atr,2)}</div>
+          <div class="sub">Average true range — how far this stock typically travels in a day</div></div>
+      </div>
+      <div class="note-inline" style="margin-top:12px;">These are descriptive session statistics, not entry or exit signals. VWAP, opening range and pivots are reference levels traders watch; where price sits relative to them is a fact, what to do about it isn't.</div>
+    `;
+  }
+
+  async function renderPeers(symbol, selfMeta, selfFund){
+    const block = document.getElementById('peerBlock');
+    if (!block) return;
+    const grp = peersFor(symbol);
+    if (!grp){
+      block.innerHTML = `<div class="note-inline">No peer group mapped for this symbol yet — peer comparison covers the ~110 large and mid caps in the built-in directory.</div>`;
+      return;
+    }
+    block.innerHTML = `<div class="note-inline">Loading ${grp.peers.length} peers in ${grp.label}…</div>`;
+
+    const selfTicker = symbol.replace(/\.(NS|BO)$/,'');
+    const rows = [];
+    // self row first
+    rows.push({
+      t: selfTicker, isSelf: true,
+      price: selfMeta.price, chg1y: selfMeta.chg1y, rsi: selfMeta.rsi,
+      pe: selfFund ? val(selfFund.summaryDetail && selfFund.summaryDetail.trailingPE) : null,
+      pb: selfFund ? val(selfFund.defaultKeyStatistics && selfFund.defaultKeyStatistics.priceToBook) : null,
+      roe: selfFund ? val(selfFund.financialData && selfFund.financialData.returnOnEquity) : null,
+      margin: selfFund ? val(selfFund.financialData && selfFund.financialData.profitMargins) : null,
+      mcap: selfFund ? val(selfFund.summaryDetail && selfFund.summaryDetail.marketCap) : null,
+    });
+
+    await runPool(grp.peers, async (t) => {
+      const sym = t + '.NS';
+      try {
+        const h = await fetchHistory(sym, '1y', '1d');
+        const closes = h.closes;
+        const price = h.meta.regularMarketPrice != null ? h.meta.regularMarketPrice : closes[closes.length-1];
+        const chg1y = closes.length > 1 ? ((price / closes[0]) - 1) * 100 : null;
+        const rsi = rsiLast(closes, 14);
+        let f = null;
+        try { f = await fetchFundamentals(sym); } catch(e){}
+        rows.push({
+          t, isSelf: false, price, chg1y, rsi,
+          pe: f ? val(f.summaryDetail && f.summaryDetail.trailingPE) : null,
+          pb: f ? val(f.defaultKeyStatistics && f.defaultKeyStatistics.priceToBook) : null,
+          roe: f ? val(f.financialData && f.financialData.returnOnEquity) : null,
+          margin: f ? val(f.financialData && f.financialData.profitMargins) : null,
+          mcap: f ? val(f.summaryDetail && f.summaryDetail.marketCap) : null,
+        });
+      } catch(e){ /* skip peers that fail */ }
+    }, 3);
+
+    if (currentDetailSymbol !== symbol) return;
+
+    // rank helper: where does the selected stock sit among peers on a metric?
+    function rankOf(key, higherIsBetter){
+      const vals = rows.map(r => r[key]).filter(v => v != null && !isNaN(v));
+      const me = rows.find(r => r.isSelf)[key];
+      if (me == null || isNaN(me) || vals.length < 2) return null;
+      const sorted = vals.slice().sort((a,b) => higherIsBetter ? b-a : a-b);
+      return { pos: sorted.indexOf(me) + 1, total: sorted.length };
+    }
+    const med = (key) => {
+      const v = rows.filter(r=>!r.isSelf).map(r=>r[key]).filter(x=>x!=null&&!isNaN(x)).sort((a,b)=>a-b);
+      if (!v.length) return null;
+      const m = Math.floor(v.length/2);
+      return v.length % 2 ? v[m] : (v[m-1]+v[m])/2;
+    };
+
+    const self = rows.find(r=>r.isSelf);
+    const peRank = rankOf('pe', false);
+    const roeRank = rankOf('roe', true);
+    const chgRank = rankOf('chg1y', true);
+
+    const cmp = (mine, median, betterHigh) => {
+      if (mine == null || median == null) return '';
+      const higher = mine > median;
+      const good = betterHigh ? higher : !higher;
+      return `<span class="${good?'up':'down'}">${higher?'above':'below'} peer median</span>`;
+    };
+
+    rows.sort((a,b) => (b.mcap||0) - (a.mcap||0));
+
+    block.innerHTML = `
+      <div class="peer-head">
+        <span class="peer-label">${grp.label}</span>
+        <span class="peer-sub">${rows.length} companies compared on the same metrics</span>
+      </div>
+      <div class="metric-grid" style="margin-bottom:14px;">
+        <div class="metric"><div class="k">P/E vs peers</div><div class="v">${self.pe==null?'—':fmtNum(self.pe,1)}</div>
+          <div class="sub">Median ${med('pe')==null?'—':fmtNum(med('pe'),1)} · ${cmp(self.pe, med('pe'), false)}${peRank?` · cheapest #${peRank.pos} of ${peRank.total}`:''}</div></div>
+        <div class="metric"><div class="k">ROE vs peers</div><div class="v">${self.roe==null?'—':fmtPct(self.roe*100,1)}</div>
+          <div class="sub">Median ${med('roe')==null?'—':fmtPct(med('roe')*100,1)} · ${cmp(self.roe, med('roe'), true)}${roeRank?` · #${roeRank.pos} of ${roeRank.total}`:''}</div></div>
+        <div class="metric"><div class="k">1-year return vs peers</div><div class="v ${self.chg1y>=0?'up':'down'}">${self.chg1y==null?'—':fmtPct(self.chg1y,1)}</div>
+          <div class="sub">Median ${med('chg1y')==null?'—':fmtPct(med('chg1y'),1)} · ${cmp(self.chg1y, med('chg1y'), true)}${chgRank?` · #${chgRank.pos} of ${chgRank.total}`:''}</div></div>
+        <div class="metric"><div class="k">Profit margin vs peers</div><div class="v">${self.margin==null?'—':fmtPct(self.margin*100,1)}</div>
+          <div class="sub">Median ${med('margin')==null?'—':fmtPct(med('margin')*100,1)} · ${cmp(self.margin, med('margin'), true)}</div></div>
+      </div>
+      <table class="book peer-table">
+        <thead><tr><th>Company</th><th>Market cap</th><th>Price</th><th>1Y %</th><th>P/E</th><th>P/B</th><th>ROE</th><th>Margin</th><th>RSI</th></tr></thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr data-sym="${r.t}.NS" class="${r.isSelf?'peer-self':''}">
+              <td class="sym">${r.t}${r.isSelf?' <span class="exch">selected</span>':''}</td>
+              <td class="num">${r.mcap==null?'—':fmtCr(r.mcap)}</td>
+              <td class="num">₹${fmtNum(r.price,2)}</td>
+              <td class="num ${r.chg1y>=0?'up':'down'}">${r.chg1y==null?'—':fmtNum(r.chg1y,1)+'%'}</td>
+              <td class="num">${r.pe==null?'—':fmtNum(r.pe,1)}</td>
+              <td class="num">${r.pb==null?'—':fmtNum(r.pb,1)}</td>
+              <td class="num">${r.roe==null?'—':fmtNum(r.roe*100,1)+'%'}</td>
+              <td class="num">${r.margin==null?'—':fmtNum(r.margin*100,1)+'%'}</td>
+              <td class="num">${r.rsi==null?'—':fmtNum(r.rsi,0)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="note-inline" style="margin-top:12px;">Peer sets are grouped by business line. A low P/E or high ROE relative to peers is information, not a verdict — companies can trade cheap for good reasons and expensive for good reasons.</div>
+    `;
+    block.querySelectorAll('tr[data-sym]').forEach(tr => {
+      tr.addEventListener('click', () => loadStockDetail(tr.getAttribute('data-sym')));
+    });
   }
 
   function renderIntradayVWAP(intraday){
@@ -1342,6 +1706,123 @@
     document.getElementById('searchBtn').addEventListener('click', runSearch);
   }
 
+  // ================= IPO rendering =================
+  let ipoCache = [];
+
+  function ipoStatus(ipo){
+    const now = new Date();
+    const s = parseIpoDate(ipo.issueStartDate);
+    const e = parseIpoDate(ipo.issueEndDate);
+    if (s && now < s) return { key:'upcoming', label:'Upcoming' };
+    if (e && now > new Date(e.getTime() + 86400000)) return { key:'closed', label:'Closed' };
+    return { key:'open', label:'Open now' };
+  }
+
+  function parseBand(priceStr){
+    // "Rs.408 to Rs.429" -> {lo:408, hi:429}
+    if (!priceStr) return null;
+    const nums = (priceStr.match(/[\d,]+(?:\.\d+)?/g) || []).map(x => parseFloat(x.replace(/,/g,'')));
+    if (!nums.length) return null;
+    return { lo: nums[0], hi: nums.length > 1 ? nums[nums.length-1] : nums[0] };
+  }
+
+  async function loadIpos(){
+    const btn = document.getElementById('loadIpos');
+    const block = document.getElementById('ipoBlock');
+    const meta = document.getElementById('ipoMeta');
+    btn.disabled = true; btn.textContent = 'Loading…';
+    block.innerHTML = `<div class="note-inline">Fetching the current issue list from NSE…</div>`;
+    document.getElementById('ipoDetail').innerHTML = '';
+    try {
+      const list = await fetchIpos();
+      ipoCache = list;
+      if (!list.length){
+        block.innerHTML = `<div class="note-inline">NSE is reporting no open or upcoming IPOs right now. This list is genuinely empty between issues — it isn't an error.</div>`;
+        meta.textContent = '';
+      } else {
+        const order = { open:0, upcoming:1, closed:2 };
+        const sorted = list.slice().sort((a,b) => order[ipoStatus(a).key] - order[ipoStatus(b).key]);
+        block.innerHTML = `<div class="ipo-grid">` + sorted.map(ip => {
+          const st = ipoStatus(ip);
+          const band = parseBand(ip.issuePrice);
+          const size = parseFloat(ip.issueSize);
+          return `<div class="ipo-card" data-sym="${ip.symbol}">
+            <div class="name">${ip.companyName}</div>
+            <div class="sym">${ip.symbol} · ${ip.series || 'EQ'}</div>
+            <div class="band">${band ? (band.lo === band.hi ? '₹'+fmtNum(band.lo,0) : '₹'+fmtNum(band.lo,0)+' – ₹'+fmtNum(band.hi,0)) : (ip.issuePrice || '—')}</div>
+            <div class="rowline"><span>Opens</span><span>${ip.issueStartDate || '—'}</span></div>
+            <div class="rowline"><span>Closes</span><span>${ip.issueEndDate || '—'}</span></div>
+            <div class="rowline"><span>Issue size</span><span>${isNaN(size) ? (ip.issueSize||'—') : fmtNum(size,0)+' shares'}</span></div>
+            <span class="pill ${st.key}">${st.label}</span>
+          </div>`;
+        }).join('') + `</div>
+        <div class="note-inline" style="margin-top:14px;">Straight from NSE's public issue feed. An IPO appearing here is not a suggestion to apply — a price band tells you the cost, not the value. Read the company's Red Herring Prospectus (filed with SEBI) before deciding anything.</div>`;
+        meta.textContent = list.length + ' issue' + (list.length===1?'':'s') + ' listed';
+        block.querySelectorAll('.ipo-card').forEach(card => {
+          card.addEventListener('click', () => showIpoDetail(card.getAttribute('data-sym')));
+        });
+      }
+    } catch (err){
+      block.innerHTML = `<div class="note-inline">Couldn't reach NSE's IPO feed. NSE aggressively blocks automated access, so this endpoint is less reliable than the price feeds — try again in a moment.</div>`;
+      meta.textContent = '';
+    }
+    btn.disabled = false; btn.textContent = 'Refresh IPOs';
+  }
+
+  async function showIpoDetail(symbol){
+    const ip = ipoCache.find(x => x.symbol === symbol);
+    const wrap = document.getElementById('ipoDetail');
+    if (!ip || !wrap) return;
+    const st = ipoStatus(ip);
+    const band = parseBand(ip.issuePrice);
+    const size = parseFloat(ip.issueSize);
+    const raise = (band && !isNaN(size)) ? band.hi * size : null;
+
+    wrap.innerHTML = `<div class="ipo-detail-card">
+      <div class="detail-head">
+        <div>
+          <h3>${ip.companyName}</h3>
+          <div class="meta-line"><span class="badge">${ip.symbol}</span><span class="badge">${ip.series||'EQ'}</span><span class="badge">${st.label}</span></div>
+        </div>
+        <div class="detail-actions"><button class="close-btn" id="closeIpo">Close ×</button></div>
+      </div>
+      <div class="metric-grid" style="margin-top:16px;">
+        <div class="metric"><div class="k">Price band</div><div class="v">${band ? (band.lo===band.hi ? '₹'+fmtNum(band.lo,0) : '₹'+fmtNum(band.lo,0)+' – ₹'+fmtNum(band.hi,0)) : '—'}</div><div class="sub">Per share</div></div>
+        <div class="metric"><div class="k">Issue size</div><div class="v">${isNaN(size)?'—':fmtNum(size,0)}</div><div class="sub">Shares offered</div></div>
+        <div class="metric"><div class="k">Approx. raise at top</div><div class="v">${raise==null?'—':fmtCr(raise)}</div><div class="sub">Issue size × upper band</div></div>
+        <div class="metric"><div class="k">Subscription window</div><div class="v" style="font-size:13px;">${ip.issueStartDate||'—'} → ${ip.issueEndDate||'—'}</div></div>
+      </div>
+      <div id="ipoLive"><div class="note-inline" style="margin-top:14px;">Checking whether this company is already trading…</div></div>
+    </div>`;
+
+    document.getElementById('closeIpo').addEventListener('click', () => { wrap.innerHTML = ''; });
+    wrap.scrollIntoView({ behavior:'smooth', block:'start' });
+
+    // If it has already listed, pull live post-listing performance vs the issue price.
+    const live = document.getElementById('ipoLive');
+    try {
+      const h = await fetchHistory(ip.symbol + '.NS', '1mo', '1d');
+      const closes = h.closes;
+      const price = h.meta.regularMarketPrice != null ? h.meta.regularMarketPrice : closes[closes.length-1];
+      const listPrice = closes[0];
+      const vsIssue = band ? ((price - band.hi) / band.hi) * 100 : null;
+      const vsList = listPrice ? ((price - listPrice) / listPrice) * 100 : null;
+      live.innerHTML = `
+        <div class="section-label" style="margin-top:20px;"><span>Since listing</span><span class="rule-line"></span></div>
+        <div class="metric-grid">
+          <div class="metric"><div class="k">Current price</div><div class="v">₹${fmtNum(price,2)}</div></div>
+          <div class="metric"><div class="k">First close on record</div><div class="v">₹${fmtNum(listPrice,2)}</div></div>
+          <div class="metric"><div class="k">Vs issue price (top band)</div><div class="v ${vsIssue>=0?'up':'down'}">${vsIssue==null?'—':fmtPct(vsIssue,1)}</div><div class="sub">Listing gain or loss for an allottee</div></div>
+          <div class="metric"><div class="k">Vs first close</div><div class="v ${vsList>=0?'up':'down'}">${vsList==null?'—':fmtPct(vsList,1)}</div></div>
+        </div>
+        <div style="margin-top:12px;"><button class="ipo-open-full" data-sym="${ip.symbol}.NS" style="background:transparent;border:1px solid var(--hair);color:var(--cream-dim);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12.5px;">Open full analysis for ${ip.symbol} →</button></div>`;
+      const b = live.querySelector('.ipo-open-full');
+      if (b) b.addEventListener('click', () => loadStockDetail(ip.symbol + '.NS'));
+    } catch(e){
+      live.innerHTML = `<div class="note-inline" style="margin-top:14px;">Not trading yet — there's no market data until the shares list. Once listed, this panel will show price versus the issue band automatically.</div>`;
+    }
+  }
+
   // ================= Screener =================
   // Cap-tier grouping here is illustrative (for organising this table), not an official AMFI/SEBI classification.
   const SCREENER_LARGE = ['RELIANCE','TCS','HDFCBANK','ICICIBANK','INFY','HINDUNILVR','ITC','SBIN','BHARTIARTL','LT'];
@@ -1396,6 +1877,7 @@
     btn.disabled = false; btn.textContent = 'Refresh';
   }
 
+  document.getElementById('loadIpos').addEventListener('click', loadIpos);
   document.getElementById('loadLargeCap').addEventListener('click', () => loadScreenerGroup(SCREENER_LARGE, 'largeCapBody', 'loadLargeCap'));
   document.getElementById('loadMidCap').addEventListener('click', () => loadScreenerGroup(SCREENER_MID, 'midCapBody', 'loadMidCap'));
 
