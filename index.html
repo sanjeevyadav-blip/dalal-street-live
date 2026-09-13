@@ -3185,6 +3185,187 @@
       'but because pulling 30 option chains would take far longer than this ranking should, and only about 180 NSE names have options at all, which would make the comparison uneven. ' +
       'This ranks <em>recent momentum and technical posture</em>, which is not the same as a view on the business. It is not a buy list.';
   })();
+  const R20_LARGE = ['RELIANCE','TCS','HDFCBANK','ICICIBANK','INFY','HINDUNILVR','ITC','SBIN','BHARTIARTL','LT',
+    'KOTAKBANK','AXISBANK','MARUTI','SUNPHARMA','TITAN','ULTRACEMCO','BAJFINANCE','HCLTECH','NTPC','POWERGRID',
+    'M&M','TATAMOTORS','TATASTEEL','ASIANPAINT','WIPRO','ADANIPORTS','COALINDIA','ONGC','JSWSTEEL','NESTLEIND',
+    'BAJAJFINSV','TECHM','GRASIM','HINDALCO','DRREDDY','CIPLA','BRITANNIA','EICHERMOT','HEROMOTOCO','INDUSINDBK'];
+  const R20_MID = ['PERSISTENT','COFORGE','MPHASIS','CUMMINSIND','BHARATFORG','ESCORTS','ALKEM','GLENMARK','TORNTPHARM','JUBLFOOD',
+    'TRENT','PIIND','SRF','ABB','HDFCAMC','MUTHOOTFIN','CHOLAFIN','LUPIN','AUROPHARMA','BIOCON',
+    'HAVELLS','DABUR','MARICO','GODREJCP','BERGEPAINT','TVSMOTOR','ASHOKLEY','CANBK','PFC','RECLTD',
+    'LTIM','SIEMENS','BEL','HAL','IRCTC','NMDC','SAIL','GAIL','BANKBARODA','PNB'];
+  function gbmProbUp(closes, days){
+    const r = [];
+    const s = closes.slice(-252);
+    for (let i=1;i<s.length;i++) r.push(Math.log(s[i]/s[i-1]));
+    if (r.length < 30) return null;
+    let m = 0; r.forEach(function(x){ m += x; }); m /= r.length;
+    let v = 0; r.forEach(function(x){ v += (x-m)*(x-m); }); v /= (r.length-1);
+    const sd = Math.sqrt(v);
+    if (!(sd > 0)) return null;
+    const z = (m*days) / (sd*Math.sqrt(days));
+    return { p: nCdf(z)*100, drift: m*252*100, vol: sd*Math.sqrt(252)*100 };
+  }
+  async function scoreStock20(ticker, niftyRet){
+    const symbol = ticker + '.NS';
+    const h = await fetchHistory(symbol, '1y', '1d');
+    const c = h.closes, o = h.opens, hi = h.highs, lo = h.lows, v = h.volumes;
+    if (c.length < 80) throw new Error('short history');
+    const price = h.meta.regularMarketPrice != null ? h.meta.regularMarketPrice : c[c.length-1];
+    const pats = detectPatterns(o, hi, lo, c);
+    let cs = 50;
+    pats.forEach(function(p){ if (p.bias==='bullish') cs += 12; else if (p.bias==='bearish') cs -= 12; });
+    cs = Math.max(0, Math.min(100, cs));
+    const rsi = rsiLast(c,14);
+    const macd = macdLast(c);
+    const s50 = smaSeries(c,50), s200 = smaSeries(c,200);
+    const a50 = s50[s50.length-1], a200 = s200[s200.length-1];
+    const above50 = a50 != null && price >= a50, above200 = a200 != null && price >= a200;
+    let ind = 0;
+    ind += rsi == null ? 12 : (rsi >= 45 && rsi <= 70 ? 25 : rsi > 70 ? 12 : rsi < 30 ? 8 : 16);
+    ind += macd.hist >= 0 ? 25 : 5;
+    ind += above50 ? 25 : 5;
+    ind += above200 ? 25 : 5;
+    const av20 = average(v.slice(-20)), av60 = average(v.slice(-60));
+    const vr = av60 ? av20/av60 : 1;
+    const upDays = c.slice(-20).filter(function(x,i,a){ return i>0 && x>a[i-1]; }).length;
+    let vol = Math.max(0, Math.min(100, 50 + (vr-1)*40 + (upDays-10)*3));
+    function ret(d){ const i = Math.max(0, c.length-1-d); return (c[c.length-1]/c[i]-1)*100; }
+    const r3 = ret(63), r6 = ret(126);
+    const rs3 = r3 - niftyRet.r3, rs6 = r6 - niftyRet.r6;
+    const rs = Math.max(0, Math.min(100, 50 + rs3*1.2 + rs6*0.8));
+    const composite = cs*0.15 + ind*0.35 + vol*0.15 + rs*0.35;
+    const w = gbmProbUp(c, 5), mo = gbmProbUp(c, 21);
+    const tilt = ((composite - 50)/50) * 6;   // at most +/-6 points
+    const pWeek = w ? Math.max(5, Math.min(95, w.p + tilt)) : null;
+    const pMonth = mo ? Math.max(5, Math.min(95, mo.p + tilt*1.3)) : null;
+    const bits = [];
+    if (w) bits.push((w.drift >= 0 ? 'Uptrend drift +' : 'Downtrend drift ') + fmtNum(w.drift,0) + '%/yr');
+    bits.push(above200 ? 'above 200-DMA' : 'below 200-DMA');
+    if (macd.hist >= 0) bits.push('MACD positive'); else bits.push('MACD negative');
+    if (rsi != null){
+      if (rsi > 70) bits.push('RSI ' + fmtNum(rsi,0) + ' overbought');
+      else if (rsi < 30) bits.push('RSI ' + fmtNum(rsi,0) + ' oversold');
+      else bits.push('RSI ' + fmtNum(rsi,0));
+    }
+    bits.push((rs3 >= 0 ? 'beating' : 'lagging') + ' Nifty by ' + fmtNum(Math.abs(rs3),1) + '% (3M)');
+    if (w && w.vol > 35) bits.push('high volatility ' + fmtNum(w.vol,0) + '% widens both tails');
+    if (pats.length && pats[0].bias !== 'neutral') bits.push(pats[0].name.toLowerCase());
+    return { ticker, symbol, price, rsi, above50, above200, composite, ind, vol, rs, rs3,
+      pWeek, pMonth, annVol: w ? w.vol : null, drift: w ? w.drift : null,
+      reason: bits.slice(0,4).join(' \u00b7 '),
+      topPattern: pats.length ? pats[0] : null };
+  }
+  async function runRanking20(tickers, bodyId, btnId){
+    const tbody = document.getElementById(bodyId);
+    const btn = document.getElementById(btnId);
+    btn.disabled = true; btn.textContent = 'Scoring\u2026';
+    tbody.innerHTML = '<tr><td colspan="8" class="loading-dots">Scoring ' + tickers.length + ' stocks \u2014 this takes 15\u201325 seconds\u2026</td></tr>';
+    const nh = await fetchHistory('^NSEI','1y','1d');
+    const nc = nh.closes;
+    function nret(d){ const i = Math.max(0, nc.length-1-d); return (nc[nc.length-1]/nc[i]-1)*100; }
+    const niftyRet = { r3: nret(63), r6: nret(126) };
+    const rows = [];
+    await runPool(tickers, async function(t){
+      try { rows.push(await scoreStock20(t, niftyRet)); } catch(e){}
+    }, 6);
+    rows.sort(function(a,b){ return b.composite - a.composite; });
+    const top = rows.slice(0,20);
+    if (!top.length){
+      tbody.innerHTML = '<tr><td colspan="8" style="color:var(--cream-dim)">Couldn\u2019t score these right now \u2014 try again shortly.</td></tr>';
+      btn.disabled = false; btn.textContent = 'Re-run'; return;
+    }
+    function pCls(p){ return p == null ? '' : p >= 55 ? 'up' : p <= 45 ? 'down' : 'info'; }
+    tbody.innerHTML = top.map(function(r,i){
+      return '<tr data-sym="' + r.symbol + '">' +
+        '<td class="sym">' + (i+1) + '. ' + r.ticker + '</td>' +
+        '<td class="num">\u20b9' + fmtNum(r.price,2) + '</td>' +
+        '<td class="num"><b>' + fmtNum(r.composite,1) + '</b></td>' +
+        '<td class="num ' + pCls(r.pWeek) + '"><b>' + (r.pWeek==null?'\u2014':fmtNum(r.pWeek,1)+'%') + '</b></td>' +
+        '<td class="num ' + pCls(r.pMonth) + '"><b>' + (r.pMonth==null?'\u2014':fmtNum(r.pMonth,1)+'%') + '</b></td>' +
+        '<td class="num ' + (r.rs3>=0?'up':'down') + '">' + fmtNum(r.rs3,1) + '%</td>' +
+        '<td class="num">' + (r.rsi==null?'\u2014':fmtNum(r.rsi,0)) + '</td>' +
+        '<td style="font-size:11.5px;color:var(--cream-dim);line-height:1.5">' + r.reason + '</td>' +
+      '</tr>';
+    }).join('');
+    tbody.querySelectorAll('tr[data-sym]').forEach(function(tr){
+      tr.addEventListener('click', function(){ loadStockDetail(tr.getAttribute('data-sym')); });
+    });
+    btn.disabled = false; btn.textContent = 'Re-run';
+  }
+  (function upgradeRanking(){
+    const sec = document.getElementById('rankSection');
+    if (!sec) return;
+    const head = '<tr><th>Rank</th><th>Price</th><th>Score</th><th>P(up) 1 week</th><th>P(up) 1 month</th>' +
+      '<th>RS vs Nifty (3M)</th><th>RSI</th><th>Reasoning</th></tr>';
+    sec.innerHTML =
+      '<div class="section-head"><h2>Top performers</h2>' +
+      '<span class="hint">Ranked on technicals, with model-derived odds and the reasoning behind them</span></div>' +
+      '<p class="screener-note">Stocks are ranked 0\u2013100 by a blend of indicators (35%), relative strength (35%), candlestick patterns (15%) and volume (15%), then the top 20 are shown. ' +
+      '<b>The two probability columns are model output, not forecasts.</b> They come from the stock\u2019s own return distribution \u2014 its historical drift and volatility \u2014 answering: if the next week or month behaves like the past year, what are the odds the price ends higher? ' +
+      'A small tilt (at most \u00b16 points) is applied from the technical score. Expect most values to sit between 45% and 60%: that narrow band is the honest answer, and any tool showing you 85% confidence on a one-week stock move is selling you something. ' +
+      '<b>Derivatives are not in the composite</b> \u2014 the option chain works and appears on individual F&amp;O stocks, but pulling 40 chains would be slow and only ~180 NSE names have options, making the comparison uneven. ' +
+      'This ranks <em>momentum and technical posture</em>, not business quality. It is not a buy list.</p>' +
+      '<div class="screener-group"><div class="screener-head"><h3>Large cap \u2014 top 20</h3><button id="rankLargeBtn">Rank large cap</button></div>' +
+      '<table class="book screener-table"><thead>' + head + '</thead><tbody id="rankLargeBody"><tr><td colspan="8" style="color:var(--cream-dim);padding:14px 10px">Not ranked yet \u2014 click \u201cRank large cap\u201d (scores 40 stocks, ~20s).</td></tr></tbody></table></div>' +
+      '<div class="screener-group"><div class="screener-head"><h3>Mid cap \u2014 top 20</h3><button id="rankMidBtn">Rank mid cap</button></div>' +
+      '<table class="book screener-table"><thead>' + head + '</thead><tbody id="rankMidBody"><tr><td colspan="8" style="color:var(--cream-dim);padding:14px 10px">Not ranked yet \u2014 click \u201cRank mid cap\u201d (scores 40 stocks, ~20s).</td></tr></tbody></table></div>';
+    document.getElementById('rankLargeBtn').addEventListener('click', function(){ runRanking20(R20_LARGE,'rankLargeBody','rankLargeBtn'); });
+    document.getElementById('rankMidBtn').addEventListener('click', function(){ runRanking20(R20_MID,'rankMidBody','rankMidBtn'); });
+  })();
+  GLOSSARY['p(up) 1 week'] = ['Probability of a rise in one week',
+    'The chance the price ends higher after five trading days, calculated from this stock\u2019s own past-year drift and volatility. It assumes the future resembles the recent past, which is exactly when it fails \u2014 around shocks and news. Values cluster near 50% because one week of stock movement is genuinely close to a coin flip.'];
+  GLOSSARY['p(up) 1 month'] = ['Probability of a rise in one month',
+    'Same calculation over roughly 21 trading days. Longer horizons let any upward drift accumulate, so this usually sits slightly above the one-week figure for a rising stock and below it for a falling one. Still a model output, not a prediction.'];
+  GLOSSARY['reasoning'] = ['Reasoning',
+    'The main factors actually moving that row\u2019s probability: the stock\u2019s drift, its position against the 200-day average, MACD, RSI, and how it is doing against the Nifty. If a reason surprises you, open the stock and check the detail panel rather than trusting the summary.'];
+  (function mountManual(){
+    const wrap = document.querySelector('.wrap');
+    if (!wrap) return;
+    const gloss = document.getElementById('glossarySection');
+    const sec = document.createElement('section');
+    sec.className = 'screener';
+    sec.id = 'manualSection';
+    function step(n, title, body){
+      return '<div style="margin-bottom:18px">' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">' +
+        '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--gold);color:#1a1305;font-weight:700;font-size:12px;font-family:var(--mono)">' + n + '</span>' +
+        '<span style="font-family:var(--serif);font-weight:600;font-size:15px">' + title + '</span></div>' +
+        '<div style="font-size:13px;line-height:1.7;color:var(--cream-dim)">' + body + '</div></div>';
+    }
+    sec.innerHTML =
+      '<div class="section-head"><h2>How to use this dashboard</h2><span class="hint">Read this once \u2014 it will save you from the common misreadings</span></div>' +
+      '<div class="screener-group">' +
+      step('1','Start with the ticker and indices',
+        'The scrolling tape and the three index cards show where the market is overall. A stock falling 2% on a day the Nifty falls 2% has told you nothing about the company \u2014 always read a move against the index first.') +
+      step('2','Search or click any stock',
+        'Type three or more letters in the search box (\u201ctata\u201d, \u201chdfc\u201d, \u201cwip\u201d) and pick from the suggestions, or click any row in the watchlist, screener or ranking tables. The full detail panel opens below.') +
+      step('3','Read the Snapshot table first',
+        'Every row names its own source. <b>Computed here</b> means it was calculated in your browser from live price data and cannot be stale. <b>Yahoo Finance</b> rows are vendor data that can lag a quarter on fundamentals. The risk-free rate is a fixed assumption \u2014 a dial you can disagree with, not a measurement.') +
+      step('4','Use the \u24d8 markers everywhere',
+        'Every metric label has a small circled <b>i</b>. Hover it on desktop, tap it on mobile, for a plain-English explanation. If you only remember one thing from those notes: a large number with a weak t-statistic is noise, not a finding.') +
+      step('5','Charts, then technicals',
+        'The main chart carries 50 and 200-day averages plus Bollinger bands; below it sit volume, RSI and MACD. Technicals describe <em>what price has been doing</em> and where it might pause. They are descriptive, not predictive, and they fail regularly \u2014 which is why they carry only part of the weight in any score here.') +
+      step('6','Valuation: read the range, never the point',
+        'The DCF prints a single fair value, but the sensitivity grid beneath it shows that value swinging 40% or more across perfectly defensible assumptions. The <b>reverse DCF</b> is usually the better tool: instead of asking what the stock is worth, it tells you what growth rate today\u2019s price already assumes \u2014 then you judge whether that is believable.') +
+      step('7','Earnings quality is the fraud-and-fragility check',
+        'Cash flow versus reported profit, accruals, and whether cash growth keeps pace with revenue. A company can report rising profits for years while generating no cash. This section is where that shows up, and it matters more than any indicator on the page.') +
+      step('8','Options-implied odds carry the most weight',
+        'Where a stock has listed options, the market itself is pricing the probability of it finishing above today\u2019s price, with real money at stake. That beats any model here. Two caveats printed alongside it: these are <em>risk-neutral</em> probabilities, which embed a fear premium, and thin open interest makes far-out strikes unreliable.') +
+      step('9','Factor decomposition tells you what you actually own',
+        'It splits returns into market, size and momentum exposure, leaving alpha. If R\u00b2 is high, you mostly own market risk. If alpha looks large but its t-statistic sits between \u22122 and 2, it is noise \u2014 that is the single most common misreading in retail analysis.') +
+      step('10','Probabilities in the ranking are odds, not promises',
+        'The weekly and monthly columns come from each stock\u2019s own drift and volatility. They cluster near 50% on purpose. Short-horizon stock movement is close to a coin flip, and a dashboard that told you otherwise would be lying to you.') +
+      step('11','Size the position before you decide anything',
+        'In the thesis walkthrough, enter your capital, the percentage you are willing to risk, and a stop price. It returns the number of shares that keeps your loss to that amount. Watch the concentration warning: a tight stop produces a large position for the same rupee risk.') +
+      step('12','The verdict panel does not give a verdict',
+        'It reports valuation, earnings quality, momentum, risk and the street view separately, and deliberately stops there. Where the pillars agree, you do not need a label. Where they conflict, <b>that conflict is the finding</b> \u2014 and collapsing it into one BUY/HOLD/AVOID word would hide the most useful thing on the page. The synthesis depends on your horizon, your existing holdings and your tax position, none of which this page knows.') +
+      '</div>' +
+      '<p class="screener-note"><b>What this dashboard is not.</b> It is not investment advice, and nothing here is a recommendation to buy or sell. ' +
+      'Publishing buy/sell calls and target prices in India is restricted to SEBI-registered research analysts. ' +
+      'Price data comes from unofficial Yahoo endpoints and NSE\u2019s public APIs through a proxy you own \u2014 reliable enough to think with, not something to place trades on without checking your broker\u2019s own feed. ' +
+      'Every model on this page is shown with its assumptions and its failure modes visible, because a number without its caveats is worse than no number at all.</p>';
+    if (gloss) wrap.insertBefore(sec, gloss); else wrap.appendChild(sec);
+  })();
 })();
 </script>
 </body>
