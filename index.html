@@ -3460,6 +3460,116 @@
     document.getElementById('rankMidBtn').addEventListener('click', function(){ runRankingFull(R20_MID,'rankMidBody','rankMidBtn'); });
   })();
   GLOSSARY['volume'] = ['Volume score', 'A 0\u2013100 sub-score, not raw share count. It compares the last 20 days of turnover against the last 60, and counts how many of the recent sessions closed higher. Above 50 means participation is picking up on rising days.'];
+  async function fetchScreenerRow2(ticker){
+    const symbol = ticker + '.NS';
+    const hist = await fetchHistory(symbol, '1y', '1d');
+    const c = hist.closes, meta = hist.meta;
+    if (c.length < 30) throw new Error('short history');
+    const price = meta.regularMarketPrice != null ? meta.regularMarketPrice : c[c.length-1];
+    let prev = null;
+    if (meta.previousClose != null && Math.abs(meta.previousClose - price)/price < 0.25) prev = meta.previousClose;
+    if (prev == null) prev = c[c.length-2];
+    const change1d = prev ? ((price - prev)/prev)*100 : null;
+    const change1y = c.length > 1 ? ((price/c[0]) - 1)*100 : null;
+    const rsi = rsiLast(c,14);
+    const wkHigh = meta.fiftyTwoWeekHigh != null ? meta.fiftyTwoWeekHigh : Math.max.apply(null, hist.highs);
+    const offHigh = wkHigh ? ((price - wkHigh)/wkHigh)*100 : null;
+    const s200 = smaSeries(c,200);
+    const a200 = s200[s200.length-1];
+    const vs200 = a200 != null ? ((price - a200)/a200)*100 : null;
+    const v = hist.volumes;
+    const av20 = average(v.slice(-20)), av60 = average(v.slice(-60));
+    const volRatio = av60 ? av20/av60 : null;
+    let pe=null, mcap=null, roe=null, de=null, divY=null;
+    try {
+      const f = await fetchFundamentals(symbol);
+      const sd = f.summaryDetail||{}, fd = f.financialData||{};
+      pe = val(sd.trailingPE);
+      mcap = val(sd.marketCap);
+      roe = val(fd.returnOnEquity);
+      de = val(fd.debtToEquity);
+      divY = val(sd.dividendYield);
+    } catch(e){}
+    return { symbol, ticker, price, change1d, change1y, rsi, pe, offHigh,
+      mcap, roe: roe!=null?roe*100:null, de, divY: divY!=null?divY*100:null, vs200, volRatio };
+  }
+  function screenerRow2Html(r){
+    function cls(x){ return x==null ? '' : x>=0 ? 'up' : 'down'; }
+    function pct(x,d){ return x==null ? '\u2014' : (x>=0?'\u25b2 ':'\u25bc ') + fmtNum(Math.abs(x), d==null?2:d) + '%'; }
+    return '<tr data-sym="' + r.symbol + '">' +
+      '<td class="sym">' + r.ticker + '</td>' +
+      '<td class="num">\u20b9' + fmtNum(r.price,2) + '</td>' +
+      '<td class="num ' + cls(r.change1d) + '">' + pct(r.change1d,2) + '</td>' +
+      '<td class="num ' + cls(r.change1y) + '">' + pct(r.change1y,1) + '</td>' +
+      '<td class="num">' + (r.mcap==null?'\u2014':fmtCr(r.mcap)) + '</td>' +
+      '<td class="num">' + (r.rsi==null?'\u2014':fmtNum(r.rsi,1)) + '</td>' +
+      '<td class="num">' + (r.pe==null?'\u2014':fmtNum(r.pe,1)) + '</td>' +
+      '<td class="num ' + (r.roe!=null && r.roe>=15 ? 'up' : r.roe!=null && r.roe<8 ? 'down' : '') + '">' + (r.roe==null?'\u2014':fmtNum(r.roe,1)+'%') + '</td>' +
+      '<td class="num ' + (r.de!=null && r.de>100 ? 'down' : r.de!=null && r.de<40 ? 'up' : '') + '">' + (r.de==null?'\u2014':fmtNum(r.de,0)) + '</td>' +
+      '<td class="num">' + (r.divY==null?'\u2014':fmtNum(r.divY,2)+'%') + '</td>' +
+      '<td class="num ' + cls(r.vs200) + '">' + (r.vs200==null?'\u2014':fmtNum(r.vs200,1)+'%') + '</td>' +
+      '<td class="num ' + (r.volRatio!=null && r.volRatio>1.25 ? 'up' : r.volRatio!=null && r.volRatio<0.75 ? 'down' : '') + '">' + (r.volRatio==null?'\u2014':fmtNum(r.volRatio,2)+'\u00d7') + '</td>' +
+      '<td class="num ' + cls(r.offHigh) + '">' + (r.offHigh==null?'\u2014':fmtNum(r.offHigh,1)+'%') + '</td>' +
+    '</tr>';
+  }
+  async function loadScreener2(tickers, bodyId, btnId){
+    const tbody = document.getElementById(bodyId);
+    const btn = document.getElementById(btnId);
+    btn.disabled = true; btn.textContent = 'Loading\u2026';
+    tbody.innerHTML = tickers.map(function(t){
+      return '<tr id="s2-' + t + '"><td class="sym">' + t + '</td><td colspan="12" class="loading-dots">fetching\u2026</td></tr>';
+    }).join('');
+    await runPool(tickers, async function(t){
+      try {
+        const r = await fetchScreenerRow2(t);
+        const row = document.getElementById('s2-' + t);
+        if (row) row.outerHTML = screenerRow2Html(r);
+      } catch(e){
+        const row = document.getElementById('s2-' + t);
+        if (row) row.outerHTML = '<tr><td class="sym">' + t + '</td><td colspan="12" style="color:var(--cream-dim)">Couldn\u2019t load</td></tr>';
+      }
+    }, 5);
+    tbody.querySelectorAll('tr[data-sym]').forEach(function(tr){
+      tr.addEventListener('click', function(){ loadStockDetail(tr.getAttribute('data-sym')); });
+    });
+    btn.disabled = false; btn.textContent = 'Refresh';
+  }
+  (function rebuildScreener(){
+    const body = document.getElementById('largeCapBody');
+    if (!body) return;
+    let sec = body;
+    while (sec && sec.tagName !== 'SECTION') sec = sec.parentNode;
+    if (!sec) return;
+    const head = '<tr><th>Symbol</th><th>Price</th><th>1D %</th><th>1Y %</th><th>Market cap</th>' +
+      '<th>RSI(14)</th><th>P/E</th><th>ROE</th><th>Debt / Equity</th><th>Dividend yield</th>' +
+      '<th>vs 200-DMA</th><th>Volume vs avg</th><th>Off 52w high</th></tr>';
+    function group(title, bodyId, btnId){
+      return '<div class="screener-group">' +
+        '<div class="screener-head"><h3>' + title + '</h3><button id="' + btnId + '">Load ' + title.toLowerCase() + '</button></div>' +
+        '<p class="scroll-hint">\u2194 Scroll sideways for all thirteen columns.</p>' +
+        '<div class="rank-scroll"><table class="book screener-table"><thead>' + head + '</thead>' +
+        '<tbody id="' + bodyId + '"><tr><td colspan="13" style="color:var(--cream-dim);padding:14px 12px">Not loaded yet.</td></tr></tbody></table></div></div>';
+    }
+    sec.innerHTML =
+      '<div class="section-head"><h2>Screener</h2>' +
+      '<span class="hint">Live, objective metrics only \u2014 no buy/sell calls, no invented targets</span></div>' +
+      '<p class="screener-note">Price, momentum, valuation, quality and participation for each name, pulled live. ' +
+      'It deliberately has no \u201ctarget price\u201d or \u201cprobability of success\u201d column: nobody can honestly compute the odds a stock reaches a price by a date, and a target price is a forecast dressed as a fact. ' +
+      'In India, publishing buy/sell/target recommendations is restricted to <a href="https://www.sebi.gov.in" target="_blank" rel="noopener">SEBI</a>-registered Research Analysts and Investment Advisers. ' +
+      'A starting point for your own research, not a tip sheet.</p>' +
+      group('Large cap', 'largeCapBody', 'loadLargeCap') +
+      group('Mid cap', 'midCapBody', 'loadMidCap');
+    document.getElementById('loadLargeCap').addEventListener('click', function(){ loadScreener2(SCREENER_LARGE,'largeCapBody','loadLargeCap'); });
+    document.getElementById('loadMidCap').addEventListener('click', function(){ loadScreener2(SCREENER_MID,'midCapBody','loadMidCap'); });
+  })();
+  GLOSSARY['1d %'] = ['One-day change', 'Price change versus the previous trading session\u2019s close. If this ever matches the 1Y figure exactly, something is broken \u2014 that was a real bug here, caused by falling back to a year-old reference price.'];
+  GLOSSARY['1y %'] = ['One-year change', 'Price change over roughly the last 252 trading sessions. Compare it against the Nifty\u2019s own move before reading anything into it.'];
+  GLOSSARY['market cap'] = ['Market capitalisation', 'The whole company\u2019s value: share price \u00d7 shares outstanding. Shown in crore. It sets the context for every other number \u2014 a 30% ROE means something different at \u20b9500 Cr than at \u20b95 lakh Cr.'];
+  GLOSSARY['debt / equity'] = ['Debt-to-equity', 'Borrowings against shareholder funds, as a percentage. Under 40 is conservative, over 100 means the company owes more than its owners have put in. Leverage magnifies both good and bad years.'];
+  GLOSSARY['vs 200-dma'] = ['Distance from the 200-day average', 'How far price sits above or below its 200-day moving average. Above is generally read as an uptrend. A stock far above it may be extended; far below, it may be broken or oversold.'];
+  GLOSSARY['volume vs avg'] = ['Volume versus average', 'The last 20 days of turnover divided by the last 60. Above 1.25\u00d7 means unusual activity \u2014 something is drawing attention. Below 0.75\u00d7 means interest is fading.'];
+  GLOSSARY['off 52w high'] = ['Distance from the 52-week high', 'How far the price has fallen from its highest point in the past year. A deep drawdown is either an opportunity or a warning, and this column alone cannot tell you which.'];
+  GLOSSARY['dividend yield'] = ['Dividend yield', 'Annual dividend as a percentage of the share price \u2014 the cash return for simply holding, before any price movement. A very high yield often signals the price has fallen, not that the dividend rose.'];
 })();
 </script>
 </body>
