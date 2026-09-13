@@ -472,7 +472,7 @@
     ['SUNPHARMA','Sun Pharmaceutical'],['TITAN','Titan Company'],['ULTRACEMCO','UltraTech Cement'],
     ['WIPRO','Wipro'],['NESTLEIND','Nestle India'],['ONGC','Oil & Natural Gas Corp'],['NTPC','NTPC'],
     ['POWERGRID','Power Grid Corp'],['M&M','Mahindra & Mahindra'],['TATASTEEL','Tata Steel'],
-    ['TATAMOTORS','Tata Motors'],['JSWSTEEL','JSW Steel'],['ADANIENT','Adani Enterprises'],
+    ['TMPV','Tata Motors Passenger Vehicles'],['JSWSTEEL','JSW Steel'],['ADANIENT','Adani Enterprises'],
     ['ADANIPORTS','Adani Ports'],['COALINDIA','Coal India'],['BAJAJFINSV','Bajaj Finserv'],
     ['HDFCLIFE','HDFC Life Insurance'],['SBILIFE','SBI Life Insurance'],['DRREDDY',"Dr. Reddy's Labs"],
     ['CIPLA','Cipla'],['DIVISLAB',"Divi's Laboratories"],['GRASIM','Grasim Industries'],
@@ -482,7 +482,7 @@
     ['HINDALCO','Hindalco Industries'],['DMART','Avenue Supermarts (DMart)'],['PIDILITIND','Pidilite Industries'],
     ['DABUR','Dabur India'],['GODREJCP','Godrej Consumer Products'],['HAVELLS','Havells India'],
     ['SIEMENS','Siemens'],['PNB','Punjab National Bank'],['BANKBARODA','Bank of Baroda'],
-    ['IDFCFIRSTB','IDFC First Bank'],['ZOMATO','Eternal (Zomato)'],['IRCTC','IRCTC'],
+    ['IDFCFIRSTB','IDFC First Bank'],['ETERNAL','Eternal (formerly Zomato)'],['IRCTC','IRCTC'],
     ['VEDL','Vedanta'],['GAIL','GAIL India'],['IOC','Indian Oil Corp'],['HAL','Hindustan Aeronautics'],
     ['BEL','Bharat Electronics'],['BOSCHLTD','Bosch'],['PGHH','P&G Hygiene'],['COLPAL','Colgate-Palmolive'],
     ['MARICO','Marico'],['BERGEPAINT','Berger Paints'],['AMBUJACEM','Ambuja Cements'],['ACC','ACC Limited'],
@@ -491,7 +491,7 @@
     ['TVSMOTOR','TVS Motor'],['MOTHERSON','Samvardhana Motherson'],['CANBK','Canara Bank'],
     ['PFC','Power Finance Corp'],['RECLTD','REC Limited'],['SAIL','Steel Authority of India'],
     ['NMDC','NMDC'],['BHARATFORG','Bharat Forge'],['ASHOKLEY','Ashok Leyland'],['ESCORTS','Escorts Kubota'],
-    ['LTIM','LTIMindtree'],['PERSISTENT','Persistent Systems'],['MPHASIS','Mphasis'],['COFORGE','Coforge'],
+    ['SHRIRAMFIN','Shriram Finance'],['PERSISTENT','Persistent Systems'],['MPHASIS','Mphasis'],['COFORGE','Coforge'],
     ['JUBLFOOD','Jubilant FoodWorks'],['TRENT','Trent'],['PIIND','PI Industries'],['SRF','SRF Limited'],
     ['ABB','ABB India'],['CUMMINSIND','Cummins India'],['HDFCAMC','HDFC AMC'],['ICICIPRULI','ICICI Prudential Life'],
     ['ICICIGI','ICICI Lombard'],['MUTHOOTFIN','Muthoot Finance'],['CHOLAFIN','Cholamandalam Investment'],
@@ -802,7 +802,7 @@
   // Grouped by broad business line so comparisons are meaningful. Not an official
   // index classification — just a sensible peer set for each name.
   const PEER_GROUPS = [
-    ['IT Services', ['TCS','INFY','HCLTECH','WIPRO','TECHM','LTIM','MPHASIS','COFORGE','PERSISTENT']],
+    ['IT Services', ['TCS','INFY','HCLTECH','WIPRO','TECHM','MPHASIS','COFORGE','PERSISTENT']],
     ['Private Banks', ['HDFCBANK','ICICIBANK','KOTAKBANK','AXISBANK','INDUSINDBK','IDFCFIRSTB']],
     ['PSU Banks', ['SBIN','BANKBARODA','PNB','CANBK']],
     ['NBFC / Finance', ['BAJFINANCE','BAJAJFINSV','CHOLAFIN','MUTHOOTFIN','PFC','RECLTD','HDFCAMC']],
@@ -810,14 +810,14 @@
     ['Oil, Gas & Energy', ['RELIANCE','ONGC','BPCL','IOC','GAIL']],
     ['Power & Utilities', ['NTPC','POWERGRID','TATAPOWER','ADANIGREEN','ADANIPOWER']],
     ['Metals & Mining', ['TATASTEEL','JSWSTEEL','HINDALCO','VEDL','SAIL','NMDC','COALINDIA']],
-    ['Automobiles', ['MARUTI','TATAMOTORS','M&M','EICHERMOT','HEROMOTOCO','BAJAJ-AUTO','TVSMOTOR','ASHOKLEY']],
+    ['Automobiles', ['MARUTI','TMPV','M&M','EICHERMOT','HEROMOTOCO','BAJAJ-AUTO','TVSMOTOR','ASHOKLEY']],
     ['Auto Components', ['MOTHERSON','BHARATFORG','BOSCHLTD','ESCORTS']],
     ['Pharma', ['SUNPHARMA','DRREDDY','CIPLA','DIVISLAB','LUPIN','AUROPHARMA','TORNTPHARM','ALKEM','GLENMARK','BIOCON']],
     ['FMCG', ['HINDUNILVR','ITC','NESTLEIND','BRITANNIA','DABUR','MARICO','GODREJCP','COLPAL','TATACONSUM','PGHH']],
     ['Cement & Construction', ['ULTRACEMCO','GRASIM','AMBUJACEM','ACC','LT']],
     ['Paints & Chemicals', ['ASIANPAINT','BERGEPAINT','PIDILITIND','SRF','PIIND','UPL']],
     ['Consumer & Retail', ['DMART','TRENT','TITAN','JUBLFOOD','HAVELLS']],
-    ['Telecom & Internet', ['BHARTIARTL','ZOMATO','PAYTM','IRCTC','INDIGO']],
+    ['Telecom & Internet', ['BHARTIARTL','ETERNAL','PAYTM','IRCTC','INDIGO']],
     ['Capital Goods & Defence', ['SIEMENS','ABB','CUMMINSIND','HAL','BEL']],
     ['Healthcare Services', ['APOLLOHOSP']],
   ];
@@ -2217,7 +2217,7 @@
   };
   const RANK_LARGE = ['RELIANCE','TCS','HDFCBANK','ICICIBANK','INFY','HINDUNILVR','ITC','SBIN','BHARTIARTL','LT',
     'KOTAKBANK','AXISBANK','MARUTI','SUNPHARMA','TITAN','ULTRACEMCO','BAJFINANCE','HCLTECH','NTPC','POWERGRID',
-    'M&M','TATAMOTORS','TATASTEEL','ASIANPAINT','WIPRO','ADANIPORTS','COALINDIA','ONGC','JSWSTEEL','NESTLEIND'];
+    'M&M','TMPV','TATASTEEL','ASIANPAINT','WIPRO','ADANIPORTS','COALINDIA','ONGC','JSWSTEEL','NESTLEIND'];
   const RANK_MID = ['PERSISTENT','COFORGE','MPHASIS','CUMMINSIND','BHARATFORG','ESCORTS','ALKEM','GLENMARK','TORNTPHARM','JUBLFOOD',
     'TRENT','PIIND','SRF','ABB','HDFCAMC','MUTHOOTFIN','CHOLAFIN','LUPIN','AUROPHARMA','BIOCON',
     'HAVELLS','DABUR','MARICO','GODREJCP','BERGEPAINT','TVSMOTOR','ASHOKLEY','CANBK','PFC','RECLTD'];
@@ -3187,12 +3187,12 @@
   })();
   const R20_LARGE = ['RELIANCE','TCS','HDFCBANK','ICICIBANK','INFY','HINDUNILVR','ITC','SBIN','BHARTIARTL','LT',
     'KOTAKBANK','AXISBANK','MARUTI','SUNPHARMA','TITAN','ULTRACEMCO','BAJFINANCE','HCLTECH','NTPC','POWERGRID',
-    'M&M','TATAMOTORS','TATASTEEL','ASIANPAINT','WIPRO','ADANIPORTS','COALINDIA','ONGC','JSWSTEEL','NESTLEIND',
+    'M&M','TMPV','TATASTEEL','ASIANPAINT','WIPRO','ADANIPORTS','COALINDIA','ONGC','JSWSTEEL','NESTLEIND',
     'BAJAJFINSV','TECHM','GRASIM','HINDALCO','DRREDDY','CIPLA','BRITANNIA','EICHERMOT','HEROMOTOCO','INDUSINDBK'];
   const R20_MID = ['PERSISTENT','COFORGE','MPHASIS','CUMMINSIND','BHARATFORG','ESCORTS','ALKEM','GLENMARK','TORNTPHARM','JUBLFOOD',
     'TRENT','PIIND','SRF','ABB','HDFCAMC','MUTHOOTFIN','CHOLAFIN','LUPIN','AUROPHARMA','BIOCON',
     'HAVELLS','DABUR','MARICO','GODREJCP','BERGEPAINT','TVSMOTOR','ASHOKLEY','CANBK','PFC','RECLTD',
-    'LTIM','SIEMENS','BEL','HAL','IRCTC','NMDC','SAIL','GAIL','BANKBARODA','PNB'];
+    'MAXHEALTH','SIEMENS','BEL','HAL','IRCTC','NMDC','SAIL','GAIL','BANKBARODA','PNB'];
   function gbmProbUp(closes, days){
     const r = [];
     const s = closes.slice(-252);
@@ -3572,16 +3572,16 @@
   GLOSSARY['dividend yield'] = ['Dividend yield', 'Annual dividend as a percentage of the share price \u2014 the cash return for simply holding, before any price movement. A very high yield often signals the price has fallen, not that the dividend rose.'];
   const UNIV_LARGE = ['RELIANCE','TCS','HDFCBANK','ICICIBANK','INFY','HINDUNILVR','ITC','SBIN','BHARTIARTL','LT',
     'KOTAKBANK','AXISBANK','MARUTI','SUNPHARMA','TITAN','ULTRACEMCO','BAJFINANCE','HCLTECH','NTPC','POWERGRID',
-    'M&M','TATAMOTORS','TATASTEEL','ASIANPAINT','WIPRO','ADANIPORTS','COALINDIA','ONGC','JSWSTEEL','NESTLEIND',
+    'M&M','TMPV','TATASTEEL','ASIANPAINT','WIPRO','ADANIPORTS','COALINDIA','ONGC','JSWSTEEL','NESTLEIND',
     'BAJAJFINSV','TECHM','GRASIM','HINDALCO','DRREDDY','CIPLA','BRITANNIA','EICHERMOT','HEROMOTOCO','INDUSINDBK',
-    'ADANIENT','APOLLOHOSP','BAJAJ-AUTO','BPCL','DIVISLAB','HDFCLIFE','SBILIFE','TATACONSUM','UPL','LTIM',
+    'ADANIENT','APOLLOHOSP','BAJAJ-AUTO','BPCL','DIVISLAB','HDFCLIFE','SBILIFE','TATACONSUM','UPL','SHRIRAMFIN',
     'DMART','VEDL','IOC','GAIL','SIEMENS'];
   const UNIV_MID = ['PERSISTENT','COFORGE','MPHASIS','CUMMINSIND','BHARATFORG','ESCORTS','ALKEM','GLENMARK','TORNTPHARM','JUBLFOOD',
     'TRENT','PIIND','SRF','ABB','HDFCAMC','MUTHOOTFIN','CHOLAFIN','LUPIN','AUROPHARMA','BIOCON',
     'HAVELLS','DABUR','MARICO','GODREJCP','BERGEPAINT','TVSMOTOR','ASHOKLEY','CANBK','PFC','RECLTD',
     'BEL','HAL','IRCTC','NMDC','SAIL','BANKBARODA','PNB','IDFCFIRSTB','ICICIGI','ICICIPRULI',
-    'COLPAL','PGHH','BOSCHLTD','AMBUJACEM','ACC','TATAPOWER','ADANIGREEN','ADANIPOWER','MOTHERSON','ZOMATO',
-    'PAYTM','INDIGO','LICI','NMDC','BANKINDIA'];
+    'COLPAL','PGHH','BOSCHLTD','AMBUJACEM','ACC','TATAPOWER','ADANIGREEN','ADANIPOWER','MOTHERSON','ETERNAL',
+    'PAYTM','INDIGO','LICI','POLYCAB','BANKINDIA'];
   const COUNTS = [10,15,20,30,50];
   function countSelectHtml(id, def){
     return '<label style="font-size:12px;color:var(--cream-dim);display:inline-flex;align-items:center;gap:6px;margin-right:10px">' +
