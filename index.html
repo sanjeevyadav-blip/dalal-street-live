@@ -2526,6 +2526,402 @@
         (pctCapital > 25 ? '<div class="note-inline" style="margin-top:10px">That position would be ' + fmtNum(pctCapital,0) + '% of your capital. A tight stop produces a large position for the same rupee risk \u2014 the trade risk is controlled, but the concentration risk is not.</div>' : '');
     });
   }
+  function nCdf(x){
+    const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+    const s = x<0?-1:1; const z = Math.abs(x)/Math.SQRT2;
+    const t = 1/(1+p*z);
+    const y = 1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-z*z);
+    return 0.5*(1+s*y);
+  }
+  async function fetchOptionChain(ticker){
+    const base = 'https://www.nseindia.com/api/';
+    const ci = await fetchJsonThroughProxy(base + 'option-chain-contract-info?symbol=' + encodeURIComponent(ticker));
+    const exps = ci && ci.expiryDates ? ci.expiryDates : null;
+    if (!exps || !exps.length) return null;
+    const expiry = exps[0];
+    const oc = await fetchJsonThroughProxy(base + 'option-chain-v3?type=Equity&symbol=' +
+      encodeURIComponent(ticker) + '&expiry=' + encodeURIComponent(expiry));
+    const rec = oc && oc.records;
+    if (!rec || !rec.data || !rec.data.length) return null;
+    return { expiry, expiries: exps, underlying: rec.underlyingValue, data: rec.data, timestamp: rec.timestamp || null };
+  }
+  function analyseOptions(chain, spot){
+    const rows = chain.data.filter(function(r){ return r.CE || r.PE; });
+    if (!rows.length) return null;
+    const parts = chain.expiry.split('-');
+    const months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+    const expDate = new Date(parseInt(parts[2],10), months[parts[1]], parseInt(parts[0],10));
+    const dte = Math.max(1, Math.round((expDate - new Date())/86400000));
+    const T = dte/365;
+    const r = 0.07;
+    const S = chain.underlying || spot;
+    let ceOI=0, peOI=0, ceVol=0, peVol=0;
+    rows.forEach(function(x){
+      if (x.CE){ ceOI += x.CE.openInterest||0; ceVol += x.CE.totalTradedVolume||0; }
+      if (x.PE){ peOI += x.PE.openInterest||0; peVol += x.PE.totalTradedVolume||0; }
+    });
+    const pcrOI = ceOI ? peOI/ceOI : null;
+    const pcrVol = ceVol ? peVol/ceVol : null;
+    let atm = null, bestD = Infinity;
+    rows.forEach(function(x){ const d = Math.abs(x.strikePrice - S); if (d < bestD){ bestD = d; atm = x; } });
+    const atmIV = atm ? ((atm.CE && atm.CE.impliedVolatility) || (atm.PE && atm.PE.impliedVolatility) || 0)/100 : null;
+    function callDelta(K, iv){
+      if (!iv || iv <= 0 || !K) return null;
+      const d1 = (Math.log(S/K) + (r + 0.5*iv*iv)*T) / (iv*Math.sqrt(T));
+      return nCdf(d1);
+    }
+    function probITM(K, iv){ // risk-neutral P(S_T > K), i.e. N(d2)
+      if (!iv || iv <= 0 || !K) return null;
+      const d2 = (Math.log(S/K) + (r - 0.5*iv*iv)*T) / (iv*Math.sqrt(T));
+      return nCdf(d2);
+    }
+    const pAbove = atmIV ? probITM(S, atmIV) : null;
+    const ladder = [];
+    [-10,-5,0,5,10].forEach(function(pct){
+      const K = S*(1+pct/100);
+      let near = null, nd = Infinity;
+      rows.forEach(function(x){ const d = Math.abs(x.strikePrice - K); if (d<nd){ nd=d; near=x; } });
+      if (!near) return;
+      const iv = ((near.CE && near.CE.impliedVolatility) || (near.PE && near.PE.impliedVolatility) || 0)/100;
+      const p = probITM(near.strikePrice, iv || atmIV);
+      ladder.push({ pct: pct, strike: near.strikePrice, iv: (iv||atmIV)*100, pAbove: p!=null?p*100:null,
+        ceOI: near.CE?near.CE.openInterest:0, peOI: near.PE?near.PE.openInterest:0 });
+    });
+    let maxPain = null, minLoss = Infinity;
+    rows.forEach(function(k){
+      const K = k.strikePrice;
+      let loss = 0;
+      rows.forEach(function(x){
+        if (x.CE) loss += Math.max(0, K - x.strikePrice) * (x.CE.openInterest||0);
+        if (x.PE) loss += Math.max(0, x.strikePrice - K) * (x.PE.openInterest||0);
+      });
+      if (loss < minLoss){ minLoss = loss; maxPain = K; }
+    });
+    let topCE = null, topPE = null;
+    rows.forEach(function(x){
+      if (x.CE && (!topCE || x.CE.openInterest > topCE.oi)) topCE = { strike:x.strikePrice, oi:x.CE.openInterest };
+      if (x.PE && (!topPE || x.PE.openInterest > topPE.oi)) topPE = { strike:x.strikePrice, oi:x.PE.openInterest };
+    });
+    function ivNear(K, side){
+      let near=null, nd=Infinity;
+      rows.forEach(function(x){ const d=Math.abs(x.strikePrice-K); if (d<nd){ nd=d; near=x; } });
+      if (!near) return null;
+      const leg = side==='P' ? near.PE : near.CE;
+      return leg && leg.impliedVolatility ? leg.impliedVolatility : null;
+    }
+    const putIV = ivNear(S*0.9,'P'), callIV = ivNear(S*1.1,'C');
+    const skew = (putIV!=null && callIV!=null) ? putIV-callIV : null;
+    return { dte, expiry: chain.expiry, S, atmIV: atmIV!=null?atmIV*100:null, pAbove: pAbove!=null?pAbove*100:null,
+      pcrOI, pcrVol, ceOI, peOI, ladder, maxPain, topCE, topPE, skew,
+      impliedMove: atmIV!=null ? S*atmIV*Math.sqrt(T)*100/S : null,
+      strikes: rows.length, timestamp: chain.timestamp };
+  }
+  async function renderOptions(ticker, spot){
+    const host = document.getElementById('detailCard');
+    if (!host) return;
+    const old = document.getElementById('optBlock');
+    if (old) old.remove();
+    const wrap = document.createElement('div');
+    wrap.id = 'optBlock';
+    wrap.innerHTML =
+      '<div class="section-label"><span>Options-implied probability</span><span class="rule-line"></span></div>' +
+      '<div id="optBody"><div class="note-inline">Pulling the live NSE option chain\u2026</div></div>';
+    host.appendChild(wrap);
+    const body = document.getElementById('optBody');
+    let chain = null;
+    try { chain = await fetchOptionChain(ticker); } catch(e){}
+    if (!chain){
+      body.innerHTML = '<div class="note-inline">No F&amp;O contracts listed for this stock. Only about 180 NSE names have options \u2014 for everything else there is no market-implied probability to read, because no one is trading one.</div>';
+      return;
+    }
+    const o = analyseOptions(chain, spot);
+    if (!o){ body.innerHTML = '<div class="note-inline">The option chain came back empty for this expiry.</div>'; return; }
+    const bias = o.pcrOI == null ? 'info' : o.pcrOI > 1.2 ? 'up' : o.pcrOI < 0.7 ? 'down' : 'info';
+    const biasTxt = o.pcrOI == null ? '\u2014' : o.pcrOI > 1.2 ? 'Put-heavy (often read as bullish)' : o.pcrOI < 0.7 ? 'Call-heavy (often read as bearish)' : 'Balanced';
+    const ladder = '<table class="book" style="margin-top:12px"><thead><tr><th>Strike</th><th>vs spot</th><th>IV</th><th>Market P(above)</th><th>Call OI</th><th>Put OI</th></tr></thead><tbody>' +
+      o.ladder.map(function(l){
+        return '<tr><td class="sym">\u20b9' + fmtNum(l.strike,0) + '</td>' +
+          '<td class="num">' + (l.pct>0?'+':'') + l.pct + '%</td>' +
+          '<td class="num">' + fmtNum(l.iv,1) + '%</td>' +
+          '<td class="num ' + (l.pAbove>=50?'up':'down') + '"><b>' + (l.pAbove==null?'\u2014':fmtNum(l.pAbove,1)+'%') + '</b></td>' +
+          '<td class="num">' + fmtNum(l.ceOI,0) + '</td>' +
+          '<td class="num">' + fmtNum(l.peOI,0) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+    body.innerHTML =
+      '<div class="metric-grid">' +
+        '<div class="metric"><div class="k">P(above spot) at expiry</div><div class="v ' + (o.pAbove>=50?'up':'down') + '" style="font-size:20px">' + (o.pAbove==null?'\u2014':fmtNum(o.pAbove,1)+'%') + '</div><div class="sub">Risk-neutral, from ATM implied vol</div></div>' +
+        '<div class="metric"><div class="k">Expiry</div><div class="v" style="font-size:14px">' + o.expiry + '</div><div class="sub">' + o.dte + ' days away</div></div>' +
+        '<div class="metric"><div class="k">ATM implied volatility</div><div class="v">' + (o.atmIV==null?'\u2014':fmtNum(o.atmIV,1)+'%') + '</div><div class="sub">What option sellers are charging</div></div>' +
+        '<div class="metric"><div class="k">Implied move by expiry</div><div class="v info">\u00b1' + (o.impliedMove==null?'\u2014':fmtNum(o.impliedMove,1)+'%') + '</div><div class="sub">One standard deviation</div></div>' +
+        '<div class="metric"><div class="k">Put-call ratio (OI)</div><div class="v ' + bias + '">' + (o.pcrOI==null?'\u2014':fmtNum(o.pcrOI,2)) + '</div><div class="sub">' + biasTxt + '</div></div>' +
+        '<div class="metric"><div class="k">Put-call ratio (volume)</div><div class="v">' + (o.pcrVol==null?'\u2014':fmtNum(o.pcrVol,2)) + '</div><div class="sub">Today\u2019s flow, not positioning</div></div>' +
+        '<div class="metric"><div class="k">Max pain</div><div class="v">\u20b9' + fmtNum(o.maxPain,0) + '</div><div class="sub">' + fmtNum(((o.maxPain-o.S)/o.S)*100,1) + '% from spot</div></div>' +
+        '<div class="metric"><div class="k">Volatility skew</div><div class="v ' + (o.skew>2?'down':o.skew<-2?'up':'info') + '">' + (o.skew==null?'\u2014':fmtNum(o.skew,1)+' pts') + '</div><div class="sub">10% OTM put IV minus call IV</div></div>' +
+        '<div class="metric"><div class="k">Heaviest call OI</div><div class="v">\u20b9' + (o.topCE?fmtNum(o.topCE.strike,0):'\u2014') + '</div><div class="sub">Often acts as a ceiling</div></div>' +
+        '<div class="metric"><div class="k">Heaviest put OI</div><div class="v">\u20b9' + (o.topPE?fmtNum(o.topPE.strike,0):'\u2014') + '</div><div class="sub">Often acts as a floor</div></div>' +
+      '</div>' + ladder +
+      '<div class="note-inline" style="margin-top:12px">These are <b>risk-neutral</b> probabilities \u2014 what the option market is pricing, derived from N(d\u2082) in Black-Scholes using live implied volatility. ' +
+      'They are the market\u2019s own view backed by real capital, which is why they are worth more than any model on this page. Two honest caveats: risk-neutral is not real-world probability (it embeds a risk premium, so downside odds look slightly overstated), and thin open interest makes far strikes unreliable. ' +
+      'Check the OI columns before trusting any single row.</div>';
+  }
+  const FACTOR_LARGE = ['RELIANCE','TCS','HDFCBANK','ICICIBANK','INFY','HINDUNILVR','ITC','SBIN','BHARTIARTL','LT','KOTAKBANK','MARUTI'];
+  const FACTOR_SMALL = ['PERSISTENT','COFORGE','MPHASIS','CUMMINSIND','BHARATFORG','ESCORTS','ALKEM','GLENMARK','TORNTPHARM','JUBLFOOD','TRENT','SRF'];
+  let factorCache = null;
+  async function buildFactors(){
+    if (factorCache) return factorCache;
+    const all = FACTOR_LARGE.concat(FACTOR_SMALL);
+    const hist = {};
+    await runPool(all, async function(t){
+      try { hist[t] = await fetchHistory(t + '.NS', '2y', '1d'); } catch(e){}
+    }, 6);
+    const nifty = await fetchHistory('^NSEI', '2y', '1d');
+    const series = Object.keys(hist).map(function(k){ return hist[k].closes; });
+    if (series.length < 8) return null;
+    const n = Math.min.apply(null, series.map(function(s){ return s.length; }).concat([nifty.closes.length]));
+    function rets(c){ const out=[]; const s=c.slice(c.length-n); for (let i=1;i<s.length;i++) out.push(Math.log(s[i]/s[i-1])); return out; }
+    const mkt = rets(nifty.closes);
+    const bigR = FACTOR_LARGE.filter(function(t){return hist[t];}).map(function(t){ return rets(hist[t].closes); });
+    const smlR = FACTOR_SMALL.filter(function(t){return hist[t];}).map(function(t){ return rets(hist[t].closes); });
+    const T = mkt.length;
+    function avgAt(arrs, i){ let s=0,c=0; arrs.forEach(function(a){ if (a[i]!=null){ s+=a[i]; c++; } }); return c?s/c:0; }
+    const smb = [], wml = [];
+    const allR = bigR.concat(smlR);
+    const allTick = FACTOR_LARGE.filter(function(t){return hist[t];}).concat(FACTOR_SMALL.filter(function(t){return hist[t];}));
+    for (let i=0;i<T;i++){
+      smb.push(avgAt(smlR,i) - avgAt(bigR,i));
+      if (i < 252){ wml.push(0); continue; }
+      const scored = allR.map(function(a, idx){
+        let cum = 0;
+        for (let k=i-252;k<i-21;k++) cum += a[k]||0;
+        return { idx: idx, m: cum };
+      }).sort(function(a,b){ return b.m - a.m; });
+      const nq = Math.max(1, Math.floor(scored.length/3));
+      let win=0, los=0;
+      for (let q=0;q<nq;q++) win += allR[scored[q].idx][i]||0;
+      for (let q=scored.length-nq;q<scored.length;q++) los += allR[scored[q].idx][i]||0;
+      wml.push(win/nq - los/nq);
+    }
+    factorCache = { mkt, smb, wml, T, universe: allTick.length };
+    return factorCache;
+  }
+  async function renderFactors(symbol, hist){
+    const host = document.getElementById('detailCard');
+    if (!host) return;
+    const old = document.getElementById('facBlock');
+    if (old) old.remove();
+    const wrap = document.createElement('div');
+    wrap.id = 'facBlock';
+    wrap.innerHTML =
+      '<div class="section-label"><span>Factor decomposition</span><span class="rule-line"></span></div>' +
+      '<div id="facBody"><div class="note-inline">Building factor series from a 24-stock universe\u2026 first run takes a few seconds.</div></div>';
+    host.appendChild(wrap);
+    const body = document.getElementById('facBody');
+    let F = null;
+    try { F = await buildFactors(); } catch(e){}
+    if (!F){ body.innerHTML = '<div class="note-inline">Couldn\u2019t build the factor series just now \u2014 reopen this stock in a moment.</div>'; return; }
+    const c = hist.closes;
+    const n = Math.min(F.T + 1, c.length);
+    const s = c.slice(c.length - n);
+    const y = [];
+    for (let i=1;i<s.length;i++) y.push(Math.log(s[i]/s[i-1]));
+    const L = Math.min(y.length, F.T);
+    const Y = y.slice(y.length-L), M = F.mkt.slice(F.mkt.length-L), S2 = F.smb.slice(F.smb.length-L), W = F.wml.slice(F.wml.length-L);
+    const rfD = 0.07/252;
+    const X = [];
+    for (let i=0;i<L;i++) X.push([1, M[i]-rfD, S2[i], W[i]]);
+    const fit = olsMulti(Y.map(function(v){ return v - rfD; }), X);
+    if (!fit){ body.innerHTML = '<div class="note-inline">Regression did not converge for this symbol.</div>'; return; }
+    const names = ['Alpha', 'Market (Nifty)', 'Size (SMB proxy)', 'Momentum (WML)'];
+    const tstats = fit.beta.map(function(b,i){ return fit.se[i] ? b/fit.se[i] : 0; });
+    const alphaAnn = fit.beta[0]*252*100;
+    const sig = Math.abs(tstats[0]) > 1.96;
+    const rows = names.map(function(nm,i){
+      const isAlpha = i===0;
+      const v = isAlpha ? fmtNum(alphaAnn,2)+'% p.a.' : fmtNum(fit.beta[i],2);
+      const t = fmtNum(tstats[i],2);
+      const strong = Math.abs(tstats[i]) > 1.96;
+      return '<tr><td class="sym">' + nm + '</td>' +
+        '<td class="num"><b>' + v + '</b></td>' +
+        '<td class="num ' + (strong?'up':'') + '">' + t + '</td>' +
+        '<td>' + (strong ? 'Statistically significant' : 'Not distinguishable from zero') + '</td></tr>';
+    }).join('');
+    body.innerHTML =
+      '<div class="metric-grid">' +
+        '<div class="metric"><div class="k">Annualised alpha</div><div class="v ' + (alphaAnn>=0?'up':'down') + '">' + fmtNum(alphaAnn,2) + '%</div><div class="sub">' + (sig?'Statistically significant':'Not significant \u2014 likely noise') + '</div></div>' +
+        '<div class="metric"><div class="k">Market beta</div><div class="v">' + fmtNum(fit.beta[1],2) + '</div><div class="sub">Sensitivity to Nifty moves</div></div>' +
+        '<div class="metric"><div class="k">Size loading</div><div class="v">' + fmtNum(fit.beta[2],2) + '</div><div class="sub">' + (fit.beta[2]>0.1?'Behaves like a smaller company':fit.beta[2]<-0.1?'Behaves like a large cap':'Neutral') + '</div></div>' +
+        '<div class="metric"><div class="k">Momentum loading</div><div class="v">' + fmtNum(fit.beta[3],2) + '</div><div class="sub">' + (fit.beta[3]>0.1?'Trend-following behaviour':fit.beta[3]<-0.1?'Contrarian behaviour':'Neutral') + '</div></div>' +
+        '<div class="metric"><div class="k">R\u00b2</div><div class="v">' + fmtNum(fit.r2*100,1) + '%</div><div class="sub">Share of moves explained by factors</div></div>' +
+        '<div class="metric"><div class="k">Idiosyncratic</div><div class="v info">' + fmtNum((1-fit.r2)*100,1) + '%</div><div class="sub">Stock-specific, not systematic</div></div>' +
+      '</div>' +
+      '<table class="book" style="margin-top:12px"><thead><tr><th>Factor</th><th>Loading</th><th>t-stat</th><th>Reading</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<div class="note-inline" style="margin-top:12px">Regressed on ' + L + ' daily observations. A |t-stat| above 1.96 means the loading is distinguishable from zero at 95% confidence. ' +
+      '<b>Alpha is the number to be sceptical about</b> \u2014 it is usually statistically insignificant, and when it is, the honest reading is that the stock\u2019s returns are fully explained by its factor exposures with no evidence of skill or mispricing. ' +
+      'One caveat stated plainly: the size and momentum factors are <b>built from a ' + F.universe + '-stock universe here</b>, not the canonical Fama-French series (which is not freely published for India), so loadings are directionally right but not comparable to academic figures. There is no value (HML) factor for the same reason.</div>';
+  }
+  const __prevRenderDetailCore = renderDetailCore;
+  renderDetailCore = function(symbol, hist, niftyHist){
+    __prevRenderDetailCore(symbol, hist, niftyHist);
+    const meta = hist.meta;
+    const price = meta.regularMarketPrice != null ? meta.regularMarketPrice : hist.closes[hist.closes.length-1];
+    const ticker = symbol.replace(/\.(NS|BO)$/,'');
+    setTimeout(function(){
+      renderOptions(ticker, price);
+      renderFactors(symbol, hist);
+    }, 400);
+  };
+  function ageLabel(ts){
+    if (!ts) return null;
+    const days = Math.floor((Date.now() - ts*1000)/86400000);
+    if (days < 0) return 'scheduled';
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 32) return days + 'd old';
+    const m = Math.round(days/30);
+    return m + 'mo old';
+  }
+  async function renderSnapshot(symbol, hist, niftyHist, price){
+    const host = document.getElementById('detailCard');
+    if (!host) return;
+    const old = document.getElementById('snapBlock');
+    if (old) old.remove();
+    const wrap = document.createElement('div');
+    wrap.id = 'snapBlock';
+    wrap.innerHTML =
+      '<div class="section-label"><span>Snapshot</span><span class="rule-line"></span></div>' +
+      '<div id="snapBody"><div class="note-inline">Assembling the summary\u2026</div></div>';
+    const anchor = host.querySelector('.chart-block') || host.querySelector('.stat-row');
+    if (anchor && anchor.parentNode === host) host.insertBefore(wrap, anchor);
+    else host.appendChild(wrap);
+    const meta = hist.meta;
+    const c = hist.closes, h = hist.highs, l = hist.lows;
+    const rows = [];
+    function row(metric, value, source, flag){
+      rows.push({ metric: metric, value: value, source: source, flag: flag || null });
+    }
+    const quoteAge = meta.regularMarketTime ? ageLabel(meta.regularMarketTime) : null;
+    const quoteTs = meta.regularMarketTime
+      ? new Date(meta.regularMarketTime*1000).toLocaleString('en-IN',{ day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', hour12:false })
+      : null;
+    row('Current price', '\u20b9' + fmtNum(price,2) + (quoteTs ? ' <span style="opacity:.6">(' + quoteTs + ')</span>' : ''),
+      'Yahoo Finance \u00b7 NSE feed', quoteAge && quoteAge !== 'today' ? 'Market closed \u2014 last traded price' : null);
+    const wkHigh = meta.fiftyTwoWeekHigh != null ? meta.fiftyTwoWeekHigh : Math.max.apply(null, h.slice(-252));
+    const wkLow = meta.fiftyTwoWeekLow != null ? meta.fiftyTwoWeekLow : Math.min.apply(null, l.slice(-252));
+    const posInRange = ((price - wkLow)/((wkHigh-wkLow)||1))*100;
+    row('52-week range', '\u20b9' + fmtNum(wkLow,2) + ' \u2013 \u20b9' + fmtNum(wkHigh,2) +
+      ' <span style="opacity:.6">(' + fmtNum(posInRange,0) + '% up the range)</span>', 'Yahoo Finance');
+    const sMap = dailyReturnsByDate(hist.dates, c);
+    const nMap = dailyReturnsByDate(niftyHist.dates, niftyHist.closes);
+    const bc = betaAndCorrelation(sMap, nMap);
+    row('Beta vs Nifty 50 (1yr)', bc.beta == null ? '\u2014' : fmtNum(bc.beta,2) +
+      (bc.corr != null ? ' <span style="opacity:.6">(corr ' + fmtNum(bc.corr,2) + ')</span>' : ''),
+      'Computed here \u00b7 daily returns');
+    const vol = annualizedVolPct(c);
+    row('Annualised volatility', fmtNum(vol,2) + '%', 'Computed here \u00b7 252d window', 'Recomputed live \u2014 not a cached vendor figure');
+    const s50 = smaSeries(c,50), s200 = smaSeries(c,200);
+    const a50 = s50[s50.length-1], a200 = s200[s200.length-1];
+    row('50-DMA / 200-DMA',
+      (a50==null?'\u2014':'\u20b9'+fmtNum(a50,2)) + ' / ' + (a200==null?'\u2014':'\u20b9'+fmtNum(a200,2)) +
+      ' <span style="opacity:.6">(' + (a50!=null?fmtNum(((price-a50)/a50)*100,1)+'%':'\u2014') + ' / ' +
+      (a200!=null?fmtNum(((price-a200)/a200)*100,1)+'%':'\u2014') + ' vs price)</span>',
+      'Computed here');
+    row('Risk-free rate (10Y G-Sec)', '7.00% <span style="opacity:.6">(assumption)</span>',
+      'Not sourced \u2014 fixed input', 'No free API for the India 10Y here; used in CAPM and DCF, so treat as a parameter you can argue with');
+    const yStart = new Date(new Date().getFullYear(),0,1).getTime();
+    function ytd(dates, closes){
+      let i = 0;
+      while (i < dates.length && dates[i].getTime() < yStart) i++;
+      if (i >= closes.length) return null;
+      return ((closes[closes.length-1]/closes[i]) - 1)*100;
+    }
+    const sY = ytd(hist.dates, c), nY = ytd(niftyHist.dates, niftyHist.closes);
+    if (sY != null) row('YTD performance',
+      fmtNum(sY,1) + '%' + (nY!=null ? ' <span style="opacity:.6">vs Nifty ' + fmtNum(nY,1) + '% \u00b7 ' +
+        (sY-nY>=0?'+':'') + fmtNum(sY-nY,1) + ' pts relative</span>' : ''), 'Computed here');
+    document.getElementById('snapBody').innerHTML = buildSnapTable(rows) +
+      '<div class="note-inline" style="margin-top:10px" id="snapPending">Loading fundamentals, consensus and options rows\u2026</div>';
+    try {
+      const f = await fetchFundamentals(symbol);
+      const sd = f.summaryDetail||{}, ks = f.defaultKeyStatistics||{}, fd = f.financialData||{};
+      const eps = val(ks.trailingEps), pe = val(sd.trailingPE);
+      if (eps != null) row('EPS (TTM) \u2192 trailing P/E',
+        '\u20b9' + fmtNum(eps,2) + (pe!=null ? ' \u2192 ' + fmtNum(pe,1) + 'x' : ''), 'Yahoo Finance \u00b7 quoteSummary');
+      const tgt = val(fd.targetMeanPrice), nAn = val(fd.numberOfAnalystOpinions);
+      if (tgt != null) row('Analyst consensus',
+        (fd.recommendationKey ? '\u201c' + fd.recommendationKey.replace(/_/g,' ') + '\u201d \u00b7 ' : '') +
+        'target \u20b9' + fmtNum(tgt,0) + ' <span style="opacity:.6">(' + fmtNum(((tgt-price)/price)*100,1) + '% vs price' +
+        (nAn?', ' + nAn + ' analysts':'') + ')</span>', 'Yahoo Finance \u00b7 sell-side aggregate',
+        'Sell-side targets skew optimistic as a class \u2014 compare against the DCF and the options-implied odds below');
+      const cat = await fetchCatalysts(symbol);
+      if (cat && cat.surprises && cat.surprises.length){
+        const last = cat.surprises[cat.surprises.length-1];
+        if (last && last.actual != null) row('Last quarter EPS: actual vs est.',
+          '\u20b9' + fmtNum(last.actual,2) + ' vs \u20b9' + fmtNum(last.est,2) +
+          (last.surprise!=null ? ' <span class="' + (last.surprise>0?'up':'down') + '">(' + (last.surprise>0?'+':'') + fmtNum(last.surprise*100,2) + '%)</span>' : ''),
+          'Yahoo Finance \u00b7 earnings history');
+      }
+      if (cat && cat.nextEarnings){
+        const d = new Date(cat.nextEarnings*1000);
+        const days = Math.round((cat.nextEarnings*1000 - Date.now())/86400000);
+        row('Next earnings', d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) +
+          ' <span style="opacity:.6">(' + (days>=0 ? days + ' days out' : 'just reported') + ')</span>',
+          'Yahoo Finance \u00b7 calendar');
+      }
+    } catch(e){
+      row('Fundamentals', 'Unavailable right now', 'Yahoo quoteSummary failed', 'Endpoint intermittently blocks unauthenticated calls');
+    }
+    try {
+      const ann = await fetchAnnuals(symbol);
+      const f2 = await fetchFundamentals(symbol);
+      const ks2 = f2.defaultKeyStatistics||{}, fd2 = f2.financialData||{};
+      const d = computeDcf(ann, price, val(ks2.sharesOutstanding), val(ks2.beta),
+        (val(fd2.totalDebt)||0) - (val(fd2.totalCash)||0));
+      if (d && d.intrinsic) row('Our DCF fair value',
+        '\u20b9' + fmtNum(d.intrinsic,2) + ' <span class="' + (d.upside>=0?'up':'down') + '">(' +
+        (d.upside>=0?'+':'') + fmtNum(d.upside,1) + '% gap)</span>',
+        'Computed here \u00b7 ' + ann.ocf.length + 'yr cash flows',
+        'Swings 40%+ across defensible assumptions \u2014 read the sensitivity grid, not this single figure');
+    } catch(e){}
+    try {
+      const ticker = symbol.replace(/\.(NS|BO)$/,'');
+      const ch = await fetchOptionChain(ticker);
+      if (ch){
+        const o = analyseOptions(ch, price);
+        if (o && o.pAbove != null){
+          row('Options-implied P(up) by expiry',
+            fmtNum(o.pAbove,1) + '% <span style="opacity:.6">(' + o.expiry + ', ' + o.dte + 'd \u00b7 ATM IV ' + fmtNum(o.atmIV,1) + '%)</span>',
+            'NSE option chain \u00b7 live',
+            'Risk-neutral, not real-world \u2014 embeds a risk premium');
+          if (o.pcrOI != null) row('Put-call ratio (OI)', fmtNum(o.pcrOI,2) +
+            ' <span style="opacity:.6">\u00b7 max pain \u20b9' + fmtNum(o.maxPain,0) + '</span>', 'NSE option chain \u00b7 live');
+        }
+      } else {
+        row('Options-implied probability', 'No F&O contracts listed', 'NSE \u00b7 checked live',
+          'Only ~180 NSE names have options');
+      }
+    } catch(e){}
+    const pend = document.getElementById('snapPending');
+    if (pend) pend.remove();
+    document.getElementById('snapBody').innerHTML = buildSnapTable(rows) +
+      '<div class="note-inline" style="margin-top:10px">Every row names where it came from. <b>Computed here</b> means it was calculated from the price series in your browser this second, so it cannot be stale. ' +
+      '<b>Yahoo Finance</b> rows are vendor data that can lag by a quarter on fundamentals. The risk-free rate is a fixed assumption, not a sourced figure \u2014 it feeds CAPM and the DCF, so it is a parameter worth disagreeing with.</div>';
+  }
+  function buildSnapTable(rows){
+    return '<table class="book"><thead><tr><th style="width:26%">Metric</th><th style="width:42%">Value</th><th style="width:32%">Source</th></tr></thead><tbody>' +
+      rows.map(function(r){
+        return '<tr><td class="sym" style="font-family:var(--sans);font-weight:600">' + r.metric + '</td>' +
+          '<td style="font-family:var(--mono);font-size:13.5px">' + r.value +
+            (r.flag ? '<div style="font-family:var(--sans);font-size:11px;color:var(--cream-dim);margin-top:3px">\u26a0 ' + r.flag + '</div>' : '') + '</td>' +
+          '<td style="font-size:12px;color:var(--cream-dim)">' + r.source + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  const __beforeSnapshot = renderDetailCore;
+  renderDetailCore = function(symbol, hist, niftyHist){
+    __beforeSnapshot(symbol, hist, niftyHist);
+    const meta = hist.meta;
+    const price = meta.regularMarketPrice != null ? meta.regularMarketPrice : hist.closes[hist.closes.length-1];
+    setTimeout(function(){ renderSnapshot(symbol, hist, niftyHist, price); }, 200);
+  };
 })();
 </script>
 </body>
