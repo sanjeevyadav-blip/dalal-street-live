@@ -3570,6 +3570,174 @@
   GLOSSARY['volume vs avg'] = ['Volume versus average', 'The last 20 days of turnover divided by the last 60. Above 1.25\u00d7 means unusual activity \u2014 something is drawing attention. Below 0.75\u00d7 means interest is fading.'];
   GLOSSARY['off 52w high'] = ['Distance from the 52-week high', 'How far the price has fallen from its highest point in the past year. A deep drawdown is either an opportunity or a warning, and this column alone cannot tell you which.'];
   GLOSSARY['dividend yield'] = ['Dividend yield', 'Annual dividend as a percentage of the share price \u2014 the cash return for simply holding, before any price movement. A very high yield often signals the price has fallen, not that the dividend rose.'];
+  const UNIV_LARGE = ['RELIANCE','TCS','HDFCBANK','ICICIBANK','INFY','HINDUNILVR','ITC','SBIN','BHARTIARTL','LT',
+    'KOTAKBANK','AXISBANK','MARUTI','SUNPHARMA','TITAN','ULTRACEMCO','BAJFINANCE','HCLTECH','NTPC','POWERGRID',
+    'M&M','TATAMOTORS','TATASTEEL','ASIANPAINT','WIPRO','ADANIPORTS','COALINDIA','ONGC','JSWSTEEL','NESTLEIND',
+    'BAJAJFINSV','TECHM','GRASIM','HINDALCO','DRREDDY','CIPLA','BRITANNIA','EICHERMOT','HEROMOTOCO','INDUSINDBK',
+    'ADANIENT','APOLLOHOSP','BAJAJ-AUTO','BPCL','DIVISLAB','HDFCLIFE','SBILIFE','TATACONSUM','UPL','LTIM',
+    'DMART','VEDL','IOC','GAIL','SIEMENS'];
+  const UNIV_MID = ['PERSISTENT','COFORGE','MPHASIS','CUMMINSIND','BHARATFORG','ESCORTS','ALKEM','GLENMARK','TORNTPHARM','JUBLFOOD',
+    'TRENT','PIIND','SRF','ABB','HDFCAMC','MUTHOOTFIN','CHOLAFIN','LUPIN','AUROPHARMA','BIOCON',
+    'HAVELLS','DABUR','MARICO','GODREJCP','BERGEPAINT','TVSMOTOR','ASHOKLEY','CANBK','PFC','RECLTD',
+    'BEL','HAL','IRCTC','NMDC','SAIL','BANKBARODA','PNB','IDFCFIRSTB','ICICIGI','ICICIPRULI',
+    'COLPAL','PGHH','BOSCHLTD','AMBUJACEM','ACC','TATAPOWER','ADANIGREEN','ADANIPOWER','MOTHERSON','ZOMATO',
+    'PAYTM','INDIGO','LICI','NMDC','BANKINDIA'];
+  const COUNTS = [10,15,20,30,50];
+  function countSelectHtml(id, def){
+    return '<label style="font-size:12px;color:var(--cream-dim);display:inline-flex;align-items:center;gap:6px;margin-right:10px">' +
+      'Show <select id="' + id + '" style="background:var(--panel);border:1px solid var(--hair);color:var(--cream);' +
+      'padding:5px 8px;border-radius:7px;font-family:var(--sans);font-size:12.5px;cursor:pointer">' +
+      COUNTS.map(function(n){ return '<option value="' + n + '"' + (n===def?' selected':'') + '>' + n + '</option>'; }).join('') +
+      '</select></label>';
+  }
+  const scrCache = { large:{}, mid:{} };
+  async function loadScreener3(univ, key, bodyId, btnId, selId){
+    const tbody = document.getElementById(bodyId);
+    const btn = document.getElementById(btnId);
+    const n = parseInt(document.getElementById(selId).value, 10) || 10;
+    const list = univ.slice(0, n);
+    btn.disabled = true; btn.textContent = 'Loading\u2026';
+    const cache = scrCache[key];
+    tbody.innerHTML = list.map(function(t){
+      return cache[t] ? screenerRow2Html(cache[t])
+        : '<tr id="s3-' + key + '-' + t + '"><td class="sym">' + t + '</td><td colspan="12" class="loading-dots">fetching\u2026</td></tr>';
+    }).join('');
+    const missing = list.filter(function(t){ return !cache[t]; });
+    await runPool(missing, async function(t){
+      try {
+        const r = await fetchScreenerRow2(t);
+        cache[t] = r;
+        const row = document.getElementById('s3-' + key + '-' + t);
+        if (row) row.outerHTML = screenerRow2Html(r);
+      } catch(e){
+        const row = document.getElementById('s3-' + key + '-' + t);
+        if (row) row.outerHTML = '<tr><td class="sym">' + t + '</td><td colspan="12" style="color:var(--cream-dim)">Couldn\u2019t load</td></tr>';
+      }
+    }, 5);
+    tbody.querySelectorAll('tr[data-sym]').forEach(function(tr){
+      tr.addEventListener('click', function(){ loadStockDetail(tr.getAttribute('data-sym')); });
+    });
+    btn.disabled = false; btn.textContent = 'Refresh';
+  }
+  (function rebuildScreener3(){
+    const body = document.getElementById('largeCapBody');
+    if (!body) return;
+    let sec = body;
+    while (sec && sec.tagName !== 'SECTION') sec = sec.parentNode;
+    if (!sec) return;
+    const head = '<tr><th>Symbol</th><th>Price</th><th>1D %</th><th>1Y %</th><th>Market cap</th>' +
+      '<th>RSI(14)</th><th>P/E</th><th>ROE</th><th>Debt / Equity</th><th>Dividend yield</th>' +
+      '<th>vs 200-DMA</th><th>Volume vs avg</th><th>Off 52w high</th></tr>';
+    function group(title, bodyId, btnId, selId){
+      return '<div class="screener-group">' +
+        '<div class="screener-head"><h3>' + title + '</h3><div>' + countSelectHtml(selId, 10) +
+        '<button id="' + btnId + '">Load</button></div></div>' +
+        '<p class="scroll-hint">\u2194 Scroll sideways for all thirteen columns.</p>' +
+        '<div class="rank-scroll"><table class="book screener-table"><thead>' + head + '</thead>' +
+        '<tbody id="' + bodyId + '"><tr><td colspan="13" style="color:var(--cream-dim);padding:14px 12px">Not loaded yet \u2014 pick a count and click Load.</td></tr></tbody></table></div></div>';
+    }
+    sec.innerHTML =
+      '<div class="section-head"><h2>Screener</h2>' +
+      '<span class="hint">Live, objective metrics only \u2014 no buy/sell calls, no invented targets</span></div>' +
+      '<p class="screener-note">Price, momentum, valuation, quality and participation for each name, pulled live. ' +
+      'Each table has its own row-count selector, drawn from a 55-stock universe; already-fetched rows are cached, so widening from 10 to 50 only fetches the new names. ' +
+      'There is deliberately no \u201ctarget price\u201d or \u201cprobability of success\u201d column: nobody can honestly compute the odds a stock reaches a price by a date, and a target is a forecast dressed as a fact. ' +
+      'In India, publishing buy/sell/target recommendations is restricted to <a href="https://www.sebi.gov.in" target="_blank" rel="noopener">SEBI</a>-registered Research Analysts and Investment Advisers. ' +
+      'A starting point for your own research, not a tip sheet.</p>' +
+      group('Large cap', 'largeCapBody', 'loadLargeCap', 'scrLargeCount') +
+      group('Mid cap', 'midCapBody', 'loadMidCap', 'scrMidCount');
+    document.getElementById('loadLargeCap').addEventListener('click', function(){ loadScreener3(UNIV_LARGE,'large','largeCapBody','loadLargeCap','scrLargeCount'); });
+    document.getElementById('loadMidCap').addEventListener('click', function(){ loadScreener3(UNIV_MID,'mid','midCapBody','loadMidCap','scrMidCount'); });
+    document.getElementById('scrLargeCount').addEventListener('change', function(){
+      if (Object.keys(scrCache.large).length) loadScreener3(UNIV_LARGE,'large','largeCapBody','loadLargeCap','scrLargeCount');
+    });
+    document.getElementById('scrMidCount').addEventListener('change', function(){
+      if (Object.keys(scrCache.mid).length) loadScreener3(UNIV_MID,'mid','midCapBody','loadMidCap','scrMidCount');
+    });
+  })();
+  const rankCache = { large:null, mid:null };
+  function renderRankRows(rows, n, bodyId){
+    const tbody = document.getElementById(bodyId);
+    const top = rows.slice(0, n);
+    function pCls(p){ return p == null ? '' : p >= 55 ? 'up' : p <= 45 ? 'down' : 'info'; }
+    function patCls(p){ return !p ? '' : p.bias === 'bullish' ? 'up' : p.bias === 'bearish' ? 'down' : ''; }
+    tbody.innerHTML = top.map(function(r,i){
+      return '<tr data-sym="' + r.symbol + '">' +
+        '<td class="sym">' + (i+1) + '. ' + r.ticker + '</td>' +
+        '<td class="num">\u20b9' + fmtNum(r.price,2) + '</td>' +
+        '<td class="num"><b>' + fmtNum(r.composite,1) + '</b></td>' +
+        '<td class="num">' + fmtNum(r.ind,0) + '</td>' +
+        '<td class="num">' + fmtNum(r.vol,0) + '</td>' +
+        '<td class="num ' + (r.rs3>=0?'up':'down') + '">' + fmtNum(r.rs3,1) + '%</td>' +
+        '<td class="num">' + (r.rsi==null?'\u2014':fmtNum(r.rsi,0)) + '</td>' +
+        '<td class="' + patCls(r.topPattern) + '">' + (r.topPattern ? r.topPattern.name : '\u2014') + '</td>' +
+        '<td class="num ' + pCls(r.pWeek) + '"><b>' + (r.pWeek==null?'\u2014':fmtNum(r.pWeek,1)+'%') + '</b></td>' +
+        '<td class="num ' + pCls(r.pMonth) + '"><b>' + (r.pMonth==null?'\u2014':fmtNum(r.pMonth,1)+'%') + '</b></td>' +
+        '<td class="reason" style="font-size:11.5px;color:var(--cream-dim);line-height:1.5">' + r.reason + '</td>' +
+      '</tr>';
+    }).join('');
+    tbody.querySelectorAll('tr[data-sym]').forEach(function(tr){
+      tr.addEventListener('click', function(){ loadStockDetail(tr.getAttribute('data-sym')); });
+    });
+  }
+  async function runRanking3(univ, key, bodyId, btnId, selId, force){
+    const tbody = document.getElementById(bodyId);
+    const btn = document.getElementById(btnId);
+    const n = parseInt(document.getElementById(selId).value, 10) || 20;
+    if (rankCache[key] && !force){ renderRankRows(rankCache[key], n, bodyId); return; }
+    btn.disabled = true; btn.textContent = 'Scoring\u2026';
+    tbody.innerHTML = '<tr><td colspan="11" class="loading-dots">Scoring all ' + univ.length + ' stocks so the ranking is real \u2014 25\u201340 seconds. Switching the count afterwards is instant.</td></tr>';
+    const nh = await fetchHistory('^NSEI','1y','1d');
+    const nc = nh.closes;
+    function nret(d){ const i = Math.max(0, nc.length-1-d); return (nc[nc.length-1]/nc[i]-1)*100; }
+    const niftyRet = { r3: nret(63), r6: nret(126) };
+    const rows = [];
+    await runPool(univ, async function(t){
+      try { rows.push(await scoreStock20(t, niftyRet)); } catch(e){}
+    }, 6);
+    rows.sort(function(a,b){ return b.composite - a.composite; });
+    if (!rows.length){
+      tbody.innerHTML = '<tr><td colspan="11" style="color:var(--cream-dim)">Couldn\u2019t score these right now \u2014 try again shortly.</td></tr>';
+      btn.disabled = false; btn.textContent = 'Re-run'; return;
+    }
+    rankCache[key] = rows;
+    renderRankRows(rows, n, bodyId);
+    btn.disabled = false; btn.textContent = 'Re-run';
+  }
+  (function rebuildRanking3(){
+    const sec = document.getElementById('rankSection');
+    if (!sec) return;
+    const head = '<tr><th>Rank</th><th>Price</th><th>Score</th><th>Indicators</th><th>Volume</th>' +
+      '<th>RS vs Nifty (3M)</th><th>RSI</th><th>Pattern</th><th>P(up) 1 week</th><th>P(up) 1 month</th><th>Reasoning</th></tr>';
+    function group(title, bodyId, btnId, selId){
+      return '<div class="screener-group">' +
+        '<div class="screener-head"><h3>' + title + '</h3><div>' + countSelectHtml(selId, 20) +
+        '<button id="' + btnId + '">Rank</button></div></div>' +
+        '<p class="scroll-hint">\u2194 Scroll sideways for all eleven columns.</p>' +
+        '<div class="rank-scroll"><table class="book screener-table"><thead>' + head + '</thead>' +
+        '<tbody id="' + bodyId + '"><tr><td colspan="11" style="color:var(--cream-dim);padding:14px 12px">Not ranked yet \u2014 pick a count and click Rank.</td></tr></tbody></table></div></div>';
+    }
+    sec.innerHTML =
+      '<div class="section-head"><h2>Top performers</h2>' +
+      '<span class="hint">Technical ranking, model-derived odds, and the reasoning behind each row</span></div>' +
+      '<p class="screener-note">Stocks are ranked 0\u2013100 by a blend of indicators (35%), relative strength (35%), candlestick patterns (15%) and volume (15%). ' +
+      '<b>The whole 55-stock universe is scored every time</b>, then the top N you select is shown \u2014 ranking only the first 10 names would not be a ranking. Changing the count afterwards is instant; press Re-run for fresh prices. ' +
+      '<b>Indicators</b> and <b>Volume</b> are the 0\u2013100 sub-scores feeding the blend, so you can see which part carries a stock\u2019s rank. ' +
+      '<b>The probability columns are model output, not forecasts.</b> They come from each stock\u2019s own past-year drift and volatility: if the next week or month behaves like the past year, what are the odds the price ends higher? ' +
+      'A small tilt (at most \u00b16 points) comes from the technical score. Expect most values between 45% and 60% \u2014 that narrow band is the honest answer, and any tool showing 85% confidence on a one-week move is selling you something. ' +
+      'This ranks <em>momentum and technical posture</em>, not business quality. It is not a buy list.</p>' +
+      group('Large cap', 'rankLargeBody', 'rankLargeBtn', 'rankLargeCount') +
+      group('Mid cap', 'rankMidBody', 'rankMidBtn', 'rankMidCount');
+    document.getElementById('rankLargeBtn').addEventListener('click', function(){ runRanking3(UNIV_LARGE,'large','rankLargeBody','rankLargeBtn','rankLargeCount', true); });
+    document.getElementById('rankMidBtn').addEventListener('click', function(){ runRanking3(UNIV_MID,'mid','rankMidBody','rankMidBtn','rankMidCount', true); });
+    document.getElementById('rankLargeCount').addEventListener('change', function(){
+      if (rankCache.large) runRanking3(UNIV_LARGE,'large','rankLargeBody','rankLargeBtn','rankLargeCount', false);
+    });
+    document.getElementById('rankMidCount').addEventListener('change', function(){
+      if (rankCache.mid) runRanking3(UNIV_MID,'mid','rankMidBody','rankMidBtn','rankMidCount', false);
+    });
+  })();
+  GLOSSARY['show'] = ['Row count', 'How many rows this table displays. Each table keeps its own setting \u2014 changing one does not affect the others. In the ranking, the full universe is always scored first and the count only decides how much of the result you see.'];
 })();
 </script>
 </body>
