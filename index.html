@@ -3366,6 +3366,100 @@
       'Every model on this page is shown with its assumptions and its failure modes visible, because a number without its caveats is worse than no number at all.</p>';
     if (gloss) wrap.insertBefore(sec, gloss); else wrap.appendChild(sec);
   })();
+  (function injectRankScrollStyles(){
+    if (document.getElementById('rankScrollStyle')) return;
+    const st = document.createElement('style');
+    st.id = 'rankScrollStyle';
+    st.textContent =
+      '.rank-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--hair);' +
+      'border-radius:10px;background:rgba(255,255,255,.012)}' +
+      '.rank-scroll table.book{min-width:1180px;margin:0}' +
+      '.rank-scroll table.book th,.rank-scroll table.book td{white-space:nowrap;padding-left:12px;padding-right:12px}' +
+      '.rank-scroll table.book td.reason{white-space:normal;min-width:250px}' +
+      '.rank-scroll::-webkit-scrollbar{height:9px}' +
+      '.rank-scroll::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:6px}' +
+      '.rank-scroll::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:6px}' +
+      '.rank-scroll::-webkit-scrollbar-thumb:hover{background:var(--gold)}' +
+      '.scroll-hint{font-size:11.5px;color:var(--cream-dim);margin:0 0 7px;font-family:var(--sans)}' +
+      '@media (max-width:720px){' +
+      '.rank-scroll table.book,.rank-scroll table.book thead,.rank-scroll table.book tbody,' +
+      '.rank-scroll table.book tr,.rank-scroll table.book td,.rank-scroll table.book th{display:revert;width:auto}' +
+      '.rank-scroll table.book thead{display:table-header-group}' +
+      '.rank-scroll table.book tr{display:table-row;padding:0;border-bottom:1px solid var(--hair)}' +
+      '.rank-scroll table.book td{display:table-cell;border:none;padding:12px}' +
+      '.rank-scroll table.book td::before{content:none}' +
+      '}';
+    document.head.appendChild(st);
+  })();
+  async function runRankingFull(tickers, bodyId, btnId){
+    const tbody = document.getElementById(bodyId);
+    const btn = document.getElementById(btnId);
+    btn.disabled = true; btn.textContent = 'Scoring\u2026';
+    tbody.innerHTML = '<tr><td colspan="11" class="loading-dots">Scoring ' + tickers.length + ' stocks \u2014 this takes 15\u201325 seconds\u2026</td></tr>';
+    const nh = await fetchHistory('^NSEI','1y','1d');
+    const nc = nh.closes;
+    function nret(d){ const i = Math.max(0, nc.length-1-d); return (nc[nc.length-1]/nc[i]-1)*100; }
+    const niftyRet = { r3: nret(63), r6: nret(126) };
+    const rows = [];
+    await runPool(tickers, async function(t){
+      try { rows.push(await scoreStock20(t, niftyRet)); } catch(e){}
+    }, 6);
+    rows.sort(function(a,b){ return b.composite - a.composite; });
+    const top = rows.slice(0,20);
+    if (!top.length){
+      tbody.innerHTML = '<tr><td colspan="11" style="color:var(--cream-dim)">Couldn\u2019t score these right now \u2014 try again shortly.</td></tr>';
+      btn.disabled = false; btn.textContent = 'Re-run'; return;
+    }
+    function pCls(p){ return p == null ? '' : p >= 55 ? 'up' : p <= 45 ? 'down' : 'info'; }
+    function patCls(p){ return !p ? '' : p.bias === 'bullish' ? 'up' : p.bias === 'bearish' ? 'down' : ''; }
+    tbody.innerHTML = top.map(function(r,i){
+      return '<tr data-sym="' + r.symbol + '">' +
+        '<td class="sym">' + (i+1) + '. ' + r.ticker + '</td>' +
+        '<td class="num">\u20b9' + fmtNum(r.price,2) + '</td>' +
+        '<td class="num"><b>' + fmtNum(r.composite,1) + '</b></td>' +
+        '<td class="num">' + fmtNum(r.ind,0) + '</td>' +
+        '<td class="num">' + fmtNum(r.vol,0) + '</td>' +
+        '<td class="num ' + (r.rs3>=0?'up':'down') + '">' + fmtNum(r.rs3,1) + '%</td>' +
+        '<td class="num">' + (r.rsi==null?'\u2014':fmtNum(r.rsi,0)) + '</td>' +
+        '<td class="' + patCls(r.topPattern) + '">' + (r.topPattern ? r.topPattern.name : '\u2014') + '</td>' +
+        '<td class="num ' + pCls(r.pWeek) + '"><b>' + (r.pWeek==null?'\u2014':fmtNum(r.pWeek,1)+'%') + '</b></td>' +
+        '<td class="num ' + pCls(r.pMonth) + '"><b>' + (r.pMonth==null?'\u2014':fmtNum(r.pMonth,1)+'%') + '</b></td>' +
+        '<td class="reason" style="font-size:11.5px;color:var(--cream-dim);line-height:1.5">' + r.reason + '</td>' +
+      '</tr>';
+    }).join('');
+    tbody.querySelectorAll('tr[data-sym]').forEach(function(tr){
+      tr.addEventListener('click', function(){ loadStockDetail(tr.getAttribute('data-sym')); });
+    });
+    btn.disabled = false; btn.textContent = 'Re-run';
+  }
+  (function rebuildRankingFull(){
+    const sec = document.getElementById('rankSection');
+    if (!sec) return;
+    const head = '<tr><th>Rank</th><th>Price</th><th>Score</th><th>Indicators</th><th>Volume</th>' +
+      '<th>RS vs Nifty (3M)</th><th>RSI</th><th>Pattern</th><th>P(up) 1 week</th><th>P(up) 1 month</th><th>Reasoning</th></tr>';
+    function group(title, bodyId, btnId, label){
+      return '<div class="screener-group">' +
+        '<div class="screener-head"><h3>' + title + '</h3><button id="' + btnId + '">' + label + '</button></div>' +
+        '<p class="scroll-hint">\u2194 Scroll the table sideways to see all eleven columns.</p>' +
+        '<div class="rank-scroll"><table class="book screener-table"><thead>' + head + '</thead>' +
+        '<tbody id="' + bodyId + '"><tr><td colspan="11" style="color:var(--cream-dim);padding:14px 12px">' +
+        'Not ranked yet \u2014 click \u201c' + label + '\u201d (scores 40 stocks, ~20s).</td></tr></tbody></table></div></div>';
+    }
+    sec.innerHTML =
+      '<div class="section-head"><h2>Top performers</h2>' +
+      '<span class="hint">Technical ranking, model-derived odds, and the reasoning behind each row</span></div>' +
+      '<p class="screener-note">Stocks are ranked 0\u2013100 by a blend of indicators (35%), relative strength (35%), candlestick patterns (15%) and volume (15%), and the top 20 are shown. ' +
+      '<b>Indicators</b> and <b>Volume</b> are the 0\u2013100 sub-scores feeding that blend, so you can see which part is carrying a stock\u2019s rank. ' +
+      '<b>The two probability columns are model output, not forecasts.</b> They come from each stock\u2019s own return distribution \u2014 its past-year drift and volatility \u2014 answering: if the next week or month behaves like the past year, what are the odds the price ends higher? ' +
+      'A small tilt (at most \u00b16 points) is applied from the technical score. Expect most values between 45% and 60%: that narrow band is the honest answer, and any tool showing 85% confidence on a one-week stock move is selling you something. ' +
+      '<b>Derivatives are not in the composite</b> \u2014 the option chain works and appears on individual F&amp;O stocks, but pulling 40 chains would be slow and only ~180 NSE names have options, which would make the comparison uneven. ' +
+      'This ranks <em>momentum and technical posture</em>, not business quality. It is not a buy list.</p>' +
+      group('Large cap \u2014 top 20', 'rankLargeBody', 'rankLargeBtn', 'Rank large cap') +
+      group('Mid cap \u2014 top 20', 'rankMidBody', 'rankMidBtn', 'Rank mid cap');
+    document.getElementById('rankLargeBtn').addEventListener('click', function(){ runRankingFull(R20_LARGE,'rankLargeBody','rankLargeBtn'); });
+    document.getElementById('rankMidBtn').addEventListener('click', function(){ runRankingFull(R20_MID,'rankMidBody','rankMidBtn'); });
+  })();
+  GLOSSARY['volume'] = ['Volume score', 'A 0\u2013100 sub-score, not raw share count. It compares the last 20 days of turnover against the last 60, and counts how many of the recent sessions closed higher. Above 50 means participation is picking up on rising days.'];
 })();
 </script>
 </body>
