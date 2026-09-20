@@ -5,9 +5,9 @@ Reverse chronological. Format: Conventional Commits categories.
 ## Unreleased
 - `refactor` EPIC-1: the 3,888-line monolithic `index.html` became 39 ES modules built by
   Vite into one `dist/index.html`. Behaviour proven unchanged against the deployed file.
-- `test` 220 offline tests against 31 committed API fixtures, including 33 golden snapshots.
+- `test` 271 offline tests against 31 committed API fixtures, including 33 golden snapshots.
 - `test` §10.4: 10 live-API integration checks (`npm run test:integration`), opt-in.
-- `test` §10.5: 27 Playwright E2E specs on desktop and mobile (`npm run test:e2e`), routed
+- `test` §10.5: 34 Playwright E2E specs on desktop and mobile (`npm run test:e2e`), routed
   through the committed fixtures so they run deterministically and offline.
 - `fix(pwa)` **the build stopped shipping the PWA.** `publicDir: false` meant Vite emitted
   `index.html` alone, while the page still linked `manifest.json` and registered `sw.js`.
@@ -15,7 +15,20 @@ Reverse chronological. Format: Conventional Commits categories.
   registration with "unsupported MIME type ('text/html')" — no install prompt, no offline
   shell. Introduced by the EPIC-1 file moves, never deployed, found by the first E2E run.
   `src/public/` + `publicDir: 'public'` restores the three-file layout the live site has.
-- **Planned:** probability lab deployment, symbol validation, Capacitor native wrapper.
+- `feat(reliability)` EPIC-4 E4-3: transient upstream failures (network error, timeout, 408,
+  425, 429, 5xx) are retried once with exponential backoff, bounded by a wall-clock budget.
+  Other 4xx are not retried — a 403 is the allowlist and a 404 is a dead symbol.
+- `feat(reliability)` EPIC-4 E4-4: suppressed failures are kept in a bounded, PII-free ring
+  buffer and shown in a new opt-in Diagnostics panel (toggle, or `?diag=1`). Nothing is sent
+  anywhere; records carry the upstream host, never the full URL.
+- `feat(reliability)` EPIC-4 E4-2: per-block error boundaries. One dead feed now renders its
+  own failure state instead of blanking the detail panel.
+- `feat(reliability)` EPIC-4 E4-1: dead or renamed tickers are named under the screener and
+  ranking tables instead of silently vanishing from the row count.
+- `feat(worker)` EPIC-4 E4-5: per-IP rate limit (300/min) and structured JSON logs.
+  **Written but not deployed** — the live Worker is unchanged.
+- `chore` deleted `.github/workflows/`; the gates run locally via `npm run verify:full`.
+- **Planned:** probability lab deployment, Capacitor native wrapper.
 
 ## v1.9 — Mobile & PWA
 - `feat(mobile)` responsive layout ≤760px: sticky header, swipe indices strip, 2-column

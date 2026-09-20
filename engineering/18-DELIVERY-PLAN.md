@@ -65,15 +65,19 @@ raises the cost of the eventual refactor. **Blocks everything else.**
 
 ---
 
-## EPIC-4 — Reliability hardening (P1)
+## EPIC-4 — Reliability hardening (P1) — **COMPLETE**
 
-| ID | Story | Est | Acceptance |
-|---|---|---|---|
-| E4-1 | Startup symbol validation; dead tickers surfaced not dropped | 2d | Console + UI warning naming dead symbols |
-| E4-2 | Per-block error boundaries | 1d | One dead feed never blanks the page |
-| E4-3 | Retry with backoff in `fetchJsonThroughProxy` | 1d | Transient 5xx recovers |
-| E4-4 | Structured client error logging (opt-in, no PII) | 2d | Errors visible without a user report |
-| E4-5 | Worker: rate-limit per IP, structured logs | 1d | Abuse contained |
+| ID | Story | Est | Acceptance | Status |
+|---|---|---|---|---|
+| E4-1 | Startup symbol validation; dead tickers surfaced not dropped | 2d | Console + UI warning naming dead symbols | **done** — validated as a by-product of use, not by 110 requests at startup; see the commit for why |
+| E4-2 | Per-block error boundaries | 1d | One dead feed never blanks the page | **done** — `runBlock` catches both sync throws and async rejections, without awaiting |
+| E4-3 | Retry with backoff in `fetchJsonThroughProxy` | 1d | Transient 5xx recovers | **done** — transient only, bounded by wall clock |
+| E4-4 | Structured client error logging (opt-in, no PII) | 2d | Errors visible without a user report | **done** — `src/diagnostics.js` + Diagnostics panel |
+| E4-5 | Worker: rate-limit per IP, structured logs | 1d | Abuse contained | **written, NOT DEPLOYED** — needs `npm run worker:deploy`, an explicit-approval action |
+
+EPIC-4 added 51 offline tests and 7 E2E specs. The per-isolate limitation of the E4-5 rate
+limiter is documented in `worker/worker.js` itself: a true global limit needs Durable Objects
+or KV.
 
 ---
 

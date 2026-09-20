@@ -1,5 +1,15 @@
 # 08. Security, Privacy & Compliance
 
+> **Update (EPIC-4 E4-5).** `worker/worker.js` now also carries a per-IP rate limit of 300
+> requests/minute and structured JSON logs. The logs record the upstream host and a fixed
+> endpoint label, never the query string, and a non-reversible hash of the client IP rather
+> than the IP itself.
+>
+> **This is not deployed** — the live Worker still has the allowlist alone. The limiter is
+> also per-isolate, so its real ceiling is some multiple of 300 and it resets unpredictably;
+> a true global limit needs Durable Objects or KV. Both points are documented in
+> `worker/worker.js` beside the code.
+
 ## 8.1 Attack surface
 
 No backend, no database, no accounts, no user input persisted server-side. The surface is
