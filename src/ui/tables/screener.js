@@ -14,6 +14,7 @@
 // exact path the 1D% == 1Y% bug shipped on.
 
 import { runPool } from '../../data/proxy.js';
+import { deadSymbolWarning } from '../../data/symbol-health.js';
 import { fetchHistory, fetchFundamentals, val, resolvePrevClose } from '../../data/yahoo.js';
 import { average } from '../../indicators/util.js';
 import { smaSeries } from '../../indicators/trend.js';
@@ -111,5 +112,30 @@ export async function loadScreener3(univ, key, bodyId, btnId, selId){
   tbody.querySelectorAll('tr[data-sym]').forEach(function(tr){
     tr.addEventListener('click', function(){ openStock(tr.getAttribute('data-sym')); });
   });
+  renderDeadSymbolNote(bodyId, list);
   btn.disabled = false; btn.textContent = 'Refresh';
+}
+
+/**
+ * EPIC-4 E4-1: name the tickers that did not resolve, under the table that wanted them.
+ *
+ * The rows themselves already say "Couldn't load", but a reader scanning a 50-row table
+ * does not reliably notice three of them — and cannot tell a dead ticker from a company
+ * that happens to publish nothing. This states it once, by name, where it cannot be missed.
+ */
+export function renderDeadSymbolNote(bodyId, universe){
+  const table = document.getElementById(bodyId);
+  if (!table) return;
+  const host = table.closest('.screener-group') || table.parentElement;
+  if (!host) return;
+  const noteId = bodyId + '-dead';
+  const existing = document.getElementById(noteId);
+  const msg = deadSymbolWarning(universe);
+  if (!msg){ if (existing) existing.remove(); return; }
+  const note = existing || document.createElement('div');
+  note.id = noteId;
+  note.className = 'note-inline';
+  note.style.marginTop = '10px';
+  note.textContent = msg;
+  if (!existing) host.appendChild(note);
 }

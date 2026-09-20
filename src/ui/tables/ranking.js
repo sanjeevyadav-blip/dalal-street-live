@@ -25,6 +25,7 @@ import { gbmProbUp } from '../../models/gbm.js';
 import { fmtNum } from '../format.js';
 import { openStock } from '../navigate.js';
 import { suppressed } from '../../suppressed.js';
+import { renderDeadSymbolNote } from './screener.js';
 
 export async function scoreStock20(ticker, niftyRet){
   const symbol = ticker + '.NS';
@@ -126,5 +127,8 @@ export async function runRanking3(univ, key, bodyId, btnId, selId, force){
   }
   rankCache[key] = rows;
   renderRankRows(rows, n, bodyId);
+  // EPIC-4 E4-1. This matters more here than in the screener: the ranking claims to score
+  // the WHOLE universe, so silently scoring 52 of 55 makes the claim untrue.
+  renderDeadSymbolNote(bodyId, univ);
   btn.disabled = false; btn.textContent = 'Re-run';
 }

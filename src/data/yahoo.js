@@ -7,6 +7,7 @@
 //   - at range=1y, meta.previousClose is absent. See resolvePrevClose below.
 
 import { fetchJsonThroughProxy } from './proxy.js';
+import { recordSymbolOk, recordSymbolDead } from './symbol-health.js';
 
 export const historyCache = Object.create(null);
 
@@ -28,9 +29,21 @@ export async function fetchQuote(symbol){
 export async function fetchHistory(symbol, range, interval){
   const url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(symbol) +
     '?interval=' + interval + '&range=' + range;
-  const data = await fetchJsonThroughProxy(url);
+  let data;
+  try {
+    data = await fetchJsonThroughProxy(url);
+  } catch (err){
+    // EPIC-4 E4-1: the proxy has already retried by now, so a failure here is worth
+    // recording against the symbol rather than swallowing.
+    recordSymbolDead(symbol, err && err.message ? err.message : err);
+    throw err;
+  }
   const result = data && data.chart && data.chart.result && data.chart.result[0];
-  if (!result || !result.meta) throw new Error('No data for ' + symbol);
+  if (!result || !result.meta) {
+    recordSymbolDead(symbol, 'no chart result');
+    throw new Error('No data for ' + symbol);
+  }
+  recordSymbolOk(symbol);
   const ts = result.timestamp || [];
   const q = (result.indicators && result.indicators.quote && result.indicators.quote[0]) || {};
   const dates=[], closes=[], opens=[], highs=[], lows=[], volumes=[];
