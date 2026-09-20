@@ -1,9 +1,9 @@
 export default [
   {
-    // src/sw.js is a service worker (its own globals) and
+    // src/public/sw.js is a service worker (its own globals) and
     // src/probability-lab.NOT-DEPLOYED.js is an unshipped classic script — both are
     // linted once EPIC-5 ports them into src/models/. See engineering/18 E5-1..E5-5.
-    ignores: ['dist/**', 'scaffold/**', '_ext/**', 'src/sw.js', 'src/probability-lab.NOT-DEPLOYED.js']
+    ignores: ['dist/**', 'scaffold/**', '_ext/**', 'src/public/sw.js', 'src/probability-lab.NOT-DEPLOYED.js']
   },
   {
     files: ['src/**/*.js', 'tests/**/*.js'],

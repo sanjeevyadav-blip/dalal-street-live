@@ -8,7 +8,18 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 export default defineConfig({
   root: 'src',
   base: './',
-  publicDir: false,
+
+  // src/public/ holds the two PWA files — manifest.json and sw.js. They must be COPIED to
+  // dist, not inlined: the page links the manifest by URL and registers the worker by URL,
+  // and a service worker cannot be inlined into the page it controls.
+  //
+  // This was `publicDir: false` until an E2E run caught the consequence. The built page
+  // still referenced both files, but the build emitted neither, so on a deploy the manifest
+  // would 404 (no install prompt) and sw.js would be served the SPA fallback — which is
+  // text/html, so registration failed outright with "unsupported MIME type". Nothing in the
+  // 217 offline tests looked at what else lands in dist/ beside index.html.
+  // tests/unit/build-output.test.js now asserts both files are emitted.
+  publicDir: 'public',
   plugins: [viteSingleFile()],
   build: {
     outDir: '../dist',

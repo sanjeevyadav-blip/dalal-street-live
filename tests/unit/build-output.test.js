@@ -66,6 +66,35 @@ suite('built artefact is self-contained', () => {
     expect(html).toContain('manifest.json');
   });
 
+  it('actually emits the two PWA files it references', () => {
+    // The page links manifest.json and registers sw.js by URL, so "the reference is in the
+    // HTML" is only half the contract — the files have to be in dist/ too.
+    //
+    // They were not. `publicDir: false` meant the build emitted index.html alone, while the
+    // page went on asking for both. On Pages the manifest would 404 and sw.js would receive
+    // the HTML fallback, failing registration with "unsupported MIME type ('text/html')".
+    // Every offline test still passed, because none of them looked past index.html. A
+    // browser found it on the first E2E run. This is that check, made cheap.
+    expect(existsSync(resolve(process.cwd(), 'dist/manifest.json')), 'dist/manifest.json missing').toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'dist/sw.js')), 'dist/sw.js missing').toBe(true);
+  });
+
+  it('ships a service worker that never caches market data', () => {
+    // A cached quote is a wrong quote. The worker must bail out of any request bound for
+    // the proxy or Yahoo, and of anything cross-origin, before it reaches its cache-put.
+    const sw = readFileSync(resolve(process.cwd(), 'dist/sw.js'), 'utf8');
+    expect(sw).toContain('workers.dev');
+    expect(sw).toContain('yahoo');
+    expect(sw).toContain('self.location.origin');
+  });
+
+  it('ships a manifest that declares a standalone PWA', () => {
+    const manifest = JSON.parse(readFileSync(resolve(process.cwd(), 'dist/manifest.json'), 'utf8'));
+    expect(manifest.display).toBe('standalone');
+    expect(manifest.name).toBeTruthy();
+    expect(Array.isArray(manifest.icons)).toBe(true);
+  });
+
   it('stays under the CI bundle guard of 400 KB', () => {
     // .github/workflows/ci.yml fails the build over this. Catch it locally instead.
     expect(statSync(DIST).size).toBeLessThan(409600);
