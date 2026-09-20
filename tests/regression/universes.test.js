@@ -74,7 +74,7 @@ describe('ticker universes', () => {
 
 describe('module boundaries', () => {
   // Every .js under src/ that actually ships, i.e. everything the module graph can reach.
-  // probability-lab.NOT-DEPLOYED.js is excluded because nothing imports it — it carries its
+  // NOT-DEPLOYED files are excluded because nothing imports them — such a file carries its
   // own copy of olsMulti, and EPIC-5 story E5-5 is specifically about not shipping both.
   const shipped = readdirSync(resolve(process.cwd(), 'src'), { recursive: true })
     .map(String)

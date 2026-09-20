@@ -5,7 +5,9 @@
 //
 // The factor block that uses this once hung permanently on "Building..." because olsMulti
 // was missing from the deployed bundle. It must be defined exactly once: EPIC-5 story E5-5
-// removes the duplicate in probability-lab.NOT-DEPLOYED.js rather than shipping both.
+// removed the duplicate that probability-lab.NOT-DEPLOYED.js carried, rather than shipping
+// both. The two were the same algorithm; this one declares singularity at 1e-14 rather than
+// 1e-12, so it accepts slightly more near-singular systems.
 
 export function olsMulti(y, X){
   const n = y.length, k = X[0].length;
