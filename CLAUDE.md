@@ -66,7 +66,9 @@ tests/e2e/      27 Playwright specs (§10.5), desktop + mobile, fixture-routed
 scripts/        capture-fixtures.mjs, check-invariants.sh
 ```
 
-Run `npm run verify` — lint, invariants, build, test — before and after any change.
+Run `npm run verify:full` — lint, invariants, build, 220 offline tests, then 54 Playwright
+runs — before and after any change. `npm run verify` alone skips the browser and is the
+faster inner loop.
 Regenerate fixtures with `node scripts/capture-fixtures.mjs` (read-only; hits the Worker).
 
 ## Hard rules — these are deliberate, do not "fix" them
@@ -111,8 +113,12 @@ handshake and correct endpoint were found. **Re-test before concluding a source 
 ## Deployment — read before any git operation
 
 The dashboard is live and in use. **Do not push to `main`, do not merge to `main`, do not
-trigger the Pages deploy, do not `wrangler deploy`.** Work on a branch. `.github/workflows/
-deploy.yml` fires on a push to `main` only, so a feature branch is safe.
+trigger the Pages deploy, do not `wrangler deploy`.** Work on a branch, and keep it local.
+
+The owner does not use GitHub, so there is no CI to watch and nothing runs on push. The
+`.github/workflows/` files were deleted for that reason. **`npm run verify:full` is the gate**
+— lint, invariants, build, 220 offline tests, then 54 Playwright runs. Run it before and
+after any change. `npm run test:integration` is the weekly live-feed check, run by hand.
 
 ## Findings that are still open (surfaced by EPIC-1, deliberately not fixed)
 

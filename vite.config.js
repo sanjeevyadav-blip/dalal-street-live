@@ -3,8 +3,8 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 
 // Single-file output so the build still deploys to GitHub Pages as one index.html.
 // root is `src` because the entry (index.html) and the PWA assets live there;
-// outDir is therefore written back up to <repo>/dist, which is what
-// .github/workflows/deploy.yml and the CI bundle-size guard expect.
+// outDir is therefore written back up to <repo>/dist, which is the path the deploy expects
+// and what tests/unit/build-output.test.js reads.
 export default defineConfig({
   root: 'src',
   base: './',

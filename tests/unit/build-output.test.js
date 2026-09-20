@@ -61,7 +61,9 @@ suite('built artefact is self-contained', () => {
   });
 
   it('keeps the PWA hooks the deploy smoke test checks for', () => {
-    // .github/workflows/deploy.yml greps the live page for both of these.
+    // These two strings were the deploy smoke test's grep targets. The workflow is gone,
+    // but the assertions outlived it: a build that loses the title or the manifest link is
+    // broken whether or not anything is watching.
     expect(html).toContain('Dalal Street');
     expect(html).toContain('manifest.json');
   });
@@ -96,7 +98,8 @@ suite('built artefact is self-contained', () => {
   });
 
   it('stays under the CI bundle guard of 400 KB', () => {
-    // .github/workflows/ci.yml fails the build over this. Catch it locally instead.
+    // Inherited from the deleted CI size guard, and kept: the whole point of a single-file
+    // artefact is that it stays small enough to serve in one request.
     expect(statSync(DIST).size).toBeLessThan(409600);
   });
 

@@ -1,6 +1,24 @@
 # 20. CI/CD Pipeline
 
-All workflow files are in `scaffold/.github/workflows/` — copy to `.github/workflows/`.
+> **Superseded — kept as a record of intent.** The owner does not use GitHub, so the
+> `.github/workflows/` files this document describes were deleted. Nothing runs on push and
+> there is no pipeline to watch.
+>
+> What replaced it is local and manual, which for a one-person project is the same set of
+> gates without the machinery:
+>
+> | This document's gate | What actually runs it now |
+> |---|---|
+> | lint / invariants / build / unit | `npm run verify` |
+> | E2E | `npm run test:e2e` (or `npm run verify:full` for both) |
+> | bundle-size guard (400 KB) | an assertion in `tests/unit/build-output.test.js` |
+> | deploy smoke test | assertions in `tests/unit/build-output.test.js` |
+> | weekly upstream health check | `npm run test:integration`, run by hand |
+>
+> Read the rest for the reasoning behind each gate; ignore the YAML.
+
+The workflow files described below no longer exist in the repo. Recover them from git history
+(`git show 1ffa52e:.github/workflows/ci.yml`) if GitHub ever becomes part of the setup.
 
 ## Pipeline overview
 
