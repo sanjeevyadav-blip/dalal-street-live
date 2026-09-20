@@ -17,6 +17,7 @@
     "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
     "invariants": "bash scripts/check-invariants.sh",
     "verify": "npm run lint && npm run invariants && npm run build && npm run test",
+    "verify:full": "npm run verify && npm run test:e2e",
     "worker:dev": "wrangler dev worker/worker.js",
     "worker:deploy": "wrangler deploy"
   },
