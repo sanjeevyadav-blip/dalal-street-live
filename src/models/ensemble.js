@@ -33,13 +33,23 @@ import { mean, stdev } from './stats.js';
  * Default weights. Judgement, not fitted — there is no out-of-sample record to fit them to,
  * and inventing one would be worse than admitting this.
  *
- * The ordering encodes what is actually known: the options market has real capital behind
- * it, so it earns the most; GBM is a well-specified model on a bad assumption; the HMM is
- * descriptive; the logistic earns weight only when it has demonstrated out-of-sample edge,
- * which is applied by the caller, not here.
+ * THE OPTIONS-IMPLIED PROBABILITY IS DELIBERATELY ABSENT.
+ *
+ * It is the most tempting input available: the option chain is the only forward-looking
+ * number on the page with real capital behind it. But it is a RISK-NEUTRAL probability —
+ * N(d2) under the pricing measure — and the models here are real-world. The two are not the
+ * same quantity. Risk-neutral probabilities embed a risk premium, which is why they
+ * systematically overstate downside odds, and CLAUDE.md invariant 4 requires that
+ * distinction to be flagged wherever they appear.
+ *
+ * Blending them would quietly erase it: the posterior would be part risk-neutral and part
+ * real-world, labelled as neither, and no caveat could repair that. The options block
+ * reports its own number, correctly labelled, and the lab points readers at it.
+ *
+ * The weights sum to 0.8, under 1, which shrinks the posterior toward 50%. That is
+ * deliberate shrinkage for correlated inputs — see the note at the top of this file.
  */
 export const DEFAULT_WEIGHTS = {
-  options: 0.35,
   gbm: 0.25,
   garch: 0.20,
   hmm: 0.15,

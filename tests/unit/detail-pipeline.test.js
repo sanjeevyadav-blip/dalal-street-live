@@ -24,18 +24,28 @@ describe('DETAIL_BLOCKS', () => {
   //   renderSnapshot         setTimeout 200
   //   renderOptions          setTimeout 400  (shared one timer callback...)
   //   renderFactors          setTimeout 400  (...with options, called second)
-  it('declares the blocks in the order the wrap chain ran them', () => {
-    expect(DETAIL_BLOCKS.map((b) => b.id)).toEqual([
-      'core',
-      'deep-analysis',
-      'snapshot',
-      'options',
-      'factors'
-    ]);
+  // The PR-8 parity contract covers the FIVE blocks the wrap chain produced. It is stated
+  // as a prefix rather than as the whole list so a genuinely new feature can be appended
+  // without weakening it: the original five must keep their order and their delays, and
+  // anything added must come after them. EPIC-5 E5-4 appended 'probability-lab' at 700ms.
+  const WRAP_CHAIN = ['core', 'deep-analysis', 'snapshot', 'options', 'factors'];
+  const WRAP_CHAIN_DELAYS = [0, 0, 200, 400, 400];
+
+  it('still declares the wrap chain blocks first, in the order they ran', () => {
+    expect(DETAIL_BLOCKS.slice(0, WRAP_CHAIN.length).map((b) => b.id)).toEqual(WRAP_CHAIN);
   });
 
-  it('keeps the delays the wrap chain used', () => {
-    expect(DETAIL_BLOCKS.map((b) => b.delayMs)).toEqual([0, 0, 200, 400, 400]);
+  it('still keeps the delays the wrap chain used', () => {
+    expect(DETAIL_BLOCKS.slice(0, WRAP_CHAIN.length).map((b) => b.delayMs)).toEqual(WRAP_CHAIN_DELAYS);
+  });
+
+  it('runs any later block after all of them', () => {
+    // A new block scheduled earlier than 400ms would reorder what is on screen, which is the
+    // thing the parity contract exists to prevent.
+    const later = DETAIL_BLOCKS.slice(WRAP_CHAIN.length);
+    for (const b of later){
+      expect(b.delayMs, b.id + ' would render before the original blocks').toBeGreaterThanOrEqual(400);
+    }
   });
 
   it('gives every block an id and a render function', () => {

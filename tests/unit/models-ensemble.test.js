@@ -191,7 +191,16 @@ describe('Bayesian ensemble', () => {
     // summing to 1 would assert a confidence the construction does not support.
     const total = Object.values(DEFAULT_WEIGHTS).reduce((a, b) => a + b, 0);
     expect(total).toBeGreaterThan(0.5);
-    expect(total).toBeLessThan(1.5);
-    expect(DEFAULT_WEIGHTS.options).toBeGreaterThan(DEFAULT_WEIGHTS.hmm);
+    expect(total).toBeLessThan(1);
+  });
+
+  it('excludes the options-implied probability, which is a different quantity', () => {
+    // The most tempting input on the page, and a category error. N(d2) from the option chain
+    // is RISK-NEUTRAL; every model here is real-world. Risk-neutral probabilities embed a
+    // risk premium, which is why CLAUDE.md invariant 4 requires them to be flagged wherever
+    // they appear. Blending them in would make the posterior part one measure and part the
+    // other, labelled as neither, and no caveat could repair that.
+    expect(DEFAULT_WEIGHTS.options).toBeUndefined();
+    expect(Object.keys(DEFAULT_WEIGHTS).sort()).toEqual(['garch', 'gbm', 'hmm', 'logistic']);
   });
 });

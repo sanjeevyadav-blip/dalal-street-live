@@ -12,8 +12,14 @@
 //   chartData  the full 2-year series plus precomputed overlays, kept at full length so
 //              changing the visible range re-slices instead of re-fetching.
 //   range      the visible window: one of the keys of RANGE_DAYS in ui/charts.js.
+//   dcfInputs  what the DCF was built from, stashed by ui/deep-analysis.js so the
+//              probability lab can re-run it under uncertainty without a second round of
+//              fetchAnnuals and fetchFundamentals. Null until the DCF succeeds, and reset
+//              on every stock load so the lab can never draw on the previous company's
+//              cash flows.
 export const detailState = {
   symbol: null,
   chartData: null,
-  range: '1y'
+  range: '1y',
+  dcfInputs: null
 };

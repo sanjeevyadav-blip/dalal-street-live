@@ -10,6 +10,7 @@ import { atrLast } from '../indicators/volatility.js';
 import { suppressed } from '../suppressed.js';
 import { fmtCr, fmtNum } from './format.js';
 import { renderThesis } from './thesis.js';
+import { detailState } from './detail-state.js';
 import { computeDcf } from '../valuation/dcf.js';
 import { earningsQuality } from '../valuation/earnings-quality.js';
 
@@ -54,6 +55,12 @@ export async function renderDeepAnalysis(symbol, hist, price){
     } catch (err) { suppressed('dcf inputs: fundamentals', err); }
     const dcfEl = document.getElementById('dcfBlock');
     const d = computeDcf(ann, price, shares, beta, netDebt);
+    // Hand the inputs to the probability lab (EPIC-5 E5-4) rather than making it fetch the
+    // annuals and fundamentals a second time. Only set when the DCF actually computed: the
+    // lab must not run on a company whose cash-flow history could not support one.
+    detailState.dcfInputs = (d && !d.error && shares > 0)
+      ? { base: d.base, shares, netDebt, price, growth: d.growth, disc: d.disc }
+      : null;
     if (!d) {
       dcfEl.innerHTML = '<div class="note-inline">Not enough cash-flow history published for this symbol to build a DCF.</div>';
     } else if (d.error) {

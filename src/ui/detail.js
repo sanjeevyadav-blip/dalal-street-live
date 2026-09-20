@@ -49,6 +49,7 @@ import { renderSnapshot } from './snapshot.js';
 import { addSymbolToWatchlist } from './watchlist.js';
 import { showError } from './errors.js';
 import { suppressed } from '../suppressed.js';
+import { renderProbabilityLab } from './probability-lab.js';
 
 function renderDetailCore(symbol, hist, niftyHist){
   const meta = hist.meta;
@@ -232,7 +233,12 @@ export const DETAIL_BLOCKS = [
   { id: 'deep-analysis', delayMs: 0, render: (ctx) => renderDeepAnalysis(ctx.symbol, ctx.hist, ctx.price) },
   { id: 'snapshot', delayMs: 200, render: (ctx) => renderSnapshot(ctx.symbol, ctx.hist, ctx.niftyHist, ctx.price) },
   { id: 'options', delayMs: 400, render: (ctx) => renderOptions(ctx.ticker, ctx.price) },
-  { id: 'factors', delayMs: 400, render: (ctx) => renderFactors(ctx.symbol, ctx.hist) }
+  { id: 'factors', delayMs: 400, render: (ctx) => renderFactors(ctx.symbol, ctx.hist) },
+  // EPIC-5 E5-4. Last, and at 700ms rather than 400, for two reasons: it reads
+  // detailState.dcfInputs, which deep-analysis only fills once its fetches land, and its
+  // models run for roughly 100ms on the main thread. Putting it behind the blocks that
+  // paint keeps that cost off the first render rather than in front of it.
+  { id: 'probability-lab', delayMs: 700, render: (ctx) => renderProbabilityLab(ctx.hist, detailState.dcfInputs) }
 ];
 
 /**
@@ -292,14 +298,16 @@ const BLOCK_HOSTS = {
   'deep-analysis': 'deepBlock',
   'snapshot': 'snapBlock',
   'options': 'optBlock',
-  'factors': 'facBlock'
+  'factors': 'facBlock',
+  'probability-lab': 'labBlock'
 };
 
 const BLOCK_LABELS = {
   'deep-analysis': 'Deep analysis',
   'snapshot': 'Snapshot',
   'options': 'Options-implied probability',
-  'factors': 'Factor decomposition'
+  'factors': 'Factor decomposition',
+  'probability-lab': 'Probability lab'
 };
 
 export function renderBlockError(blockId, err) {

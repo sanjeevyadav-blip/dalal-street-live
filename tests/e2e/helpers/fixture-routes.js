@@ -57,6 +57,18 @@ function syntheticChart(symbol, range) {
   return clone;
 }
 
+/** Keep only the last `bars` observations, leaving the response otherwise well-formed. */
+function truncateChart(data, bars) {
+  const clone = JSON.parse(JSON.stringify(data));
+  const r = clone.chart.result[0];
+  r.timestamp = (r.timestamp || []).slice(-bars);
+  const q = (r.indicators && r.indicators.quote && r.indicators.quote[0]) || {};
+  for (const key of Object.keys(q)) {
+    if (Array.isArray(q[key])) q[key] = q[key].slice(-bars);
+  }
+  return clone;
+}
+
 function chartResponse(target) {
   const m = /\/v8\/finance\/chart\/([^?]+)/.exec(target.pathname + target.search);
   if (!m) return null;
@@ -94,13 +106,15 @@ function annualsResponse(target) {
  * @param {import('@playwright/test').Page} page
  * @param {object} [opts]
  * @param {boolean} [opts.offline]  Fail every upstream call, to exercise the dead-network path.
+ * @param {number} [opts.historyBars]  Truncate every chart response to this many bars, to
+ *   exercise the paths that decline for want of history rather than computing on nothing.
  * @param {string[]} [opts.fnoSymbols]  Tickers that have a listed option chain. Everything
  *   else gets an empty expiry list, which is how NSE answers for a non-F&O name — that is
  *   what drives the "no contracts" state rather than a wall of zeros.
  * @returns {{count: () => number}} request counter, for asserting a re-render did not re-fetch.
  */
 export async function installFixtureRoutes(page, opts = {}) {
-  const { offline = false, fnoSymbols = ['RELIANCE'] } = opts;
+  const { offline = false, fnoSymbols = ['RELIANCE'], historyBars = null } = opts;
   let requests = 0;
 
   await page.route(PROXY_GLOB, async (route) => {
@@ -128,7 +142,8 @@ export async function installFixtureRoutes(page, opts = {}) {
 
     if (path.includes('/v8/finance/chart/')) {
       const data = chartResponse(target);
-      return data ? json(data) : route.fulfill({ status: 404, body: 'no fixture' });
+      if (!data) return route.fulfill({ status: 404, body: 'no fixture' });
+      return json(historyBars ? truncateChart(data, historyBars) : data);
     }
     if (path.includes('/v10/finance/quoteSummary/')) {
       const data = quoteSummaryResponse(target);

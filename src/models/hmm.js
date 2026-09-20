@@ -168,8 +168,12 @@ export function fitHmm(closes){
     expRetAnn: expRet * 252 * 100,
     blendVolAnn: Math.sqrt(blendVar * 252) * 100,
     separation,
-    regime: pBull > 0.6 ? 'Calmer, higher-drift state'
-      : pBull < 0.4 ? 'Volatile, lower-drift state'
+    // Labelled by DRIFT, because that is what bullIdx sorts on. Calling the higher-drift
+    // state "calmer" would be wrong as often as not: on real data the higher-drift state
+    // frequently carries the higher volatility too, and a label that asserts otherwise is
+    // a claim the model never made.
+    regime: pBull > 0.6 ? 'Higher-drift state'
+      : pBull < 0.4 ? 'Lower-drift state'
         : 'Between states',
     n: N
   };
