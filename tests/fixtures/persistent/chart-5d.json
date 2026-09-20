@@ -1,0 +1,134 @@
+{
+  "capturedAt": "2026-09-20T07:09:32.428Z",
+  "upstream": "https://query1.finance.yahoo.com/v8/finance/chart/PERSISTENT.NS?interval=1d&range=5d",
+  "body": {
+    "chart": {
+      "result": [
+        {
+          "meta": {
+            "currency": "INR",
+            "symbol": "PERSISTENT.NS",
+            "exchangeName": "NSI",
+            "fullExchangeName": "NSE",
+            "instrumentType": "EQUITY",
+            "firstTradeDate": 1270525500,
+            "regularMarketTime": 1789724702,
+            "hasPrePostMarketData": false,
+            "gmtoffset": 19800,
+            "timezone": "IST",
+            "exchangeTimezoneName": "Asia/Kolkata",
+            "regularMarketPrice": 5416,
+            "regularMarketChangePercent": -1.041,
+            "fulldayPrice": 5416,
+            "fulldayChange": -57,
+            "fulldayChangePercent": -1.041,
+            "fiftyTwoWeekHigh": 6599,
+            "fiftyTwoWeekLow": 4244.5,
+            "regularMarketDayHigh": 5500,
+            "regularMarketDayLow": 5389,
+            "regularMarketVolume": 494682,
+            "longName": "Persistent Systems Limited",
+            "shortName": "PERSISTENT SYSTEMS LTD",
+            "chartPreviousClose": 5516,
+            "priceHint": 2,
+            "currentTradingPeriod": {
+              "pre": {
+                "timezone": "IST",
+                "end": 1789703100,
+                "start": 1789703100,
+                "gmtoffset": 19800
+              },
+              "regular": {
+                "timezone": "IST",
+                "end": 1789725600,
+                "start": 1789703100,
+                "gmtoffset": 19800
+              },
+              "post": {
+                "timezone": "IST",
+                "end": 1789725600,
+                "start": 1789725600,
+                "gmtoffset": 19800
+              }
+            },
+            "dataGranularity": "1d",
+            "range": "5d",
+            "validRanges": [
+              "1d",
+              "5d",
+              "1mo",
+              "3mo",
+              "6mo",
+              "1y",
+              "2y",
+              "5y",
+              "10y",
+              "ytd",
+              "max"
+            ]
+          },
+          "timestamp": [
+            1789357500,
+            1789443900,
+            1789530300,
+            1789616700,
+            1789703100
+          ],
+          "indicators": {
+            "quote": [
+              {
+                "low": [
+                  5516,
+                  5456.5,
+                  5390.5,
+                  null,
+                  5389
+                ],
+                "high": [
+                  5516,
+                  5759,
+                  5529.5,
+                  null,
+                  5500
+                ],
+                "close": [
+                  5516,
+                  5477.5,
+                  5440,
+                  null,
+                  5416
+                ],
+                "open": [
+                  5516,
+                  5654,
+                  5522,
+                  null,
+                  5476
+                ],
+                "volume": [
+                  0,
+                  812335,
+                  412053,
+                  null,
+                  494682
+                ]
+              }
+            ],
+            "adjclose": [
+              {
+                "adjclose": [
+                  5516,
+                  5477.5,
+                  5440,
+                  null,
+                  5416
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "error": null
+    }
+  }
+}

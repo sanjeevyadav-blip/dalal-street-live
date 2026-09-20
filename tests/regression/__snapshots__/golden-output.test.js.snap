@@ -1,0 +1,852 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`golden output — hdfcbank > history unpacks to a consistent shape 1`] = `
+{
+  "allSeriesAligned": true,
+  "bars": 501,
+  "currency": "INR",
+  "hasPreviousClose": false,
+}
+`;
+
+exports[`golden output — hdfcbank > indicators 1`] = `
+{
+  "atr14": "12.983729",
+  "bollinger": {
+    "lower": "689.946397",
+    "mid": "712.419998",
+    "percentB": "0.913374",
+    "upper": "734.893599",
+  },
+  "ema12": "714.025918",
+  "macd": {
+    "hist": "4.079223",
+    "macd": "-4.680259",
+    "signal": "-8.759483",
+  },
+  "rsi14": "55.973925",
+  "sma200": "824.049250",
+  "sma50": "735.738000",
+  "volPct": "19.785468",
+}
+`;
+
+exports[`golden output — hdfcbank > models 1`] = `
+{
+  "gbm30": {
+    "drift": "-29.1126",
+    "p": "31.9905",
+    "vol": "21.4649",
+  },
+  "gbm90": {
+    "drift": "-29.1126",
+    "p": "20.8816",
+    "vol": "21.4649",
+  },
+}
+`;
+
+exports[`golden output — hdfcbank > price action and candlestick patterns 1`] = `
+{
+  "patterns": [
+    {
+      "age": "4d ago",
+      "bias": "neutral",
+      "name": "Doji",
+      "note": "Open and close nearly equal — indecision",
+    },
+  ],
+  "priceAction": {
+    "resistance": "732.1000",
+    "support": "722.0000",
+    "toResistance": "0.1505",
+    "toSupport": "1.2312",
+    "trend": "Downtrend — lower highs and lower lows",
+  },
+}
+`;
+
+exports[`golden output — hdfcbank > risk and momentum 1`] = `
+{
+  "beta": "1.092859",
+  "cagrPct": "-7.126358",
+  "corr": "0.720496",
+  "maxDrawdownPct": "-32.165075",
+  "obv": "rising (volume confirming)",
+  "pivots": {
+    "p": "715.133341",
+    "r1": "717.266683",
+    "r2": "721.533366",
+    "s1": "710.866659",
+    "s2": "708.733317",
+  },
+  "sharpeStyle": "-0.713976",
+  "stochastic": {
+    "d": "63.647154",
+    "k": "72.272538",
+  },
+}
+`;
+
+exports[`golden output — hdfcbank > valuation 1`] = `
+{
+  "dcf": {
+    "base": "1065776300000",
+    "disc": "0.110000",
+    "growth": "0.200000",
+    "intrinsic": "1546.48",
+    "outcome": "computed",
+    "sens": [
+      {
+        "dr": "0.110000",
+        "vals": [
+          "1285.08",
+          "1546.48",
+          "1853.43",
+        ],
+      },
+      {
+        "dr": "0.130000",
+        "vals": [
+          "938.70",
+          "1130.68",
+          "1354.92",
+        ],
+      },
+      {
+        "dr": "0.150000",
+        "vals": [
+          "719.18",
+          "867.94",
+          "1040.81",
+        ],
+      },
+    ],
+    "upside": "111.56",
+  },
+  "earningsQuality": {
+    "accr": "-0.7863",
+    "capexInt": "4.7189",
+    "cfni": "1.5871",
+    "fcf": "1065776300000.0000",
+    "fcfMargin": "55.3458",
+    "flags": [
+      {
+        "good": true,
+        "t": "Operating cash flow exceeds reported profit — earnings are cash-backed",
+      },
+      {
+        "good": true,
+        "t": "Low accruals — little reliance on non-cash accounting entries",
+      },
+      {
+        "good": true,
+        "t": "Positive free cash flow after capex",
+      },
+      {
+        "good": true,
+        "t": "Cash flow is keeping pace with revenue growth",
+      },
+    ],
+    "grade": "Strong",
+    "max": "4.0000",
+    "ocfG": "32.8371",
+    "revG": "16.9014",
+    "score": "4.0000",
+    "years": "4.0000",
+  },
+  "reverseDcf": {
+    "capped": true,
+    "implied": "-0.200000",
+  },
+}
+`;
+
+exports[`golden output — persistent > history unpacks to a consistent shape 1`] = `
+{
+  "allSeriesAligned": true,
+  "bars": 500,
+  "currency": "INR",
+  "hasPreviousClose": false,
+}
+`;
+
+exports[`golden output — persistent > indicators 1`] = `
+{
+  "atr14": "151.095075",
+  "bollinger": {
+    "lower": "5357.970195",
+    "mid": "5595.725000",
+    "percentB": "0.122037",
+    "upper": "5833.479805",
+  },
+  "ema12": "5514.996679",
+  "macd": {
+    "hist": "-37.127344",
+    "macd": "-6.329867",
+    "signal": "30.797477",
+  },
+  "rsi14": "44.207461",
+  "sma200": "5401.798494",
+  "sma50": "5457.467988",
+  "volPct": "36.054169",
+}
+`;
+
+exports[`golden output — persistent > models 1`] = `
+{
+  "gbm30": {
+    "drift": "-2.1911",
+    "p": "49.1315",
+    "vol": "34.7261",
+  },
+  "gbm90": {
+    "drift": "-2.1911",
+    "p": "48.4960",
+    "vol": "34.7261",
+  },
+}
+`;
+
+exports[`golden output — persistent > price action and candlestick patterns 1`] = `
+{
+  "patterns": [
+    {
+      "age": "2d ago",
+      "bias": "bearish",
+      "name": "Bearish Engulfing",
+      "note": "Today's body swallows yesterday's up candle",
+    },
+    {
+      "age": "2d ago",
+      "bias": "bearish",
+      "name": "Evening Star",
+      "note": "Up candle, pause, then sharp reversal",
+    },
+    {
+      "age": "3d ago",
+      "bias": "neutral",
+      "name": "Doji",
+      "note": "Open and close nearly equal — indecision",
+    },
+  ],
+  "priceAction": {
+    "resistance": "5489.0000",
+    "support": "5390.0000",
+    "toResistance": "1.3479",
+    "toSupport": "0.4801",
+    "trend": "Sideways / range-bound",
+  },
+}
+`;
+
+exports[`golden output — persistent > risk and momentum 1`] = `
+{
+  "beta": "1.110481",
+  "cagrPct": "2.257142",
+  "corr": "0.402129",
+  "maxDrawdownPct": "-35.595279",
+  "obv": "falling (volume diverging)",
+  "pivots": {
+    "p": "5453.333333",
+    "r1": "5516.166667",
+    "r2": "5592.333333",
+    "s1": "5377.166667",
+    "s2": "5314.333333",
+  },
+  "sharpeStyle": "-0.131548",
+  "stochastic": {
+    "d": "19.505981",
+    "k": "14.032307",
+  },
+}
+`;
+
+exports[`golden output — persistent > valuation 1`] = `
+{
+  "dcf": {
+    "base": "15585490000",
+    "disc": "0.130000",
+    "growth": "0.200000",
+    "intrinsic": "2026.28",
+    "outcome": "computed",
+    "sens": [
+      {
+        "dr": "0.110000",
+        "vals": [
+          "2249.08",
+          "2626.29",
+          "3069.23",
+        ],
+      },
+      {
+        "dr": "0.130000",
+        "vals": [
+          "1749.25",
+          "2026.28",
+          "2349.87",
+        ],
+      },
+      {
+        "dr": "0.150000",
+        "vals": [
+          "1432.48",
+          "1647.14",
+          "1896.60",
+        ],
+      },
+    ],
+    "upside": "-62.59",
+  },
+  "earningsQuality": {
+    "accr": "0.8613",
+    "capexInt": "11.8034",
+    "cfni": "0.9475",
+    "fcf": "15585490000.0000",
+    "fcfMargin": "10.5675",
+    "flags": [
+      {
+        "good": false,
+        "t": "Profit is running ahead of cash generation — worth checking why",
+      },
+      {
+        "good": true,
+        "t": "Low accruals — little reliance on non-cash accounting entries",
+      },
+      {
+        "good": true,
+        "t": "Positive free cash flow after capex",
+      },
+      {
+        "good": true,
+        "t": "Cash flow is keeping pace with revenue growth",
+      },
+    ],
+    "grade": "Reasonable",
+    "max": "4.0000",
+    "ocfG": "22.7363",
+    "revG": "20.8768",
+    "score": "3.0000",
+    "years": "4.0000",
+  },
+  "reverseDcf": {
+    "capped": false,
+    "implied": "0.469122",
+  },
+}
+`;
+
+exports[`golden output — reliance > history unpacks to a consistent shape 1`] = `
+{
+  "allSeriesAligned": true,
+  "bars": 501,
+  "currency": "INR",
+  "hasPreviousClose": false,
+}
+`;
+
+exports[`golden output — reliance > indicators 1`] = `
+{
+  "atr14": "19.653352",
+  "bollinger": {
+    "lower": "1223.981415",
+    "mid": "1281.780005",
+    "percentB": "0.020923",
+    "upper": "1339.578594",
+  },
+  "ema12": "1261.305202",
+  "macd": {
+    "hist": "-6.991290",
+    "macd": "-18.170668",
+    "signal": "-11.179378",
+  },
+  "rsi14": "31.961795",
+  "sma200": "1374.812502",
+  "sma50": "1295.396001",
+  "volPct": "20.761245",
+}
+`;
+
+exports[`golden output — reliance > models 1`] = `
+{
+  "gbm30": {
+    "drift": "-14.3616",
+    "p": "40.4088",
+    "vol": "20.4104",
+  },
+  "gbm90": {
+    "drift": "-14.3616",
+    "p": "33.7058",
+    "vol": "20.4104",
+  },
+}
+`;
+
+exports[`golden output — reliance > price action and candlestick patterns 1`] = `
+{
+  "patterns": [
+    {
+      "age": "1d ago",
+      "bias": "neutral",
+      "name": "Doji",
+      "note": "Open and close nearly equal — indecision",
+    },
+    {
+      "age": "2d ago",
+      "bias": "bearish",
+      "name": "Shooting Star",
+      "note": "Long upper wick — buyers rejected",
+    },
+  ],
+  "priceAction": {
+    "resistance": "1288.7000",
+    "support": "1226.4000",
+    "toResistance": "5.0799",
+    "toSupport": "0.0000",
+    "trend": "Sideways / range-bound",
+  },
+}
+`;
+
+exports[`golden output — reliance > risk and momentum 1`] = `
+{
+  "beta": "1.046327",
+  "cagrPct": "-8.462119",
+  "corr": "0.657398",
+  "maxDrawdownPct": "-23.868496",
+  "obv": "falling (volume diverging)",
+  "pivots": {
+    "p": "1245.266683",
+    "r1": "1252.033366",
+    "r2": "1260.166707",
+    "s1": "1237.133341",
+    "s2": "1230.366659",
+  },
+  "sharpeStyle": "-0.744759",
+  "stochastic": {
+    "d": "4.184629",
+    "k": "4.537678",
+  },
+}
+`;
+
+exports[`golden output — reliance > valuation 1`] = `
+{
+  "dcf": {
+    "base": "691970000000",
+    "disc": "0.130000",
+    "growth": "0.080000",
+    "intrinsic": "539.77",
+    "outcome": "computed",
+    "sens": [
+      {
+        "dr": "0.110000",
+        "vals": [
+          "656.36",
+          "724.69",
+          "846.59",
+        ],
+      },
+      {
+        "dr": "0.130000",
+        "vals": [
+          "487.54",
+          "539.77",
+          "631.27",
+        ],
+      },
+      {
+        "dr": "0.150000",
+        "vals": [
+          "380.10",
+          "422.14",
+          "494.49",
+        ],
+      },
+    ],
+    "upside": "-55.99",
+  },
+  "earningsQuality": {
+    "accr": "-5.1116",
+    "capexInt": "63.9811",
+    "cfni": "2.3784",
+    "fcf": "691970000000.0000",
+    "fcfMargin": "6.5452",
+    "flags": [
+      {
+        "good": true,
+        "t": "Operating cash flow exceeds reported profit — earnings are cash-backed",
+      },
+      {
+        "good": true,
+        "t": "Low accruals — little reliance on non-cash accounting entries",
+      },
+      {
+        "good": true,
+        "t": "Positive free cash flow after capex",
+      },
+      {
+        "good": true,
+        "t": "Cash flow is keeping pace with revenue growth",
+      },
+    ],
+    "grade": "Strong",
+    "max": "4.0000",
+    "ocfG": "18.6441",
+    "revG": "6.3941",
+    "score": "4.0000",
+    "years": "4.0000",
+  },
+  "reverseDcf": {
+    "capped": false,
+    "implied": "0.275773",
+  },
+}
+`;
+
+exports[`golden output — shared maths > nCdf at reference points 1`] = `
+[
+  "0.02499783",
+  "0.15865526",
+  "0.50000000",
+  "0.84134474",
+  "0.97500217",
+  "0.99500244",
+]
+`;
+
+exports[`golden output — shared maths > olsMulti on an exact linear system 1`] = `
+{
+  "beta": [
+    "2.818182",
+  ],
+  "n": "5.000000",
+  "r2": "0.795455",
+  "se": [
+    "0.192847",
+  ],
+}
+`;
+
+exports[`golden output — shared maths > option chain analysis inputs are intact 1`] = `
+{
+  "firstStrikeHasBothSides": true,
+  "hasUnderlying": true,
+  "strikes": 43,
+}
+`;
+
+exports[`golden output — tcs > history unpacks to a consistent shape 1`] = `
+{
+  "allSeriesAligned": true,
+  "bars": 501,
+  "currency": "INR",
+  "hasPreviousClose": false,
+}
+`;
+
+exports[`golden output — tcs > indicators 1`] = `
+{
+  "atr14": "64.931510",
+  "bollinger": {
+    "lower": "2121.115131",
+    "mid": "2262.755017",
+    "percentB": "-0.056888",
+    "upper": "2404.394903",
+  },
+  "ema12": "2216.838690",
+  "macd": {
+    "hist": "-15.847343",
+    "macd": "-39.417298",
+    "signal": "-23.569955",
+  },
+  "rsi14": "32.212424",
+  "sma200": "2550.308498",
+  "sma50": "2300.468013",
+  "volPct": "24.753928",
+}
+`;
+
+exports[`golden output — tcs > models 1`] = `
+{
+  "gbm30": {
+    "drift": "-41.3167",
+    "p": "30.8527",
+    "vol": "28.5096",
+  },
+  "gbm90": {
+    "drift": "-41.3167",
+    "p": "19.3224",
+    "vol": "28.5096",
+  },
+}
+`;
+
+exports[`golden output — tcs > price action and candlestick patterns 1`] = `
+{
+  "patterns": [
+    {
+      "age": "today",
+      "bias": "bearish",
+      "name": "Bearish Marubozu",
+      "note": "Full-body candle, one side in control",
+    },
+    {
+      "age": "1d ago",
+      "bias": "bearish",
+      "name": "Shooting Star",
+      "note": "Long upper wick — buyers rejected",
+    },
+    {
+      "age": "4d ago",
+      "bias": "neutral",
+      "name": "Doji",
+      "note": "Open and close nearly equal — indecision",
+    },
+  ],
+  "priceAction": {
+    "resistance": "2122.7000",
+    "support": "2055.0000",
+    "toResistance": "0.8409",
+    "toSupport": "2.3753",
+    "trend": "Downtrend — lower highs and lower lows",
+  },
+}
+`;
+
+exports[`golden output — tcs > risk and momentum 1`] = `
+{
+  "beta": "0.823708",
+  "cagrPct": "-30.422972",
+  "corr": "0.434071",
+  "maxDrawdownPct": "-55.685196",
+  "obv": "falling (volume diverging)",
+  "pivots": {
+    "p": "2205.366699",
+    "r1": "2248.233398",
+    "r2": "2306.466797",
+    "s1": "2147.133301",
+    "s2": "2104.266602",
+  },
+  "sharpeStyle": "-1.511799",
+  "stochastic": {
+    "d": "12.803495",
+    "k": "6.802525",
+  },
+}
+`;
+
+exports[`golden output — tcs > valuation 1`] = `
+{
+  "dcf": {
+    "base": "479480000000",
+    "disc": "0.130000",
+    "growth": "0.072516",
+    "intrinsic": "1724.52",
+    "outcome": "computed",
+    "sens": [
+      {
+        "dr": "0.110000",
+        "vals": [
+          "2062.12",
+          "2192.46",
+          "2488.82",
+        ],
+      },
+      {
+        "dr": "0.130000",
+        "vals": [
+          "1624.58",
+          "1724.52",
+          "1947.57",
+        ],
+      },
+      {
+        "dr": "0.150000",
+        "vals": [
+          "1346.15",
+          "1426.80",
+          "1603.63",
+        ],
+      },
+    ],
+    "upside": "-18.08",
+  },
+  "earningsQuality": {
+    "accr": "-1.5814",
+    "capexInt": "7.9587",
+    "cfni": "1.0586",
+    "fcf": "479480000000.0000",
+    "fcfMargin": "17.9566",
+    "flags": [
+      {
+        "good": true,
+        "t": "Operating cash flow exceeds reported profit — earnings are cash-backed",
+      },
+      {
+        "good": true,
+        "t": "Low accruals — little reliance on non-cash accounting entries",
+      },
+      {
+        "good": true,
+        "t": "Positive free cash flow after capex",
+      },
+      {
+        "good": true,
+        "t": "Cash flow is keeping pace with revenue growth",
+      },
+    ],
+    "grade": "Strong",
+    "max": "4.0000",
+    "ocfG": "7.4732",
+    "revG": "5.8018",
+    "score": "4.0000",
+    "years": "4.0000",
+  },
+  "reverseDcf": {
+    "capped": false,
+    "implied": "0.135188",
+  },
+}
+`;
+
+exports[`golden output — tmpv > history unpacks to a consistent shape 1`] = `
+{
+  "allSeriesAligned": true,
+  "bars": 501,
+  "currency": "INR",
+  "hasPreviousClose": false,
+}
+`;
+
+exports[`golden output — tmpv > indicators 1`] = `
+{
+  "atr14": "8.315259",
+  "bollinger": {
+    "lower": "297.283245",
+    "mid": "308.715001",
+    "percentB": "0.285028",
+    "upper": "320.146756",
+  },
+  "ema12": "306.765870",
+  "macd": {
+    "hist": "0.970358",
+    "macd": "-6.486292",
+    "signal": "-7.456650",
+  },
+  "rsi14": "40.544418",
+  "sma200": "347.330250",
+  "sma50": "324.527999",
+  "volPct": "47.252323",
+}
+`;
+
+exports[`golden output — tmpv > models 1`] = `
+{
+  "gbm30": {
+    "drift": "-85.3973",
+    "p": "31.1201",
+    "vol": "59.8335",
+  },
+  "gbm90": {
+    "drift": "-85.3973",
+    "p": "19.6845",
+    "vol": "59.8335",
+  },
+}
+`;
+
+exports[`golden output — tmpv > price action and candlestick patterns 1`] = `
+{
+  "patterns": [
+    {
+      "age": "1d ago",
+      "bias": "bullish",
+      "name": "Bullish Engulfing",
+      "note": "Today's body swallows yesterday's down candle",
+    },
+    {
+      "age": "3d ago",
+      "bias": "bearish",
+      "name": "Bearish Marubozu",
+      "note": "Full-body candle, one side in control",
+    },
+    {
+      "age": "4d ago",
+      "bias": "neutral",
+      "name": "Doji",
+      "note": "Open and close nearly equal — indecision",
+    },
+  ],
+  "priceAction": {
+    "resistance": "315.5000",
+    "support": "299.3000",
+    "toResistance": "3.8512",
+    "toSupport": "1.4812",
+    "trend": "Sideways / range-bound",
+  },
+}
+`;
+
+exports[`golden output — tmpv > risk and momentum 1`] = `
+{
+  "beta": "1.378845",
+  "cagrPct": "-43.827518",
+  "corr": "0.380643",
+  "maxDrawdownPct": "-70.175703",
+  "obv": "falling (volume diverging)",
+  "pivots": {
+    "p": "311.349996",
+    "r1": "322.949992",
+    "r2": "331.399984",
+    "s1": "302.900004",
+    "s2": "291.300008",
+  },
+  "sharpeStyle": "-1.075662",
+  "stochastic": {
+    "d": "35.569437",
+    "k": "42.001403",
+  },
+}
+`;
+
+exports[`golden output — tmpv > valuation 1`] = `
+{
+  "dcf": {
+    "error": "Free cash flow is negative or unavailable, so a DCF would be meaningless here.",
+    "outcome": "declined",
+  },
+  "earningsQuality": {
+    "accr": "18.1579",
+    "capexInt": "278.2149",
+    "cfni": "0.1583",
+    "fcf": "-232410000000.0000",
+    "fcfMargin": "-6.9713",
+    "flags": [
+      {
+        "good": false,
+        "t": "Profit is running ahead of cash generation — worth checking why",
+      },
+      {
+        "good": false,
+        "t": "High accruals — a bigger share of profit is non-cash",
+      },
+      {
+        "good": false,
+        "t": "Capex is consuming all operating cash flow",
+      },
+      {
+        "good": false,
+        "t": "Revenue is growing faster than cash flow — possible receivables build-up",
+      },
+    ],
+    "grade": "Weak",
+    "max": "4.0000",
+    "ocfG": "-28.3057",
+    "revG": "-0.9314",
+    "score": "0.0000",
+    "years": "4.0000",
+  },
+  "reverseDcf": null,
+}
+`;

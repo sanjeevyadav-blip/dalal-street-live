@@ -1,0 +1,7 @@
+name = "dalal-proxy"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+account_id = "72c873a84fcd130082ce94b1fca2a6a3"
+
+# Deploy:  npx wrangler deploy
+# Tail:    npx wrangler tail

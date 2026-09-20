@@ -1,0 +1,459 @@
+{
+  "capturedAt": "2026-09-20T07:09:28.630Z",
+  "upstream": "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/RELIANCE.NS?symbol=RELIANCE.NS&type=annualOperatingCashFlow,annualCapitalExpenditure,annualNetIncome,annualTotalRevenue,annualTotalAssets&period1=1569136165&period2=1789888165",
+  "body": {
+    "timeseries": {
+      "result": [
+        {
+          "meta": {
+            "symbol": [
+              "RELIANCE.NS"
+            ],
+            "type": [
+              "annualTotalRevenue"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualTotalRevenue": [
+            {
+              "dataId": 20100,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 8778350000000,
+                "fmt": "8.78T"
+              }
+            },
+            {
+              "dataId": 20100,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 9010640000000,
+                "fmt": "9.01T"
+              }
+            },
+            {
+              "dataId": 20100,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 9646930000000,
+                "fmt": "9.65T"
+              }
+            },
+            {
+              "dataId": 20100,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 10572190000000,
+                "fmt": "10.57T"
+              }
+            }
+          ]
+        },
+        {
+          "meta": {
+            "symbol": [
+              "RELIANCE.NS"
+            ],
+            "type": [
+              "annualOperatingCashFlow"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualOperatingCashFlow": [
+            {
+              "dataId": 26014,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 1150320000000,
+                "fmt": "1.15T"
+              }
+            },
+            {
+              "dataId": 26014,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 1587880000000,
+                "fmt": "1.59T"
+              }
+            },
+            {
+              "dataId": 26014,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 1787030000000,
+                "fmt": "1.79T"
+              }
+            },
+            {
+              "dataId": 26014,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 1921130000000,
+                "fmt": "1.92T"
+              }
+            }
+          ]
+        },
+        {
+          "meta": {
+            "symbol": [
+              "RELIANCE.NS"
+            ],
+            "type": [
+              "annualNetIncome"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualNetIncome": [
+            {
+              "dataId": 20091,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 667020000000,
+                "fmt": "667.02B"
+              }
+            },
+            {
+              "dataId": 20091,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 696210000000,
+                "fmt": "696.21B"
+              }
+            },
+            {
+              "dataId": 20091,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 696480000000,
+                "fmt": "696.48B"
+              }
+            },
+            {
+              "dataId": 20091,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 807750000000,
+                "fmt": "807.75B"
+              }
+            }
+          ]
+        },
+        {
+          "meta": {
+            "symbol": [
+              "RELIANCE.NS"
+            ],
+            "type": [
+              "annualTotalAssets"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualTotalAssets": [
+            {
+              "dataId": 23220,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 16074310000000,
+                "fmt": "16.07T"
+              },
+              "businessSegmentData": [
+                {
+                  "dataValue": 5062380000000,
+                  "segmentType": "Business",
+                  "segmentName": "Digital Services",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 0,
+                  "segmentType": "Business",
+                  "segmentName": "Financial Services",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 378120000000,
+                  "segmentType": "Business",
+                  "segmentName": "Oil and Gas",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 3855040000000,
+                  "segmentType": "Business",
+                  "segmentName": "Oil to Chemicals (O2C)",
+                  "isPrimarySegment": 1
+                },
+                {
+                  "dataValue": 2171330000000,
+                  "segmentType": "Business",
+                  "segmentName": "Others",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 1683140000000,
+                  "segmentType": "Business",
+                  "segmentName": "Retail",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 2924300000000,
+                  "segmentType": "Business",
+                  "segmentName": "Unallocable",
+                  "isPrimarySegment": 0
+                }
+              ]
+            },
+            {
+              "dataId": 23220,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 17559860000000,
+                "fmt": "17.56T"
+              },
+              "businessSegmentData": [
+                {
+                  "dataValue": 5552690000000,
+                  "segmentType": "Business",
+                  "segmentName": "Digital Services",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 366250000000,
+                  "segmentType": "Business",
+                  "segmentName": "Oil and Gas",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 4163220000000,
+                  "segmentType": "Business",
+                  "segmentName": "Oil to Chemicals (O2C)",
+                  "isPrimarySegment": 1
+                },
+                {
+                  "dataValue": 2524350000000,
+                  "segmentType": "Business",
+                  "segmentName": "Others",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 1987650000000,
+                  "segmentType": "Business",
+                  "segmentName": "Retail",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 2965700000000,
+                  "segmentType": "Business",
+                  "segmentName": "Unallocable",
+                  "isPrimarySegment": 0
+                }
+              ]
+            },
+            {
+              "dataId": 23220,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 19501210000000,
+                "fmt": "19.50T"
+              },
+              "businessSegmentData": [
+                {
+                  "dataValue": 5980150000000,
+                  "segmentType": "Business",
+                  "segmentName": "Digital Services",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 358630000000,
+                  "segmentType": "Business",
+                  "segmentName": "Oil and Gas",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 4408590000000,
+                  "segmentType": "Business",
+                  "segmentName": "Oil to Chemicals (O2C)",
+                  "isPrimarySegment": 1
+                },
+                {
+                  "dataValue": 3448530000000,
+                  "segmentType": "Business",
+                  "segmentName": "Others",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 2182190000000,
+                  "segmentType": "Business",
+                  "segmentName": "Retail",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 3123120000000,
+                  "segmentType": "Business",
+                  "segmentName": "Unallocable",
+                  "isPrimarySegment": 0
+                }
+              ]
+            },
+            {
+              "dataId": 23220,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 21781400000000,
+                "fmt": "21.78T"
+              },
+              "businessSegmentData": [
+                {
+                  "dataValue": 6337000000000,
+                  "segmentType": "Business",
+                  "segmentName": "Digital Services",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 308330000000,
+                  "segmentType": "Business",
+                  "segmentName": "Oil and Gas",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 5184320000000,
+                  "segmentType": "Business",
+                  "segmentName": "Oil to Chemicals (O2C)",
+                  "isPrimarySegment": 1
+                },
+                {
+                  "dataValue": 3918690000000,
+                  "segmentType": "Business",
+                  "segmentName": "Others",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 2498620000000,
+                  "segmentType": "Business",
+                  "segmentName": "Retail",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 3534440000000,
+                  "segmentType": "Business",
+                  "segmentName": "Unallocated",
+                  "isPrimarySegment": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "meta": {
+            "symbol": [
+              "RELIANCE.NS"
+            ],
+            "type": [
+              "annualCapitalExpenditure"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualCapitalExpenditure": [
+            {
+              "dataId": 26005,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": -1409880000000,
+                "fmt": "-1.41T"
+              }
+            },
+            {
+              "dataId": 26005,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": -1528830000000,
+                "fmt": "-1.53T"
+              }
+            },
+            {
+              "dataId": 26005,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": -1399670000000,
+                "fmt": "-1.40T"
+              }
+            },
+            {
+              "dataId": 26005,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": -1229160000000,
+                "fmt": "-1.23T"
+              }
+            }
+          ]
+        }
+      ],
+      "error": null
+    }
+  }
+}

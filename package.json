@@ -1,0 +1,37 @@
+{
+  "name": "dalal-street-live",
+  "version": "1.9.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:integration": "vitest run --config vitest.integration.config.js",
+    "lint": "eslint src tests --no-error-on-unmatched-pattern",
+    "lint:fix": "eslint src tests --no-error-on-unmatched-pattern --fix",
+    "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
+    "invariants": "bash scripts/check-invariants.sh",
+    "verify": "npm run lint && npm run invariants && npm run build && npm run test",
+    "worker:dev": "wrangler dev worker/worker.js",
+    "worker:deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "eslint": "^9.13.0",
+    "happy-dom": "^20.14.5",
+    "prettier": "^3.3.0",
+    "vite": "^5.4.0",
+    "vite-plugin-singlefile": "^2.0.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^3.80.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,15 @@
+# The deployed index.html is LF. This machine has core.autocrlf=true, which rewrites the
+# working tree to CRLF on checkout and silently adds one byte per line (+3,887 bytes on
+# index.html alone). That breaks the byte-for-byte parity check the EPIC-1 refactor is
+# measured against, so line endings are pinned here rather than left to local git config.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.ttf binary
+*.woff  binary
+*.woff2 binary
+*.zip binary
+*.pdf binary
+*.docx binary

@@ -1,0 +1,134 @@
+{
+  "capturedAt": "2026-09-20T07:09:29.728Z",
+  "upstream": "https://query1.finance.yahoo.com/v8/finance/chart/TCS.NS?interval=1d&range=5d",
+  "body": {
+    "chart": {
+      "result": [
+        {
+          "meta": {
+            "currency": "INR",
+            "symbol": "TCS.NS",
+            "exchangeName": "NSI",
+            "fullExchangeName": "NSE",
+            "instrumentType": "EQUITY",
+            "firstTradeDate": 1029123900,
+            "regularMarketTime": 1789724699,
+            "hasPrePostMarketData": false,
+            "gmtoffset": 19800,
+            "timezone": "IST",
+            "exchangeTimezoneName": "Asia/Kolkata",
+            "regularMarketPrice": 2105,
+            "regularMarketChangePercent": -3.881,
+            "fulldayPrice": 2105,
+            "fulldayChange": -85,
+            "fulldayChangePercent": -3.881,
+            "fiftyTwoWeekHigh": 3350,
+            "fiftyTwoWeekLow": 1976.8,
+            "regularMarketDayHigh": 2177.3,
+            "regularMarketDayLow": 2101.2,
+            "regularMarketVolume": 6875428,
+            "longName": "Tata Consultancy Services Limited",
+            "shortName": "TATA CONSULTANCY SERV LT",
+            "chartPreviousClose": 2200.8,
+            "priceHint": 2,
+            "currentTradingPeriod": {
+              "pre": {
+                "timezone": "IST",
+                "end": 1789703100,
+                "start": 1789703100,
+                "gmtoffset": 19800
+              },
+              "regular": {
+                "timezone": "IST",
+                "end": 1789725600,
+                "start": 1789703100,
+                "gmtoffset": 19800
+              },
+              "post": {
+                "timezone": "IST",
+                "end": 1789725600,
+                "start": 1789725600,
+                "gmtoffset": 19800
+              }
+            },
+            "dataGranularity": "1d",
+            "range": "5d",
+            "validRanges": [
+              "1d",
+              "5d",
+              "1mo",
+              "3mo",
+              "6mo",
+              "1y",
+              "2y",
+              "5y",
+              "10y",
+              "ytd",
+              "max"
+            ]
+          },
+          "timestamp": [
+            1789357500,
+            1789443900,
+            1789530300,
+            1789616700,
+            1789703100
+          ],
+          "indicators": {
+            "quote": [
+              {
+                "low": [
+                  2200.800048828125,
+                  2251,
+                  2172,
+                  2162.5,
+                  2101.199951171875
+                ],
+                "volume": [
+                  0,
+                  5406210,
+                  2763709,
+                  3295917,
+                  6875428
+                ],
+                "open": [
+                  2200.800048828125,
+                  2275.5,
+                  2270,
+                  2171,
+                  2177.199951171875
+                ],
+                "high": [
+                  2200.800048828125,
+                  2323,
+                  2273.89990234375,
+                  2263.60009765625,
+                  2177.300048828125
+                ],
+                "close": [
+                  2200.800048828125,
+                  2251,
+                  2188.800048828125,
+                  2190,
+                  2105
+                ]
+              }
+            ],
+            "adjclose": [
+              {
+                "adjclose": [
+                  2200.800048828125,
+                  2251,
+                  2188.800048828125,
+                  2190,
+                  2105
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "error": null
+    }
+  }
+}

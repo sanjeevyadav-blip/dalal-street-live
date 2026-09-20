@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dalal Street Live — NSE &amp; BSE Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+  <div class="ticker-wrap"><div class="ticker-track" id="tickerTrack"></div></div>
+
+  <div class="wrap">
+    <header class="masthead">
+      <div>
+        <h1>Dalal Street <span class="rule">Live</span></h1>
+        <p class="sub">NSE &amp; BSE indices, a searchable stock desk, and your own watchlist.</p>
+      </div>
+      <div class="status-block">
+        <span class="status-pill"><span class="dot" id="statusDot"></span><span id="statusText">Checking…</span></span>
+        <span class="clock" id="istClock">— IST</span>
+      </div>
+    </header>
+
+    <div class="banner" id="errorBanner"></div>
+
+    <section class="search-panel">
+      <h2>Look up any stock</h2>
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Type 3+ letters — partial name or symbol, e.g. 'tata', 'hdfc', 'wip'" autocomplete="off">
+        <select id="searchExchange"><option value="NS">NSE</option><option value="BO">BSE</option></select>
+        <button id="searchBtn">Search</button>
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+    </section>
+
+    <section class="indices" id="indicesGrid"></section>
+
+    <section class="detail" id="detailSection">
+      <div class="detail-card" id="detailCard"></div>
+    </section>
+
+    <section class="watchlist">
+      <div class="section-head">
+        <h2>Watchlist</h2>
+        <span class="hint">Type an NSE/BSE symbol, e.g. <code>RELIANCE</code> — click a row to open full details</span>
+      </div>
+      <form class="add-form" id="addForm">
+        <input type="text" id="symbolInput" placeholder="Symbol, e.g. WIPRO" autocomplete="off">
+        <select id="exchangeSelect"><option value="NS">NSE</option><option value="BO">BSE</option></select>
+        <button type="submit">Add to board</button>
+      </form>
+      <table class="book">
+        <thead><tr><th>Symbol</th><th>Last price</th><th>Change</th><th>% Change</th><th></th></tr></thead>
+        <tbody id="watchlistBody"></tbody>
+      </table>
+    </section>
+
+    <section class="ipo">
+      <div class="section-head">
+        <h2>IPO watch</h2>
+        <span class="hint">Live from NSE — open, upcoming and recently closed issues</span>
+      </div>
+      <div class="ipo-controls">
+        <button id="loadIpos">Load IPOs</button>
+        <span class="hint" id="ipoMeta"></span>
+      </div>
+      <div id="ipoBlock"><div class="note-inline">Not loaded yet — click "Load IPOs" to pull the current NSE issue list.</div></div>
+      <div id="ipoDetail"></div>
+    </section>
+
+    <section class="screener">
+      <div class="section-head">
+        <h2>Screener</h2>
+        <span class="hint">Live, objective metrics only — not buy/sell calls, no invented targets</span>
+      </div>
+      <p class="screener-note">
+        This table ranks stocks by data that's actually measurable — price, momentum, valuation — pulled the same
+        way as everything else on this page. It deliberately has no "target sell price," "time to hold," or
+        "probability of success" column: nobody can honestly compute a probability that a stock hits a price by a
+        date, and a specific target price is a forecast dressed up as a fact. In India, publishing stock
+        recommendations with buy/sell/target prices is also restricted to <a href="https://www.sebi.gov.in" target="_blank" rel="noopener">SEBI</a>-registered
+        Research Analysts and Investment Advisers. Use this as a starting point for your own research, not a tip sheet.
+      </p>
+      <div class="screener-group">
+        <div class="screener-head">
+          <h3>Large cap</h3>
+          <button id="loadLargeCap">Load large cap</button>
+        </div>
+        <table class="book screener-table">
+          <thead><tr><th>Symbol</th><th>Price</th><th>1D %</th><th>1Y %</th><th>RSI(14)</th><th>P/E</th><th>Off 52w high</th></tr></thead>
+          <tbody id="largeCapBody"><tr><td colspan="7" style="color:var(--cream-dim); padding:14px 10px;">Not loaded yet — click "Load large cap."</td></tr></tbody>
+        </table>
+      </div>
+      <div class="screener-group">
+        <div class="screener-head">
+          <h3>Mid &amp; small cap</h3>
+          <button id="loadMidCap">Load mid &amp; small cap</button>
+        </div>
+        <table class="book screener-table">
+          <thead><tr><th>Symbol</th><th>Price</th><th>1D %</th><th>1Y %</th><th>RSI(14)</th><th>P/E</th><th>Off 52w high</th></tr></thead>
+          <tbody id="midCapBody"><tr><td colspan="7" style="color:var(--cream-dim); padding:14px 10px;">Not loaded yet — click "Load mid &amp; small cap."</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="controls">
+      <div class="left">
+        <span>Auto-refresh:</span>
+        <select id="intervalSelect">
+          <option value="15000">Every 15s</option>
+          <option value="30000" selected>Every 30s</option>
+          <option value="60000">Every 60s</option>
+          <option value="0">Off</option>
+        </select>
+        <button id="refreshNowBtn">Refresh now</button>
+      </div>
+      <div id="lastUpdated">Not yet updated</div>
+    </div>
+
+    <p class="disclaimer">
+      Prices and history come client-side from Yahoo Finance's public endpoints (via a CORS relay, since Yahoo
+      blocks direct browser requests from other sites). Per Yahoo's own data-delay disclosures, NSE symbols
+      (<code>.NS</code>) are treated as real-time and BSE (<code>.BO</code>) runs ~15 minutes behind — but these
+      are unofficial, unsupported endpoints, so treat everything here as informational, not investment advice.
+      Fundamentals (P/E, ROE, analyst targets, etc.) come from a separate, more fragile Yahoo endpoint that
+      occasionally blocks unauthenticated requests — when that happens the panel says so and still shows price
+      and technicals, which are computed locally from price history and don't depend on that endpoint. Recent
+      news headlines are pulled live from Google News at the moment you open a stock, so they're never stale —
+      but they're unfiltered search results, not vetted analysis, so read the source before acting on anything.
+    </p>
+  </div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>
+
+<!-- rebuild trigger -->

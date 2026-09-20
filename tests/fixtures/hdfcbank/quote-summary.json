@@ -1,0 +1,1828 @@
+{
+  "capturedAt": "2026-09-20T07:09:31.637Z",
+  "upstream": "https://query2.finance.yahoo.com/v10/finance/quoteSummary/HDFCBANK.NS?modules=summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,earningsTrend,majorHoldersBreakdown,incomeStatementHistory,balanceSheetHistory,cashflowStatementHistory,earnings,price",
+  "body": {
+    "quoteSummary": {
+      "result": [
+        {
+          "assetProfile": {
+            "address1": "HDFC Bank House",
+            "address2": "Shiv Sagar Estate Dr Annie Besant Road Worli",
+            "city": "Mumbai",
+            "zip": "400018",
+            "country": "India",
+            "phone": "91 22 6652 1000",
+            "fax": "91 22 2496 0739",
+            "website": "https://www.hdfc.bank.in",
+            "industry": "Banks - Regional",
+            "industryKey": "banks-regional",
+            "industryDisp": "Banks - Regional",
+            "sector": "Financial Services",
+            "sectorKey": "financial-services",
+            "sectorDisp": "Financial Services",
+            "longBusinessSummary": "HDFC Bank Limited provides banking and financial products and services to individuals and businesses in India, Bahrain, Hong Kong, Singapore, and Dubai. The company operates through Treasury, Retail Banking, Wholesale Banking, Other Banking Business, Insurance Business, and Other segments. It offers savings, salary, current, rural, public provident fund, pension, and demat accounts; fixed and recurring deposits; and safe deposit lockers, as well as offshore accounts and deposits, and overdrafts against fixed deposits. The company also provides personal, home, car and pre owned car, marriage, two-wheeler, business, doctor, educational, gold, consumer, and rural loans; loans against properties, securities, mutual funds, and car; loans for professionals; government sponsored programs; and loans on credit card, as well as working capital, term loans, supply chain management, project finance, export finance, commercial vehicle / equipment finance, tractor finance, infrastructure, and agriculture finance. In addition, it offers credit, debit, prepaid, forex, and kisan gold cards; payment and collection, export, import, remittance, bank guarantee, letter of credit, trade, hedging, and merchant and cash management services; and insurance and investment products. Further, the company provides short term finance, bill discounting, structured finance, export credit, loan repayment, custodial, and documents collection services; online, mobile, and phone banking services; unified payment interface, immediate payment, national electronic funds transfer, and real time gross settlement services; channel financing, vendor financing, money market, derivatives, employee trusts, cash surplus corporates, tax payment, and bankers to rights/public issue services; and financial solutions for supply chain partners and agricultural customers. It operates branches and automated teller machines in various cities/towns. The company was incorporated in 1994 and is headquartered in Mumbai, India.",
+            "fullTimeEmployees": 212958,
+            "companyOfficers": [
+              {
+                "maxAge": 1,
+                "name": "Mr. Sashidhar  Jagdishan",
+                "age": 60,
+                "title": "MD, CEO & Director",
+                "yearBorn": 1965,
+                "fiscalYear": 2026,
+                "totalPay": {
+                  "raw": 151250779,
+                  "fmt": "151.25M",
+                  "longFmt": "151,250,779"
+                },
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              },
+              {
+                "maxAge": 1,
+                "name": "Mr. Kaizad Maneck Bharucha",
+                "age": 60,
+                "title": "Deputy MD & Director",
+                "yearBorn": 1965,
+                "fiscalYear": 2026,
+                "totalPay": {
+                  "raw": 171416076,
+                  "fmt": "171.42M",
+                  "longFmt": "171,416,076"
+                },
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              },
+              {
+                "maxAge": 1,
+                "name": "Mr. Srinivasan  Vaidyanathan",
+                "age": 61,
+                "title": "Chief Financial Officer",
+                "yearBorn": 1964,
+                "fiscalYear": 2026,
+                "totalPay": {
+                  "raw": 30179680,
+                  "fmt": "30.18M",
+                  "longFmt": "30,179,680"
+                },
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              },
+              {
+                "maxAge": 1,
+                "name": "Mr. Gourab  Roy",
+                "age": 58,
+                "title": "Group Head of Operations, ATM & Administration",
+                "yearBorn": 1967,
+                "fiscalYear": 2026,
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              },
+              {
+                "maxAge": 1,
+                "name": "Mr. Rakesh Kumar Singh",
+                "age": 55,
+                "title": "Group Head of Private Banking, International Banking, Financial Institutions & BaaS",
+                "yearBorn": 1970,
+                "fiscalYear": 2026,
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              },
+              {
+                "maxAge": 1,
+                "name": "Mr. Ajit Subhas Shetty",
+                "title": "Investor Relations Officer",
+                "fiscalYear": 2026,
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              },
+              {
+                "maxAge": 1,
+                "name": "Mr. Rakesh Kumar Rajput",
+                "age": 54,
+                "title": "Chief Compliance Officer",
+                "yearBorn": 1971,
+                "fiscalYear": 2026,
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              },
+              {
+                "maxAge": 1,
+                "name": "Mr. Sudhir Kumar Jha",
+                "age": 57,
+                "title": "Group Head of Legal & Group General Counsel",
+                "yearBorn": 1968,
+                "fiscalYear": 2026,
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              },
+              {
+                "maxAge": 1,
+                "name": "Ms. Madhu  Chhibber",
+                "age": 56,
+                "title": "Head of Corporate Communications",
+                "yearBorn": 1969,
+                "fiscalYear": 2026,
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              },
+              {
+                "maxAge": 1,
+                "name": "Mr. Ravi  Santhanam",
+                "age": 54,
+                "title": "Chief Marketing Officer & Group Head",
+                "yearBorn": 1971,
+                "fiscalYear": 2026,
+                "exercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "unexercisedValue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                }
+              }
+            ],
+            "compensationAsOfEpochDate": 1798675200,
+            "executiveTeam": [],
+            "maxAge": 86400
+          },
+          "recommendationTrend": {
+            "trend": [
+              {
+                "period": "0m",
+                "strongBuy": 6,
+                "buy": 33,
+                "hold": 2,
+                "sell": 0,
+                "strongSell": 0
+              },
+              {
+                "period": "-1m",
+                "strongBuy": 6,
+                "buy": 33,
+                "hold": 2,
+                "sell": 0,
+                "strongSell": 0
+              },
+              {
+                "period": "-2m",
+                "strongBuy": 6,
+                "buy": 33,
+                "hold": 1,
+                "sell": 0,
+                "strongSell": 0
+              },
+              {
+                "period": "-3m",
+                "strongBuy": 6,
+                "buy": 34,
+                "hold": 0,
+                "sell": 0,
+                "strongSell": 0
+              }
+            ],
+            "maxAge": 86400
+          },
+          "cashflowStatementHistory": {
+            "cashflowStatements": [
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1774915200,
+                  "fmt": "2026-03-31"
+                },
+                "netIncome": {
+                  "raw": 760259700000,
+                  "fmt": "760.26B",
+                  "longFmt": "760,259,700,000"
+                }
+              },
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1743379200,
+                  "fmt": "2025-03-31"
+                },
+                "netIncome": {
+                  "raw": 707922500000,
+                  "fmt": "707.92B",
+                  "longFmt": "707,922,500,000"
+                }
+              },
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1711843200,
+                  "fmt": "2024-03-31"
+                },
+                "netIncome": {
+                  "raw": 640620400000,
+                  "fmt": "640.62B",
+                  "longFmt": "640,620,400,000"
+                }
+              },
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1680220800,
+                  "fmt": "2023-03-31"
+                },
+                "netIncome": {
+                  "raw": 441087100000,
+                  "fmt": "441.09B",
+                  "longFmt": "441,087,100,000"
+                }
+              }
+            ],
+            "maxAge": 86400
+          },
+          "majorHoldersBreakdown": {
+            "maxAge": 1,
+            "insidersPercentHeld": {
+              "raw": 0.00153,
+              "fmt": "0.15%"
+            },
+            "institutionsPercentHeld": {
+              "raw": 0.61144,
+              "fmt": "61.14%"
+            },
+            "institutionsFloatPercentHeld": {
+              "raw": 0.61237997,
+              "fmt": "61.24%"
+            },
+            "institutionsCount": {
+              "raw": 460,
+              "fmt": "460",
+              "longFmt": "460"
+            }
+          },
+          "defaultKeyStatistics": {
+            "maxAge": 1,
+            "priceHint": {
+              "raw": 2,
+              "fmt": "2",
+              "longFmt": "2"
+            },
+            "enterpriseValue": {
+              "raw": 14766148943872,
+              "fmt": "14.77T",
+              "longFmt": "14,766,148,943,872"
+            },
+            "forwardPE": {
+              "raw": 11.590509,
+              "fmt": "11.59"
+            },
+            "profitMargins": {
+              "raw": 0.26787,
+              "fmt": "26.79%"
+            },
+            "floatShares": {
+              "raw": 15337571997,
+              "fmt": "15.34B",
+              "longFmt": "15,337,571,997"
+            },
+            "sharesOutstanding": {
+              "raw": 15416579832,
+              "fmt": "15.42B",
+              "longFmt": "15,416,579,832"
+            },
+            "sharesShort": {},
+            "sharesShortPriorMonth": {},
+            "sharesShortPreviousMonthDate": {},
+            "dateShortInterest": {},
+            "sharesPercentSharesOut": {},
+            "heldPercentInsiders": {
+              "raw": 0.00153,
+              "fmt": "0.15%"
+            },
+            "heldPercentInstitutions": {
+              "raw": 0.61144,
+              "fmt": "61.14%"
+            },
+            "shortRatio": {},
+            "shortPercentOfFloat": {},
+            "beta": {
+              "raw": 0.404,
+              "fmt": "0.4"
+            },
+            "impliedSharesOutstanding": {
+              "raw": 15416579832,
+              "fmt": "15.42B",
+              "longFmt": "15,416,579,832"
+            },
+            "morningStarOverallRating": {},
+            "morningStarRiskRating": {},
+            "category": null,
+            "bookValue": {
+              "raw": 393.813,
+              "fmt": "393.81"
+            },
+            "priceToBook": {
+              "raw": 1.856211,
+              "fmt": "1.86"
+            },
+            "annualReportExpenseRatio": {},
+            "ytdReturn": {},
+            "qtdReturn": {},
+            "beta3Year": {},
+            "totalAssets": {},
+            "yield": {},
+            "fundFamily": null,
+            "fundInceptionDate": {},
+            "legalType": null,
+            "threeYearAverageReturn": {},
+            "fiveYearAverageReturn": {},
+            "priceToSalesTrailing12Months": {},
+            "lastFiscalYearEnd": {
+              "raw": 1774915200,
+              "fmt": "2026-03-31"
+            },
+            "nextFiscalYearEnd": {
+              "raw": 1806451200,
+              "fmt": "2027-03-31"
+            },
+            "mostRecentQuarter": {
+              "raw": 1782777600,
+              "fmt": "2026-06-30"
+            },
+            "earningsQuarterlyGrowth": {
+              "raw": 0.184,
+              "fmt": "18.40%"
+            },
+            "revenueQuarterlyGrowth": {},
+            "netIncomeToCommon": {
+              "raw": 790127706112,
+              "fmt": "790.13B",
+              "longFmt": "790,127,706,112"
+            },
+            "trailingEps": {
+              "raw": 45.76,
+              "fmt": "45.76"
+            },
+            "forwardEps": {
+              "raw": 63.06884,
+              "fmt": "63.07"
+            },
+            "pegRatio": {
+              "raw": 0.89,
+              "fmt": "0.89"
+            },
+            "lastSplitFactor": "2:1",
+            "lastSplitDate": {
+              "raw": 1756166400,
+              "fmt": "2025-08-26"
+            },
+            "enterpriseToRevenue": {
+              "raw": 5.006,
+              "fmt": "5.01"
+            },
+            "enterpriseToEbitda": {},
+            "52WeekChange": {
+              "raw": -0.24185854,
+              "fmt": "-24.19%"
+            },
+            "SandP52WeekChange": {
+              "raw": 0.14293182,
+              "fmt": "14.29%"
+            },
+            "lastDividendValue": {
+              "raw": 13,
+              "fmt": "13.00"
+            },
+            "lastDividendDate": {
+              "raw": 1781827200,
+              "fmt": "2026-06-19"
+            },
+            "lastCapGain": {},
+            "annualHoldingsTurnover": {},
+            "latestFundingDate": {},
+            "latestAmountRaised": {},
+            "latestImpliedValuation": {},
+            "latestShareClass": null,
+            "leadInvestor": null,
+            "fundingToDate": {},
+            "totalFundingRounds": {}
+          },
+          "incomeStatementHistory": {
+            "incomeStatementHistory": [
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1774915200,
+                  "fmt": "2026-03-31"
+                },
+                "totalRevenue": {
+                  "raw": 1912186100000,
+                  "fmt": "1.91T",
+                  "longFmt": "1,912,186,100,000"
+                },
+                "costOfRevenue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "grossProfit": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "researchDevelopment": {},
+                "sellingGeneralAdministrative": {},
+                "nonRecurring": {},
+                "otherOperatingExpenses": {},
+                "totalOperatingExpenses": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "operatingIncome": {},
+                "totalOtherIncomeExpenseNet": {},
+                "ebit": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "interestExpense": {},
+                "incomeBeforeTax": {},
+                "incomeTaxExpense": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "minorityInterest": {},
+                "netIncomeFromContinuingOps": {},
+                "discontinuedOperations": {},
+                "extraordinaryItems": {},
+                "effectOfAccountingCharges": {},
+                "otherItems": {},
+                "netIncome": {
+                  "raw": 760259700000,
+                  "fmt": "760.26B",
+                  "longFmt": "760,259,700,000"
+                },
+                "netIncomeApplicableToCommonShares": {}
+              },
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1743379200,
+                  "fmt": "2025-03-31"
+                },
+                "totalRevenue": {
+                  "raw": 2870217300000,
+                  "fmt": "2.87T",
+                  "longFmt": "2,870,217,300,000"
+                },
+                "costOfRevenue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "grossProfit": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "researchDevelopment": {},
+                "sellingGeneralAdministrative": {},
+                "nonRecurring": {},
+                "otherOperatingExpenses": {},
+                "totalOperatingExpenses": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "operatingIncome": {},
+                "totalOtherIncomeExpenseNet": {},
+                "ebit": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "interestExpense": {},
+                "incomeBeforeTax": {},
+                "incomeTaxExpense": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "minorityInterest": {},
+                "netIncomeFromContinuingOps": {},
+                "discontinuedOperations": {},
+                "extraordinaryItems": {},
+                "effectOfAccountingCharges": {},
+                "otherItems": {},
+                "netIncome": {
+                  "raw": 707922500000,
+                  "fmt": "707.92B",
+                  "longFmt": "707,922,500,000"
+                },
+                "netIncomeApplicableToCommonShares": {}
+              },
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1711843200,
+                  "fmt": "2024-03-31"
+                },
+                "totalRevenue": {
+                  "raw": 1577734500000,
+                  "fmt": "1.58T",
+                  "longFmt": "1,577,734,500,000"
+                },
+                "costOfRevenue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "grossProfit": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "researchDevelopment": {},
+                "sellingGeneralAdministrative": {},
+                "nonRecurring": {},
+                "otherOperatingExpenses": {},
+                "totalOperatingExpenses": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "operatingIncome": {},
+                "totalOtherIncomeExpenseNet": {},
+                "ebit": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "interestExpense": {},
+                "incomeBeforeTax": {},
+                "incomeTaxExpense": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "minorityInterest": {},
+                "netIncomeFromContinuingOps": {},
+                "discontinuedOperations": {},
+                "extraordinaryItems": {},
+                "effectOfAccountingCharges": {},
+                "otherItems": {},
+                "netIncome": {
+                  "raw": 640620400000,
+                  "fmt": "640.62B",
+                  "longFmt": "640,620,400,000"
+                },
+                "netIncomeApplicableToCommonShares": {}
+              },
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1680220800,
+                  "fmt": "2023-03-31"
+                },
+                "totalRevenue": {
+                  "raw": 1180570700000,
+                  "fmt": "1.18T",
+                  "longFmt": "1,180,570,700,000"
+                },
+                "costOfRevenue": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "grossProfit": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "researchDevelopment": {},
+                "sellingGeneralAdministrative": {},
+                "nonRecurring": {},
+                "otherOperatingExpenses": {},
+                "totalOperatingExpenses": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "operatingIncome": {},
+                "totalOtherIncomeExpenseNet": {},
+                "ebit": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "interestExpense": {},
+                "incomeBeforeTax": {},
+                "incomeTaxExpense": {
+                  "raw": 0,
+                  "fmt": null,
+                  "longFmt": "0"
+                },
+                "minorityInterest": {},
+                "netIncomeFromContinuingOps": {},
+                "discontinuedOperations": {},
+                "extraordinaryItems": {},
+                "effectOfAccountingCharges": {},
+                "otherItems": {},
+                "netIncome": {
+                  "raw": 441087100000,
+                  "fmt": "441.09B",
+                  "longFmt": "441,087,100,000"
+                },
+                "netIncomeApplicableToCommonShares": {}
+              }
+            ],
+            "maxAge": 86400
+          },
+          "summaryDetail": {
+            "maxAge": 1,
+            "priceHint": {
+              "raw": 2,
+              "fmt": "2",
+              "longFmt": "2"
+            },
+            "previousClose": {
+              "raw": 713,
+              "fmt": "713.00"
+            },
+            "open": {
+              "raw": 715.25,
+              "fmt": "715.25"
+            },
+            "dayLow": {
+              "raw": 715.25,
+              "fmt": "715.25"
+            },
+            "dayHigh": {
+              "raw": 733.8,
+              "fmt": "733.80"
+            },
+            "regularMarketPreviousClose": {
+              "raw": 713,
+              "fmt": "713.00"
+            },
+            "regularMarketOpen": {
+              "raw": 715.25,
+              "fmt": "715.25"
+            },
+            "regularMarketDayLow": {
+              "raw": 715.25,
+              "fmt": "715.25"
+            },
+            "regularMarketDayHigh": {
+              "raw": 733.8,
+              "fmt": "733.80"
+            },
+            "dividendRate": {
+              "raw": 13,
+              "fmt": "13.00"
+            },
+            "dividendYield": {
+              "raw": 0.0178,
+              "fmt": "1.78%"
+            },
+            "exDividendDate": {
+              "raw": 1781827200,
+              "fmt": "2026-06-19"
+            },
+            "payoutRatio": {
+              "raw": 0.24040002,
+              "fmt": "24.04%"
+            },
+            "fiveYearAvgDividendYield": {
+              "raw": 1.08,
+              "fmt": "1.08"
+            },
+            "beta": {
+              "raw": 0.404,
+              "fmt": "0.40"
+            },
+            "trailingPE": {
+              "raw": 15.974651,
+              "fmt": "15.97"
+            },
+            "forwardPE": {
+              "raw": 11.590509,
+              "fmt": "11.59"
+            },
+            "volume": {
+              "raw": 39400710,
+              "fmt": "39.4M",
+              "longFmt": "39,400,710"
+            },
+            "regularMarketVolume": {
+              "raw": 39400710,
+              "fmt": "39.4M",
+              "longFmt": "39,400,710"
+            },
+            "averageVolume": {
+              "raw": 30777561,
+              "fmt": "30.78M",
+              "longFmt": "30,777,561"
+            },
+            "averageVolume10days": {
+              "raw": 29840718,
+              "fmt": "29.84M",
+              "longFmt": "29,840,718"
+            },
+            "averageDailyVolume10Day": {
+              "raw": 29840718,
+              "fmt": "29.84M",
+              "longFmt": "29,840,718"
+            },
+            "bid": {
+              "raw": 731,
+              "fmt": "731.00"
+            },
+            "ask": {
+              "raw": 0,
+              "fmt": "0.00"
+            },
+            "bidSize": {
+              "raw": 0,
+              "fmt": null,
+              "longFmt": "0"
+            },
+            "askSize": {
+              "raw": 0,
+              "fmt": null,
+              "longFmt": "0"
+            },
+            "marketCap": {
+              "raw": 11269520228352,
+              "fmt": "11.27T",
+              "longFmt": "11,269,520,228,352"
+            },
+            "nonDilutedMarketCap": {
+              "raw": 11269519857192,
+              "fmt": "11.27T",
+              "longFmt": "11,269,519,857,192"
+            },
+            "yield": {},
+            "ytdReturn": {},
+            "qtdReturn": {},
+            "totalAssets": {},
+            "expireDate": {},
+            "strikePrice": {},
+            "openInterest": {},
+            "fiftyTwoWeekLow": {
+              "raw": 681.9,
+              "fmt": "681.90"
+            },
+            "fiftyTwoWeekHigh": {
+              "raw": 1020.5,
+              "fmt": "1,020.50"
+            },
+            "allTimeHigh": {
+              "raw": 1020.5,
+              "fmt": "1,020.50"
+            },
+            "allTimeLow": {
+              "raw": 1.1975,
+              "fmt": "1.20"
+            },
+            "fulldayPrice": {
+              "raw": 731,
+              "fmt": "731.00"
+            },
+            "fulldayChange": {
+              "raw": 18,
+              "fmt": "18.00"
+            },
+            "fulldayChangePercent": {
+              "raw": 0.02524544,
+              "fmt": "2.52%"
+            },
+            "priceToSalesTrailing12Months": {
+              "raw": 3.820637,
+              "fmt": "3.82"
+            },
+            "fiftyDayAverage": {
+              "raw": 735.738,
+              "fmt": "735.74"
+            },
+            "twoHundredDayAverage": {
+              "raw": 817.9785,
+              "fmt": "817.98"
+            },
+            "trailingAnnualDividendRate": {
+              "raw": 13,
+              "fmt": "13.00"
+            },
+            "trailingAnnualDividendYield": {
+              "raw": 0.018232819,
+              "fmt": "1.82%"
+            },
+            "navPrice": {},
+            "currency": "INR",
+            "fromCurrency": null,
+            "toCurrency": null,
+            "lastMarket": null,
+            "coinMarketCapLink": null,
+            "volume24Hr": {},
+            "volumeAllCurrencies": {},
+            "circulatingSupply": {},
+            "algorithm": null,
+            "maxSupply": {},
+            "totalSupply": {},
+            "startDate": {},
+            "tradeable": false,
+            "fullyDilutedValue": {},
+            "volume24HrMarketCapPercent": {}
+          },
+          "earnings": {
+            "maxAge": 86400,
+            "earningsChart": {
+              "quarterly": [
+                {
+                  "date": "3Q2025",
+                  "actual": {
+                    "raw": 12.09,
+                    "fmt": "12.1"
+                  },
+                  "estimate": {
+                    "raw": 11.29,
+                    "fmt": "11.3"
+                  },
+                  "fiscalQuarter": "2Q2026",
+                  "calendarQuarter": "3Q2025",
+                  "difference": "0.8",
+                  "surprisePct": "7.09",
+                  "periodEndDate": {
+                    "raw": 1759190400,
+                    "fmt": "2025-09-30"
+                  },
+                  "reportedDate": {
+                    "raw": 1760776568,
+                    "fmt": "2025-10-18"
+                  }
+                },
+                {
+                  "date": "4Q2025",
+                  "actual": {
+                    "raw": 12.08,
+                    "fmt": "12.1"
+                  },
+                  "estimate": {
+                    "raw": 10.485,
+                    "fmt": "10.5"
+                  },
+                  "fiscalQuarter": "3Q2026",
+                  "calendarQuarter": "4Q2025",
+                  "difference": "1.6",
+                  "surprisePct": "15.21",
+                  "periodEndDate": {
+                    "raw": 1767139200,
+                    "fmt": "2025-12-31"
+                  },
+                  "reportedDate": {
+                    "raw": 1768661502,
+                    "fmt": "2026-01-17"
+                  }
+                },
+                {
+                  "date": "1Q2026",
+                  "actual": {
+                    "raw": 12.45,
+                    "fmt": "12.4"
+                  },
+                  "estimate": {
+                    "raw": 12.35,
+                    "fmt": "12.4"
+                  },
+                  "fiscalQuarter": "4Q2026",
+                  "calendarQuarter": "1Q2026",
+                  "difference": "0.1",
+                  "surprisePct": "0.81",
+                  "periodEndDate": {
+                    "raw": 1774915200,
+                    "fmt": "2026-03-31"
+                  },
+                  "reportedDate": {
+                    "raw": 1776503754,
+                    "fmt": "2026-04-18"
+                  }
+                },
+                {
+                  "date": "2Q2026",
+                  "actual": {
+                    "raw": 12.35,
+                    "fmt": "12.35"
+                  },
+                  "estimate": {
+                    "raw": 12.515,
+                    "fmt": "12.52"
+                  },
+                  "fiscalQuarter": "1Q2027",
+                  "calendarQuarter": "2Q2026",
+                  "difference": "-0.17",
+                  "surprisePct": "-1.32",
+                  "periodEndDate": {
+                    "raw": 1782777600,
+                    "fmt": "2026-06-30"
+                  },
+                  "reportedDate": {
+                    "raw": 1784365037,
+                    "fmt": "2026-07-18"
+                  }
+                }
+              ],
+              "currentQuarterEstimate": {
+                "raw": 12.24,
+                "fmt": "12.24"
+              },
+              "currentQuarterEstimateDate": "3Q",
+              "currentCalendarQuarter": "3Q2026",
+              "currentQuarterEstimateYear": 2026,
+              "currentFiscalQuarter": "2Q2027",
+              "currentPeriodEndDate": {
+                "raw": 1790726400,
+                "fmt": "2026-09-30"
+              },
+              "earningsDate": [
+                {
+                  "raw": 1792231200,
+                  "fmt": "2026-10-17"
+                }
+              ],
+              "isEarningsDateEstimate": false
+            },
+            "financialsChart": {
+              "yearly": [
+                {
+                  "date": 2023,
+                  "revenue": {
+                    "raw": 1180570700000,
+                    "fmt": "1.18T",
+                    "longFmt": "1,180,570,700,000"
+                  },
+                  "earnings": {
+                    "raw": 441087100000,
+                    "fmt": "441.09B",
+                    "longFmt": "441,087,100,000"
+                  },
+                  "profitMargin": {
+                    "raw": 0.3736219,
+                    "fmt": "37.36%"
+                  }
+                },
+                {
+                  "date": 2024,
+                  "revenue": {
+                    "raw": 1577734500000,
+                    "fmt": "1.58T",
+                    "longFmt": "1,577,734,500,000"
+                  },
+                  "earnings": {
+                    "raw": 640620400000,
+                    "fmt": "640.62B",
+                    "longFmt": "640,620,400,000"
+                  },
+                  "profitMargin": {
+                    "raw": 0.40603817,
+                    "fmt": "40.60%"
+                  }
+                },
+                {
+                  "date": 2025,
+                  "revenue": {
+                    "raw": 2870217300000,
+                    "fmt": "2.87T",
+                    "longFmt": "2,870,217,300,000"
+                  },
+                  "earnings": {
+                    "raw": 707922500000,
+                    "fmt": "707.92B",
+                    "longFmt": "707,922,500,000"
+                  },
+                  "profitMargin": {
+                    "raw": 0.24664421,
+                    "fmt": "24.66%"
+                  }
+                },
+                {
+                  "date": 2026,
+                  "revenue": {
+                    "raw": 1912186100000,
+                    "fmt": "1.91T",
+                    "longFmt": "1,912,186,100,000"
+                  },
+                  "earnings": {
+                    "raw": 760259700000,
+                    "fmt": "760.26B",
+                    "longFmt": "760,259,700,000"
+                  },
+                  "profitMargin": {
+                    "raw": 0.39758667,
+                    "fmt": "39.76%"
+                  }
+                }
+              ],
+              "quarterly": [
+                {
+                  "date": "3Q2025",
+                  "fiscalQuarter": "2Q2026",
+                  "revenue": {
+                    "raw": 459015200000,
+                    "fmt": "459.02B",
+                    "longFmt": "459,015,200,000"
+                  },
+                  "earnings": {
+                    "raw": 186412800000,
+                    "fmt": "186.41B",
+                    "longFmt": "186,412,800,000"
+                  },
+                  "profitMargin": {
+                    "raw": 0.40611464,
+                    "fmt": "40.61%"
+                  }
+                },
+                {
+                  "date": "4Q2025",
+                  "fiscalQuarter": "3Q2026",
+                  "revenue": {
+                    "raw": 458688400000,
+                    "fmt": "458.69B",
+                    "longFmt": "458,688,400,000"
+                  },
+                  "earnings": {
+                    "raw": 186537500000,
+                    "fmt": "186.54B",
+                    "longFmt": "186,537,500,000"
+                  },
+                  "profitMargin": {
+                    "raw": 0.40667585,
+                    "fmt": "40.67%"
+                  }
+                },
+                {
+                  "date": "1Q2026",
+                  "fiscalQuarter": "4Q2026",
+                  "revenue": {
+                    "raw": 462804500000,
+                    "fmt": "462.8B",
+                    "longFmt": "462,804,500,000"
+                  },
+                  "earnings": {
+                    "raw": 192210500000,
+                    "fmt": "192.21B",
+                    "longFmt": "192,210,500,000"
+                  },
+                  "profitMargin": {
+                    "raw": 0.41531685,
+                    "fmt": "41.53%"
+                  }
+                },
+                {
+                  "date": "2Q2026",
+                  "fiscalQuarter": "1Q2027",
+                  "revenue": {
+                    "raw": 463555500000,
+                    "fmt": "463.56B",
+                    "longFmt": "463,555,500,000"
+                  },
+                  "earnings": {
+                    "raw": 190597200000,
+                    "fmt": "190.6B",
+                    "longFmt": "190,597,200,000"
+                  },
+                  "profitMargin": {
+                    "raw": 0.41116372,
+                    "fmt": "41.12%"
+                  }
+                }
+              ]
+            },
+            "financialCurrency": "INR",
+            "defaultMethodology": "nongaap"
+          },
+          "price": {
+            "maxAge": 1,
+            "preMarketChange": {},
+            "preMarketPrice": {},
+            "postMarketChange": {},
+            "postMarketPrice": {},
+            "regularMarketChangePercent": {
+              "raw": 0.02524544,
+              "fmt": "2.52%"
+            },
+            "regularMarketChange": {
+              "raw": 18,
+              "fmt": "18.00"
+            },
+            "regularMarketTime": 1789724700,
+            "priceHint": {
+              "raw": 2,
+              "fmt": "2",
+              "longFmt": "2"
+            },
+            "regularMarketPrice": {
+              "raw": 731,
+              "fmt": "731.00"
+            },
+            "regularMarketDayHigh": {
+              "raw": 733.8,
+              "fmt": "733.80"
+            },
+            "regularMarketDayLow": {
+              "raw": 715.25,
+              "fmt": "715.25"
+            },
+            "regularMarketVolume": {
+              "raw": 39400710,
+              "fmt": "39.40M",
+              "longFmt": "39,400,710.00"
+            },
+            "averageDailyVolume10Day": {
+              "raw": 29840718,
+              "fmt": "29.84M",
+              "longFmt": "29,840,718"
+            },
+            "averageDailyVolume3Month": {
+              "raw": 30777561,
+              "fmt": "30.78M",
+              "longFmt": "30,777,561"
+            },
+            "regularMarketPreviousClose": {
+              "raw": 713,
+              "fmt": "713.00"
+            },
+            "regularMarketSource": "FREE_REALTIME",
+            "regularMarketOpen": {
+              "raw": 715.25,
+              "fmt": "715.25"
+            },
+            "strikePrice": {},
+            "openInterest": {},
+            "fulldayChangePercent": {
+              "raw": 0.02524544,
+              "fmt": "2.52%"
+            },
+            "fulldayChange": {
+              "raw": 18,
+              "fmt": "18.00"
+            },
+            "fulldayPrice": {
+              "raw": 731,
+              "fmt": "731.00"
+            },
+            "exchange": "NSI",
+            "exchangeName": "NSE",
+            "exchangeDataDelayedBy": 15,
+            "marketState": "CLOSED",
+            "quoteType": "EQUITY",
+            "symbol": "HDFCBANK.NS",
+            "underlyingSymbol": null,
+            "shortName": "HDFC BANK LTD",
+            "longName": "HDFC Bank Limited",
+            "currency": "INR",
+            "quoteSourceName": "Delayed Quote",
+            "currencySymbol": "₹",
+            "fromCurrency": null,
+            "toCurrency": null,
+            "lastMarket": null,
+            "volume24Hr": {},
+            "volumeAllCurrencies": {},
+            "circulatingSupply": {},
+            "marketCap": {
+              "raw": 11269520228352,
+              "fmt": "11.27T",
+              "longFmt": "11,269,520,228,352.00"
+            }
+          },
+          "balanceSheetHistory": {
+            "balanceSheetStatements": [
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1774915200,
+                  "fmt": "2026-03-31"
+                }
+              },
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1743379200,
+                  "fmt": "2025-03-31"
+                }
+              },
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1711843200,
+                  "fmt": "2024-03-31"
+                }
+              },
+              {
+                "maxAge": 1,
+                "endDate": {
+                  "raw": 1680220800,
+                  "fmt": "2023-03-31"
+                }
+              }
+            ],
+            "maxAge": 86400
+          },
+          "earningsTrend": {
+            "trend": [
+              {
+                "maxAge": 1,
+                "period": "0q",
+                "endDate": "2026-09-30",
+                "growth": {
+                  "raw": 0.0124,
+                  "fmt": "1.24%"
+                },
+                "earningsEstimate": {
+                  "avg": {
+                    "raw": 12.24,
+                    "fmt": "12.24"
+                  },
+                  "low": {
+                    "raw": 12.02,
+                    "fmt": "12.02"
+                  },
+                  "high": {
+                    "raw": 12.46,
+                    "fmt": "12.46"
+                  },
+                  "yearAgoEps": {
+                    "raw": 12.09,
+                    "fmt": "12.09"
+                  },
+                  "numberOfAnalysts": {
+                    "raw": 2,
+                    "fmt": "2",
+                    "longFmt": "2"
+                  },
+                  "growth": {
+                    "raw": 0.0124,
+                    "fmt": "1.24%"
+                  },
+                  "earningsCurrency": "INR"
+                },
+                "revenueEstimate": {
+                  "avg": {
+                    "raw": 475224862000,
+                    "fmt": "475.22B",
+                    "longFmt": "475,224,862,000"
+                  },
+                  "low": {
+                    "raw": 475224862000,
+                    "fmt": "475.22B",
+                    "longFmt": "475,224,862,000"
+                  },
+                  "high": {
+                    "raw": 475224862000,
+                    "fmt": "475.22B",
+                    "longFmt": "475,224,862,000"
+                  },
+                  "numberOfAnalysts": {
+                    "raw": 1,
+                    "fmt": "1",
+                    "longFmt": "1"
+                  },
+                  "yearAgoRevenue": {
+                    "raw": 459015200000,
+                    "fmt": "459.02B",
+                    "longFmt": "459,015,200,000"
+                  },
+                  "growth": {
+                    "raw": 0.0353,
+                    "fmt": "3.53%"
+                  },
+                  "revenueCurrency": "INR"
+                },
+                "epsTrend": {
+                  "current": {
+                    "raw": 12.24,
+                    "fmt": "12.24"
+                  },
+                  "7daysAgo": {
+                    "raw": 12.46,
+                    "fmt": "12.46"
+                  },
+                  "30daysAgo": {
+                    "raw": 12.46,
+                    "fmt": "12.46"
+                  },
+                  "60daysAgo": {
+                    "raw": 12.04,
+                    "fmt": "12.04"
+                  },
+                  "90daysAgo": {
+                    "raw": 12.04,
+                    "fmt": "12.04"
+                  },
+                  "epsTrendCurrency": "INR"
+                },
+                "epsRevisions": {
+                  "upLast7days": {
+                    "raw": 1,
+                    "fmt": "1",
+                    "longFmt": "1"
+                  },
+                  "upLast30days": {
+                    "raw": 1,
+                    "fmt": "1",
+                    "longFmt": "1"
+                  },
+                  "downLast30days": {
+                    "raw": 0,
+                    "fmt": null,
+                    "longFmt": "0"
+                  },
+                  "downLast7Days": {
+                    "raw": 0,
+                    "fmt": null,
+                    "longFmt": "0"
+                  },
+                  "downLast90days": {},
+                  "epsRevisionsCurrency": "INR"
+                }
+              },
+              {
+                "maxAge": 1,
+                "period": "+1q",
+                "endDate": "2026-12-31",
+                "growth": {
+                  "raw": 0.0691,
+                  "fmt": "6.91%"
+                },
+                "earningsEstimate": {
+                  "avg": {},
+                  "low": {},
+                  "high": {},
+                  "yearAgoEps": {},
+                  "numberOfAnalysts": {},
+                  "growth": {},
+                  "earningsCurrency": null
+                },
+                "revenueEstimate": {
+                  "avg": {
+                    "raw": 493501823000,
+                    "fmt": "493.5B",
+                    "longFmt": "493,501,823,000"
+                  },
+                  "low": {
+                    "raw": 493501823000,
+                    "fmt": "493.5B",
+                    "longFmt": "493,501,823,000"
+                  },
+                  "high": {
+                    "raw": 493501823000,
+                    "fmt": "493.5B",
+                    "longFmt": "493,501,823,000"
+                  },
+                  "numberOfAnalysts": {
+                    "raw": 1,
+                    "fmt": "1",
+                    "longFmt": "1"
+                  },
+                  "yearAgoRevenue": {
+                    "raw": 458688400000,
+                    "fmt": "458.69B",
+                    "longFmt": "458,688,400,000"
+                  },
+                  "growth": {
+                    "raw": 0.0759,
+                    "fmt": "7.59%"
+                  },
+                  "revenueCurrency": "INR"
+                },
+                "epsTrend": {
+                  "current": {},
+                  "7daysAgo": {},
+                  "30daysAgo": {},
+                  "60daysAgo": {},
+                  "90daysAgo": {},
+                  "epsTrendCurrency": null
+                },
+                "epsRevisions": {
+                  "upLast7days": {},
+                  "upLast30days": {},
+                  "downLast30days": {},
+                  "downLast7Days": {},
+                  "downLast90days": {},
+                  "epsRevisionsCurrency": null
+                }
+              },
+              {
+                "maxAge": 1,
+                "period": "0y",
+                "endDate": "2027-03-31",
+                "growth": {
+                  "raw": 0.09020001,
+                  "fmt": "9.02%"
+                },
+                "earningsEstimate": {
+                  "avg": {
+                    "raw": 53.72727,
+                    "fmt": "53.73"
+                  },
+                  "low": {
+                    "raw": 53.72727,
+                    "fmt": "53.73"
+                  },
+                  "high": {
+                    "raw": 56,
+                    "fmt": "56"
+                  },
+                  "yearAgoEps": {
+                    "raw": 49.28,
+                    "fmt": "49.28"
+                  },
+                  "numberOfAnalysts": {
+                    "raw": 37,
+                    "fmt": "37",
+                    "longFmt": "37"
+                  },
+                  "growth": {
+                    "raw": 0.09020001,
+                    "fmt": "9.02%"
+                  },
+                  "earningsCurrency": "INR"
+                },
+                "revenueEstimate": {
+                  "avg": {
+                    "raw": 2007951231600,
+                    "fmt": "2.01T",
+                    "longFmt": "2,007,951,231,600"
+                  },
+                  "low": {
+                    "raw": 2000114290210,
+                    "fmt": "2T",
+                    "longFmt": "2,000,114,290,210"
+                  },
+                  "high": {
+                    "raw": 2099597000000,
+                    "fmt": "2.1T",
+                    "longFmt": "2,099,597,000,000"
+                  },
+                  "numberOfAnalysts": {
+                    "raw": 35,
+                    "fmt": "35",
+                    "longFmt": "35"
+                  },
+                  "yearAgoRevenue": {
+                    "raw": 3099715800000,
+                    "fmt": "3.1T",
+                    "longFmt": "3,099,715,800,000"
+                  },
+                  "growth": {
+                    "raw": -0.3522,
+                    "fmt": "-35.22%"
+                  },
+                  "revenueCurrency": "INR"
+                },
+                "epsTrend": {
+                  "current": {
+                    "raw": 53.72727,
+                    "fmt": "53.73"
+                  },
+                  "7daysAgo": {
+                    "raw": 56.4,
+                    "fmt": "56.4"
+                  },
+                  "30daysAgo": {
+                    "raw": 56.4,
+                    "fmt": "56.4"
+                  },
+                  "60daysAgo": {
+                    "raw": 56.4,
+                    "fmt": "56.4"
+                  },
+                  "90daysAgo": {
+                    "raw": 56.4,
+                    "fmt": "56.4"
+                  },
+                  "epsTrendCurrency": "INR"
+                },
+                "epsRevisions": {
+                  "upLast7days": {
+                    "raw": 3,
+                    "fmt": "3",
+                    "longFmt": "3"
+                  },
+                  "upLast30days": {
+                    "raw": 4,
+                    "fmt": "4",
+                    "longFmt": "4"
+                  },
+                  "downLast30days": {
+                    "raw": 5,
+                    "fmt": "5",
+                    "longFmt": "5"
+                  },
+                  "downLast7Days": {
+                    "raw": 3,
+                    "fmt": "3",
+                    "longFmt": "3"
+                  },
+                  "downLast90days": {},
+                  "epsRevisionsCurrency": "INR"
+                }
+              },
+              {
+                "maxAge": 1,
+                "period": "+1y",
+                "endDate": "2028-03-31",
+                "growth": {
+                  "raw": 0.1739,
+                  "fmt": "17.39%"
+                },
+                "earningsEstimate": {
+                  "avg": {
+                    "raw": 63.06884,
+                    "fmt": "63.07"
+                  },
+                  "low": {
+                    "raw": 62.6,
+                    "fmt": "62.6"
+                  },
+                  "high": {
+                    "raw": 67.5,
+                    "fmt": "67.5"
+                  },
+                  "yearAgoEps": {
+                    "raw": 53.72727,
+                    "fmt": "53.73"
+                  },
+                  "numberOfAnalysts": {
+                    "raw": 38,
+                    "fmt": "38",
+                    "longFmt": "38"
+                  },
+                  "growth": {
+                    "raw": 0.1739,
+                    "fmt": "17.39%"
+                  },
+                  "earningsCurrency": "INR"
+                },
+                "revenueEstimate": {
+                  "avg": {
+                    "raw": 3009240085620,
+                    "fmt": "3.01T",
+                    "longFmt": "3,009,240,085,620"
+                  },
+                  "low": {
+                    "raw": 2314420171240,
+                    "fmt": "2.31T",
+                    "longFmt": "2,314,420,171,240"
+                  },
+                  "high": {
+                    "raw": 3704060000000,
+                    "fmt": "3.7T",
+                    "longFmt": "3,704,060,000,000"
+                  },
+                  "numberOfAnalysts": {
+                    "raw": 37,
+                    "fmt": "37",
+                    "longFmt": "37"
+                  },
+                  "yearAgoRevenue": {
+                    "raw": 2000114290210,
+                    "fmt": "2T",
+                    "longFmt": "2,000,114,290,210"
+                  },
+                  "growth": {
+                    "raw": 0.50450003,
+                    "fmt": "50.45%"
+                  },
+                  "revenueCurrency": "INR"
+                },
+                "epsTrend": {
+                  "current": {
+                    "raw": 63.06884,
+                    "fmt": "63.07"
+                  },
+                  "7daysAgo": {
+                    "raw": 62.6,
+                    "fmt": "62.6"
+                  },
+                  "30daysAgo": {
+                    "raw": 62.6,
+                    "fmt": "62.6"
+                  },
+                  "60daysAgo": {
+                    "raw": 62.6,
+                    "fmt": "62.6"
+                  },
+                  "90daysAgo": {
+                    "raw": 62.6,
+                    "fmt": "62.6"
+                  },
+                  "epsTrendCurrency": "INR"
+                },
+                "epsRevisions": {
+                  "upLast7days": {
+                    "raw": 2,
+                    "fmt": "2",
+                    "longFmt": "2"
+                  },
+                  "upLast30days": {
+                    "raw": 3,
+                    "fmt": "3",
+                    "longFmt": "3"
+                  },
+                  "downLast30days": {
+                    "raw": 3,
+                    "fmt": "3",
+                    "longFmt": "3"
+                  },
+                  "downLast7Days": {
+                    "raw": 2,
+                    "fmt": "2",
+                    "longFmt": "2"
+                  },
+                  "downLast90days": {},
+                  "epsRevisionsCurrency": "INR"
+                }
+              }
+            ],
+            "defaultMethodology": "nongaap",
+            "maxAge": 1
+          },
+          "financialData": {
+            "maxAge": 86400,
+            "currentPrice": {
+              "raw": 731,
+              "fmt": "731.00"
+            },
+            "targetHighPrice": {
+              "raw": 1400,
+              "fmt": "1,400.00"
+            },
+            "targetLowPrice": {
+              "raw": 800,
+              "fmt": "800.00"
+            },
+            "targetMeanPrice": {
+              "raw": 994.4878,
+              "fmt": "994.49"
+            },
+            "targetMedianPrice": {
+              "raw": 972,
+              "fmt": "972.00"
+            },
+            "recommendationMean": {
+              "raw": 1.2439,
+              "fmt": "1.24"
+            },
+            "recommendationKey": "strong_buy",
+            "numberOfAnalystOpinions": {
+              "raw": 41,
+              "fmt": "41",
+              "longFmt": "41"
+            },
+            "totalCash": {
+              "raw": 2377666265088,
+              "fmt": "2.38T",
+              "longFmt": "2,377,666,265,088"
+            },
+            "totalCashPerShare": {
+              "raw": 154.436,
+              "fmt": "154.44"
+            },
+            "ebitda": {},
+            "totalDebt": {
+              "raw": 5658713784320,
+              "fmt": "5.66T",
+              "longFmt": "5,658,713,784,320"
+            },
+            "quickRatio": {},
+            "currentRatio": {},
+            "totalRevenue": {
+              "raw": 2949644288000,
+              "fmt": "2.95T",
+              "longFmt": "2,949,644,288,000"
+            },
+            "debtToEquity": {},
+            "revenuePerShare": {
+              "raw": 191.839,
+              "fmt": "191.84"
+            },
+            "returnOnAssets": {
+              "raw": 0.0175,
+              "fmt": "1.75%"
+            },
+            "returnOnEquity": {
+              "raw": 0.13838,
+              "fmt": "13.84%"
+            },
+            "grossProfits": {
+              "raw": 2949644288000,
+              "fmt": "2.95T",
+              "longFmt": "2,949,644,288,000"
+            },
+            "freeCashflow": {},
+            "operatingCashflow": {},
+            "earningsGrowth": {
+              "raw": 0.181,
+              "fmt": "18.10%"
+            },
+            "revenueGrowth": {
+              "raw": 0.166,
+              "fmt": "16.60%"
+            },
+            "grossMargins": {
+              "raw": 0,
+              "fmt": "0.00%"
+            },
+            "ebitdaMargins": {
+              "raw": 0,
+              "fmt": "0.00%"
+            },
+            "operatingMargins": {
+              "raw": 0.33291999,
+              "fmt": "33.29%"
+            },
+            "profitMargins": {
+              "raw": 0.26787,
+              "fmt": "26.79%"
+            },
+            "financialCurrency": "INR"
+          }
+        }
+      ],
+      "error": null
+    }
+  }
+}

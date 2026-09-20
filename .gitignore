@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.vite/
+*.local
+
+# Handoff archives and their extraction — source of record is this repo, not the zips.
+_ext/
+files.zip
+files2.zip
+files3.zip
+Handoff document.pdf

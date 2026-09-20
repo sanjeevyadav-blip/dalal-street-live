@@ -1,0 +1,415 @@
+{
+  "capturedAt": "2026-09-20T07:09:33.410Z",
+  "upstream": "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/PERSISTENT.NS?symbol=PERSISTENT.NS&type=annualOperatingCashFlow,annualCapitalExpenditure,annualNetIncome,annualTotalRevenue,annualTotalAssets&period1=1569136171&period2=1789888171",
+  "body": {
+    "timeseries": {
+      "result": [
+        {
+          "meta": {
+            "symbol": [
+              "PERSISTENT.NS"
+            ],
+            "type": [
+              "annualNetIncome"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualNetIncome": [
+            {
+              "dataId": 20091,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 9210930000,
+                "fmt": "9.21B"
+              }
+            },
+            {
+              "dataId": 20091,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 10934910000,
+                "fmt": "10.93B"
+              }
+            },
+            {
+              "dataId": 20091,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 14001610000,
+                "fmt": "14.00B"
+              }
+            },
+            {
+              "dataId": 20091,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 18651200000,
+                "fmt": "18.65B"
+              }
+            }
+          ]
+        },
+        {
+          "meta": {
+            "symbol": [
+              "PERSISTENT.NS"
+            ],
+            "type": [
+              "annualOperatingCashFlow"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualOperatingCashFlow": [
+            {
+              "dataId": 26014,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 9557620000,
+                "fmt": "9.56B"
+              }
+            },
+            {
+              "dataId": 26014,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 13021090000,
+                "fmt": "13.02B"
+              }
+            },
+            {
+              "dataId": 26014,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 11569160000,
+                "fmt": "11.57B"
+              }
+            },
+            {
+              "dataId": 26014,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 17671300000,
+                "fmt": "17.67B"
+              }
+            }
+          ]
+        },
+        {
+          "meta": {
+            "symbol": [
+              "PERSISTENT.NS"
+            ],
+            "type": [
+              "annualTotalAssets"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualTotalAssets": [
+            {
+              "dataId": 23220,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 66730800000,
+                "fmt": "66.73B"
+              },
+              "businessSegmentData": [
+                {
+                  "dataValue": 5245500000,
+                  "segmentType": "Business",
+                  "segmentName": "Banking, Financial Services and Insurance",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 5245500000,
+                  "segmentType": "Business",
+                  "segmentName": "Banking, Financial Services and Insurance (BFSI)",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 3381920000,
+                  "segmentType": "Business",
+                  "segmentName": "Healthcare & Life Sciences",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 12006480000,
+                  "segmentType": "Business",
+                  "segmentName": "Software, Hi-Tech and Emerging Industries",
+                  "isPrimarySegment": 1
+                },
+                {
+                  "dataValue": 11873990000,
+                  "segmentType": "Business",
+                  "segmentName": "Technology Companies & Emerging Verticals",
+                  "isPrimarySegment": 1
+                },
+                {
+                  "dataValue": 46096900000,
+                  "segmentType": "Business",
+                  "segmentName": "Unallocable assets",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 46096900000,
+                  "segmentType": "Business",
+                  "segmentName": "Unallocated assets",
+                  "isPrimarySegment": 0
+                }
+              ]
+            },
+            {
+              "dataId": 23220,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 74176340000,
+                "fmt": "74.18B"
+              },
+              "businessSegmentData": [
+                {
+                  "dataValue": 6128360000,
+                  "segmentType": "Business",
+                  "segmentName": "Banking, Financial Services and Insurance",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 6128360000,
+                  "segmentType": "Business",
+                  "segmentName": "Banking, Financial Services and Insurance (BFSI)",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 4236240000,
+                  "segmentType": "Business",
+                  "segmentName": "Healthcare & Life Sciences",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 13648050000,
+                  "segmentType": "Business",
+                  "segmentName": "Software, Hi-Tech and Emerging Industries",
+                  "isPrimarySegment": 1
+                },
+                {
+                  "dataValue": 13648050000,
+                  "segmentType": "Business",
+                  "segmentName": "Technology Companies & Emerging Verticals",
+                  "isPrimarySegment": 1
+                },
+                {
+                  "dataValue": 50163690000,
+                  "segmentType": "Business",
+                  "segmentName": "Unallocable assets",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 50163690000,
+                  "segmentType": "Business",
+                  "segmentName": "Unallocated assets",
+                  "isPrimarySegment": 0
+                }
+              ]
+            },
+            {
+              "dataId": 23220,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 87366020000,
+                "fmt": "87.37B"
+              },
+              "businessSegmentData": [
+                {
+                  "dataValue": 7007190000,
+                  "segmentType": "Business",
+                  "segmentName": "Banking, Financial Services and Insurance (BFSI)",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 7163260000,
+                  "segmentType": "Business",
+                  "segmentName": "Healthcare & Life Sciences",
+                  "isPrimarySegment": 0
+                },
+                {
+                  "dataValue": 14230620000,
+                  "segmentType": "Business",
+                  "segmentName": "Technology Companies & Emerging Verticals",
+                  "isPrimarySegment": 1
+                },
+                {
+                  "dataValue": 58964950000,
+                  "segmentType": "Business",
+                  "segmentName": "Unallocated assets",
+                  "isPrimarySegment": 0
+                }
+              ]
+            },
+            {
+              "dataId": 23220,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 113765440000,
+                "fmt": "113.77B"
+              }
+            }
+          ]
+        },
+        {
+          "meta": {
+            "symbol": [
+              "PERSISTENT.NS"
+            ],
+            "type": [
+              "annualCapitalExpenditure"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualCapitalExpenditure": [
+            {
+              "dataId": 26005,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": -4332990000,
+                "fmt": "-4.33B"
+              }
+            },
+            {
+              "dataId": 26005,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": -3580330000,
+                "fmt": "-3.58B"
+              }
+            },
+            {
+              "dataId": 26005,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": -2366910000,
+                "fmt": "-2.37B"
+              }
+            },
+            {
+              "dataId": 26005,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": -2085810000,
+                "fmt": "-2.09B"
+              }
+            }
+          ]
+        },
+        {
+          "meta": {
+            "symbol": [
+              "PERSISTENT.NS"
+            ],
+            "type": [
+              "annualTotalRevenue"
+            ]
+          },
+          "timestamp": [
+            1680220800,
+            1711843200,
+            1743379200,
+            1774915200
+          ],
+          "annualTotalRevenue": [
+            {
+              "dataId": 20100,
+              "asOfDate": "2023-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 83505920000,
+                "fmt": "83.51B"
+              }
+            },
+            {
+              "dataId": 20100,
+              "asOfDate": "2024-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 98215870000,
+                "fmt": "98.22B"
+              }
+            },
+            {
+              "dataId": 20100,
+              "asOfDate": "2025-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 119387170000,
+                "fmt": "119.39B"
+              }
+            },
+            {
+              "dataId": 20100,
+              "asOfDate": "2026-03-31",
+              "periodType": "12M",
+              "currencyCode": "INR",
+              "reportedValue": {
+                "raw": 147484490000,
+                "fmt": "147.48B"
+              }
+            }
+          ]
+        }
+      ],
+      "error": null
+    }
+  }
+}

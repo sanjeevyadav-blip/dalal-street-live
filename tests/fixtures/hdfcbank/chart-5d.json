@@ -1,0 +1,134 @@
+{
+  "capturedAt": "2026-09-20T07:09:31.306Z",
+  "upstream": "https://query1.finance.yahoo.com/v8/finance/chart/HDFCBANK.NS?interval=1d&range=5d",
+  "body": {
+    "chart": {
+      "result": [
+        {
+          "meta": {
+            "currency": "INR",
+            "symbol": "HDFCBANK.NS",
+            "exchangeName": "NSI",
+            "fullExchangeName": "NSE",
+            "instrumentType": "EQUITY",
+            "firstTradeDate": 820467900,
+            "regularMarketTime": 1789724700,
+            "hasPrePostMarketData": false,
+            "gmtoffset": 19800,
+            "timezone": "IST",
+            "exchangeTimezoneName": "Asia/Kolkata",
+            "regularMarketPrice": 731,
+            "regularMarketChangePercent": 2.525,
+            "fulldayPrice": 731,
+            "fulldayChange": 18,
+            "fulldayChangePercent": 2.525,
+            "fiftyTwoWeekHigh": 1020.5,
+            "fiftyTwoWeekLow": 681.9,
+            "regularMarketDayHigh": 733.8,
+            "regularMarketDayLow": 715.25,
+            "regularMarketVolume": 39400710,
+            "longName": "HDFC Bank Limited",
+            "shortName": "HDFC BANK LTD",
+            "chartPreviousClose": 708.25,
+            "priceHint": 2,
+            "currentTradingPeriod": {
+              "pre": {
+                "timezone": "IST",
+                "start": 1789703100,
+                "end": 1789703100,
+                "gmtoffset": 19800
+              },
+              "regular": {
+                "timezone": "IST",
+                "start": 1789703100,
+                "end": 1789725600,
+                "gmtoffset": 19800
+              },
+              "post": {
+                "timezone": "IST",
+                "start": 1789725600,
+                "end": 1789725600,
+                "gmtoffset": 19800
+              }
+            },
+            "dataGranularity": "1d",
+            "range": "5d",
+            "validRanges": [
+              "1d",
+              "5d",
+              "1mo",
+              "3mo",
+              "6mo",
+              "1y",
+              "2y",
+              "5y",
+              "10y",
+              "ytd",
+              "max"
+            ]
+          },
+          "timestamp": [
+            1789357500,
+            1789443900,
+            1789530300,
+            1789616700,
+            1789703100
+          ],
+          "indicators": {
+            "quote": [
+              {
+                "close": [
+                  708.25,
+                  716.5499877929688,
+                  721.5,
+                  713,
+                  731
+                ],
+                "volume": [
+                  0,
+                  50387632,
+                  27476943,
+                  21543303,
+                  39400710
+                ],
+                "high": [
+                  708.25,
+                  730.75,
+                  725.4000244140625,
+                  719.4000244140625,
+                  733.7999877929688
+                ],
+                "open": [
+                  708.25,
+                  722.4000244140625,
+                  714.9000244140625,
+                  717.5,
+                  715.25
+                ],
+                "low": [
+                  708.25,
+                  715.0499877929688,
+                  710.8499755859375,
+                  713,
+                  715.25
+                ]
+              }
+            ],
+            "adjclose": [
+              {
+                "adjclose": [
+                  708.25,
+                  716.5499877929688,
+                  721.5,
+                  713,
+                  731
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "error": null
+    }
+  }
+}

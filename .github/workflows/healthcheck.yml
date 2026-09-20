@@ -1,0 +1,47 @@
+name: API Health Check
+# Upstream endpoints are unofficial and change without notice. This is the early
+# warning system — a failing run emails the team.
+on:
+  schedule: [{ cron: '30 3 * * *' }]   # 09:00 IST
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      W: https://dalal-proxy.sanjeev-yadav.workers.dev/?url=
+    steps:
+      - name: Price feed
+        run: |
+          U=$(python3 -c "import urllib.parse;print(urllib.parse.quote('https://query1.finance.yahoo.com/v8/finance/chart/RELIANCE.NS?interval=1d&range=5d'))")
+          curl -sf "$W$U" | grep -q '"close"' || { echo "PRICE FEED DOWN"; exit 1; }
+
+      - name: Fundamentals (proves Yahoo crumb handshake works)
+        run: |
+          U=$(python3 -c "import urllib.parse;print(urllib.parse.quote('https://query2.finance.yahoo.com/v10/finance/quoteSummary/RELIANCE.NS?modules=summaryDetail'))")
+          R=$(curl -sf "$W$U")
+          echo "$R" | grep -q 'Invalid Cookie' && { echo "CRUMB BROKEN"; exit 1; }
+          echo "$R" | grep -q 'trailingPE'     || { echo "FUNDAMENTALS EMPTY"; exit 1; }
+
+      - name: Option chain (proves NSE session handshake works)
+        run: |
+          U=$(python3 -c "import urllib.parse;print(urllib.parse.quote('https://www.nseindia.com/api/option-chain-contract-info?symbol=RELIANCE'))")
+          curl -sf "$W$U" | grep -q 'expiryDates' || { echo "NSE SESSION BROKEN"; exit 1; }
+
+      - name: Multi-year financials (DCF depends on this)
+        run: |
+          P2=$(date +%s); P1=$((P2 - 220752000))
+          RAW="https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/RELIANCE.NS?symbol=RELIANCE.NS&type=annualOperatingCashFlow&period1=$P1&period2=$P2"
+          U=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$RAW")
+          curl -sf "$W$U" | grep -q 'annualOperatingCashFlow' || { echo "TIMESERIES DOWN"; exit 1; }
+
+      - name: News feed
+        run: |
+          U=$(python3 -c "import urllib.parse;print(urllib.parse.quote('https://www.bing.com/news/search?q=Reliance+stock&format=RSS'))")
+          curl -sf "$W$U" | grep -q '<item>' || { echo "NEWS FEED DOWN"; exit 1; }
+
+      - name: Worker allowlist still enforced
+        run: |
+          U=$(python3 -c "import urllib.parse;print(urllib.parse.quote('https://example.com/'))")
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' "$W$U")
+          [ "$CODE" = "403" ] || { echo "ALLOWLIST NOT ENFORCED (got $CODE)"; exit 1; }

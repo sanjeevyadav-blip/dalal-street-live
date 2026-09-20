@@ -1,0 +1,134 @@
+{
+  "capturedAt": "2026-09-20T07:09:34.717Z",
+  "upstream": "https://query1.finance.yahoo.com/v8/finance/chart/TMPV.NS?interval=1d&range=5d",
+  "body": {
+    "chart": {
+      "result": [
+        {
+          "meta": {
+            "currency": "INR",
+            "symbol": "TMPV.NS",
+            "exchangeName": "NSI",
+            "fullExchangeName": "NSE",
+            "instrumentType": "EQUITY",
+            "firstTradeDate": 662787900,
+            "regularMarketTime": 1789724701,
+            "hasPrePostMarketData": false,
+            "gmtoffset": 19800,
+            "timezone": "IST",
+            "exchangeTimezoneName": "Asia/Kolkata",
+            "regularMarketPrice": 303.8,
+            "regularMarketChangePercent": -3.402,
+            "fulldayPrice": 303.8,
+            "fulldayChange": -10.7,
+            "fulldayChangePercent": -3.402,
+            "fiftyTwoWeekHigh": 739.7,
+            "fiftyTwoWeekLow": 294.3,
+            "regularMarketDayHigh": 310,
+            "regularMarketDayLow": 301.5,
+            "regularMarketVolume": 18037112,
+            "longName": "Tata Motors Passenger Vehicles Limited",
+            "shortName": "TATA MOTORS PASS VEH LTD",
+            "chartPreviousClose": 301.1,
+            "priceHint": 2,
+            "currentTradingPeriod": {
+              "pre": {
+                "timezone": "IST",
+                "start": 1789703100,
+                "end": 1789703100,
+                "gmtoffset": 19800
+              },
+              "regular": {
+                "timezone": "IST",
+                "start": 1789703100,
+                "end": 1789725600,
+                "gmtoffset": 19800
+              },
+              "post": {
+                "timezone": "IST",
+                "start": 1789725600,
+                "end": 1789725600,
+                "gmtoffset": 19800
+              }
+            },
+            "dataGranularity": "1d",
+            "range": "5d",
+            "validRanges": [
+              "1d",
+              "5d",
+              "1mo",
+              "3mo",
+              "6mo",
+              "1y",
+              "2y",
+              "5y",
+              "10y",
+              "ytd",
+              "max"
+            ]
+          },
+          "timestamp": [
+            1789357500,
+            1789443900,
+            1789530300,
+            1789616700,
+            1789703100
+          ],
+          "indicators": {
+            "quote": [
+              {
+                "open": [
+                  301.1000061035156,
+                  320,
+                  304.25,
+                  301,
+                  309.6000061035156
+                ],
+                "low": [
+                  301.1000061035156,
+                  303.5,
+                  299.29998779296875,
+                  299.75,
+                  301.5
+                ],
+                "close": [
+                  301.1000061035156,
+                  303.6000061035156,
+                  301,
+                  314.5,
+                  303.79998779296875
+                ],
+                "volume": [
+                  0,
+                  19003987,
+                  12264774,
+                  11903808,
+                  18037112
+                ],
+                "high": [
+                  301.1000061035156,
+                  320.1499938964844,
+                  306,
+                  319.79998779296875,
+                  310
+                ]
+              }
+            ],
+            "adjclose": [
+              {
+                "adjclose": [
+                  301.1000061035156,
+                  303.6000061035156,
+                  301,
+                  314.5,
+                  303.79998779296875
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "error": null
+    }
+  }
+}
