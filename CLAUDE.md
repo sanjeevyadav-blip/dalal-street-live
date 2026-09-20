@@ -25,7 +25,7 @@ Static site on GitHub Pages + one Cloudflare Worker as a CORS proxy. No backend,
 | `docs/07-DESIGN-SYSTEM-UX.md` | Tokens, components, mobile spec, PWA, native app routes |
 | `docs/08-SECURITY-COMPLIANCE.md` | Worker allowlist, privacy, SEBI position |
 | `docs/09-SDLC-PROCESS.md` | Branching, commits, definition of done, review checklist |
-| `docs/10-TEST-PLAN.md` | Test plan. §10.2 and §10.3 are **done** (217 tests); §10.4 live-API checks and §10.5 E2E are **not** |
+| `docs/10-TEST-PLAN.md` | Test plan. §10.2, §10.3 **done** (220 offline tests); §10.4 live-API (10) and §10.5 E2E (27×2) **done** |
 | `docs/11-DEPLOYMENT-RUNBOOK.md` | Deploy, verify, health checks, failure playbook |
 | `docs/12-MAINTENANCE-SUPPORT.md` | Fragilities ranked, fallbacks if a feed dies |
 | `docs/13-RISK-REGISTER.md` | 15 risks; top three to act on |
@@ -57,10 +57,12 @@ src/models/     normal ols gbm
 src/ui/         detail detail-state charts snapshot thesis deep-analysis options-block
                 factors-block fundamentals news-block intraday-desk peers watchlist
                 glossary ipo format errors navigate symbol tables/{screener,ranking}
-src/manifest.json  src/sw.js            PWA
+src/public/     manifest.json sw.js    PWA — COPIED to dist, not inlined (see vite.config.js)
 src/probability-lab.NOT-DEPLOYED.js     written, verified, never shipped — see doc 6
 worker/worker.js  worker/wrangler.toml  the CORS proxy
-tests/          217 tests, all offline against 31 committed API fixtures
+tests/          220 offline tests against 31 committed API fixtures
+tests/integration/  10 live-API checks (§10.4) — opt-in, hits the real Worker
+tests/e2e/      27 Playwright specs (§10.5), desktop + mobile, fixture-routed
 scripts/        capture-fixtures.mjs, check-invariants.sh
 ```
 
@@ -91,6 +93,10 @@ Regenerate fixtures with `node scripts/capture-fixtures.mjs` (read-only; hits th
   gives a year-old price. This shipped as 1D% == 1Y%.
 - `option-chain-equities` is dead. Use `option-chain-v3` **with an explicit expiry**.
 - Ticker universes rot (TATAMOTORS→TMPV, ZOMATO→ETERNAL, LTIM dead).
+- **A green build does not mean a complete `dist/`.** Vite emitted only `index.html` while
+  the page went on referencing `manifest.json` and `sw.js`, silently killing the PWA. All 217
+  offline tests passed — none of them looked past `index.html`. `publicDir: 'public'` fixes
+  it; `tests/unit/build-output.test.js` and `tests/e2e/pwa.spec.js` now hold it down.
 
 ## Working style
 
@@ -124,6 +130,6 @@ deploy.yml` fires on a push to `main` only, so a feature branch is safe.
 ## First tasks
 
 P0 ~~refactor the monolith~~ done · P0 ~~unit + regression tests~~ done ·
-P0 E2E (`docs/10` §10.5) and live-API integration checks (§10.4) · P0 CI/CD (EPIC-3) ·
+P0 ~~E2E (`docs/10` §10.5)~~ done · P0 ~~live-API integration checks (§10.4)~~ done ·
 P1 reliability hardening (EPIC-4) · P1 ship the probability lab (EPIC-5) ·
 P2 Capacitor wrapper (EPIC-6). Detail in `engineering/18-DELIVERY-PLAN.md`.

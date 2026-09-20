@@ -1,10 +1,23 @@
 # 10. Test Plan & QA Strategy
 
 > **Superseded intro (kept for the record).** This document opened by saying there were zero
-> automated tests. As of EPIC-1 PR-6 there are **197**, all running offline against 31
-> committed API fixtures: 102 unit, 63 regression, 18 boot, 7 build-output, 33 golden
-> snapshots. §10.2 is complete; §10.3 is complete; §10.5 (E2E) and §10.4 (weekly live
-> integration) are still outstanding.
+> automated tests. There are now **220 offline**, all running against 31 committed API
+> fixtures: unit, regression, boot, build-output and 33 golden snapshots. §10.2 and §10.3 are
+> complete.
+>
+> §10.4 and §10.5 are now complete too:
+>
+> - **§10.4** — `tests/integration/live-apis.test.js`, 10 checks, run with
+>   `npm run test:integration`. Deliberately outside `npm run verify`: they hit the real
+>   Worker, Yahoo and NSE, so they fail when an upstream has a bad ten minutes, which says
+>   nothing about this repo. Run weekly and after any Worker change.
+> - **§10.5** — `tests/e2e/`, 27 Playwright specs across desktop and mobile
+>   (54 runs), via `npm run test:e2e`. Routed through the same committed fixtures as the
+>   offline suite, so they are deterministic and need no network.
+>
+> The first E2E run paid for the whole exercise: it found that the Vite build emitted
+> `index.html` alone while the page still referenced `manifest.json` and `sw.js`, so the PWA
+> was dead on the refactor branch. Every offline test was green at the time.
 
 This document is the plan, and it was the highest-priority engineering task after the
 refactor.

@@ -3,8 +3,19 @@
 Reverse chronological. Format: Conventional Commits categories.
 
 ## Unreleased
-- **Planned:** module refactor, test suite, probability lab deployment, symbol validation,
-  Capacitor native wrapper.
+- `refactor` EPIC-1: the 3,888-line monolithic `index.html` became 39 ES modules built by
+  Vite into one `dist/index.html`. Behaviour proven unchanged against the deployed file.
+- `test` 220 offline tests against 31 committed API fixtures, including 33 golden snapshots.
+- `test` §10.4: 10 live-API integration checks (`npm run test:integration`), opt-in.
+- `test` §10.5: 27 Playwright E2E specs on desktop and mobile (`npm run test:e2e`), routed
+  through the committed fixtures so they run deterministically and offline.
+- `fix(pwa)` **the build stopped shipping the PWA.** `publicDir: false` meant Vite emitted
+  `index.html` alone, while the page still linked `manifest.json` and registered `sw.js`.
+  On a deploy the manifest would 404 and `sw.js` would be served the HTML fallback, failing
+  registration with "unsupported MIME type ('text/html')" — no install prompt, no offline
+  shell. Introduced by the EPIC-1 file moves, never deployed, found by the first E2E run.
+  `src/public/` + `publicDir: 'public'` restores the three-file layout the live site has.
+- **Planned:** probability lab deployment, symbol validation, Capacitor native wrapper.
 
 ## v1.9 — Mobile & PWA
 - `feat(mobile)` responsive layout ≤760px: sticky header, swipe indices strip, 2-column
