@@ -139,7 +139,12 @@ test.describe('detail panel', () => {
     const out = page.locator('#psOut');
     await expect(out).toBeVisible();
 
-    const metric = (label) => out.locator('.metric', { has: page.locator('.k', { hasText: new RegExp('^' + label + '$', 'i') }) }).locator('.v');
+    // Start-anchored, NOT end-anchored. annotateGlossary appends an "i" tooltip marker into
+    // every `.metric .k` a second or so after the block renders, so the label's text content
+    // becomes "Amount at riski". An end-anchored match passes or fails depending on whether
+    // the annotator got there first — which is exactly the kind of flake that teaches people
+    // to re-run the suite instead of reading it.
+    const metric = (label) => out.locator('.metric', { has: page.locator('.k', { hasText: new RegExp('^' + label, 'i') }) }).locator('.v');
     const num = async (label) => Number((await metric(label).innerText()).replace(/[^\d.]/g, ''));
 
     // The arithmetic is fixed and checkable: rupees at risk / rupees per share.

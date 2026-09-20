@@ -29,9 +29,9 @@
 // the chart whatever its delay. Final order is: core header, snapshot, chart, deep
 // analysis, options, factors.
 //
-// Per-block error boundaries (EPIC-4 story E4-2) belong in runBlock below. They are not
-// here yet on purpose: adding them changes what happens on the failure path, and PR-8 is a
-// restructuring that must not change behaviour.
+// Per-block error boundaries (EPIC-4 story E4-2) live in runBlock below: each block is
+// wrapped so one dead feed renders its own failure state instead of taking the panel with
+// it. The promise is caught, never awaited — see runBlock.
 
 import { NIFTY_SYMBOL } from '../data/universes.js';
 import { cagrPct, rsiLast, rsiSeriesFull, stochasticLast } from '../indicators/momentum.js';
@@ -47,6 +47,8 @@ import { fmtNum, fmtPct } from './format.js';
 import { renderOptions } from './options-block.js';
 import { renderSnapshot } from './snapshot.js';
 import { addSymbolToWatchlist } from './watchlist.js';
+import { showError } from './errors.js';
+import { suppressed } from '../suppressed.js';
 
 function renderDetailCore(symbol, hist, niftyHist){
   const meta = hist.meta;
@@ -251,11 +253,91 @@ export function detailContext(symbol, hist, niftyHist) {
   };
 }
 
-// The single point every block passes through. EPIC-4 story E4-2 wraps the call below in
-// try/catch and renders a per-block error state; today it is a bare call so that the
-// failure path behaves exactly as it did before PR-8.
+/**
+ * The single point every block passes through — and, since EPIC-4 story E4-2, the error
+ * boundary around each one.
+ *
+ * Before this, a block that threw took the rest of the panel with it or surfaced as an
+ * uncaught error in a timer, depending on which block it was. `deep-analysis` was the worst
+ * case: it runs synchronously, so its exception propagated all the way out of renderDetail
+ * into loadStockDetail, and the reader got a blank panel because the OPTIONS feed was down.
+ *
+ * TWO FAILURE MODES, BOTH CAUGHT
+ *
+ *   sync   `core` and `deep-analysis` throw directly — the try/catch handles those.
+ *   async  the other three are async functions; they return a promise that rejects long
+ *          after runBlock has returned, so the catch alone would never see them.
+ *
+ * Hence the `.catch()` on the returned promise. Note what is NOT done: the promise is not
+ * awaited. Awaiting here would serialise four independent network round trips that today run
+ * concurrently — the exact regression tests/unit/detail-pipeline.test.js exists to prevent.
+ * Attaching a catch handler does not change when anything runs.
+ */
 function runBlock(block, ctx) {
-  block.render(ctx);
+  try {
+    const result = block.render(ctx);
+    if (result && typeof result.then === 'function') {
+      result.catch((err) => renderBlockError(block.id, err));
+    }
+  } catch (err) {
+    renderBlockError(block.id, err);
+  }
+}
+
+// Where each block's error state is painted. A block that has already rendered its own
+// container gets the message inside it; one that failed before creating anything gets a
+// container made for it, so the failure is visible rather than merely absent.
+const BLOCK_HOSTS = {
+  'core': null,                 // special-cased below: the panel itself failed
+  'deep-analysis': 'deepBlock',
+  'snapshot': 'snapBlock',
+  'options': 'optBlock',
+  'factors': 'facBlock'
+};
+
+const BLOCK_LABELS = {
+  'deep-analysis': 'Deep analysis',
+  'snapshot': 'Snapshot',
+  'options': 'Options-implied probability',
+  'factors': 'Factor decomposition'
+};
+
+export function renderBlockError(blockId, err) {
+  suppressed('block:' + blockId, err);
+
+  // The core block IS the panel. There is no partial state worth showing, so this one goes
+  // to the page-level banner — the coarse case src/ui/errors.js was written for.
+  if (blockId === 'core') {
+    try { showError('Could not render the detail panel: ' + (err && err.message ? err.message : err)); } catch { /* no banner in tests */ }
+    return;
+  }
+
+  const card = document.getElementById('detailCard');
+  if (!card) return;
+
+  const hostId = BLOCK_HOSTS[blockId];
+  let host = hostId ? document.getElementById(hostId) : null;
+  if (!host) {
+    host = document.createElement('div');
+    if (hostId) host.id = hostId;
+    card.appendChild(host);
+  }
+
+  const label = BLOCK_LABELS[blockId] || blockId;
+  // Says which feed failed and that everything else is unaffected. CLAUDE.md invariant 3:
+  // a failed block must read as failed, never as "this company has no such number".
+  host.innerHTML =
+    '<div class="section-label"><span>' + label + '</span><span class="rule-line"></span></div>' +
+    '<div class="note-inline">This section could not load: ' +
+    escapeHtml(err && err.message ? err.message : String(err)) +
+    '. The feed behind it is unavailable — this is a fetch failure, not a missing figure. ' +
+    'Everything else on this page is unaffected.</div>';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
 }
 
 /**

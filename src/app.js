@@ -26,6 +26,8 @@ import { drawChart } from './ui/charts.js';
 import { loadIpos } from './ui/ipo.js';
 
 import { countSelectHtml, loadScreener3, scrCache } from './ui/tables/screener.js';
+import { mountDiagnostics } from './ui/diagnostics-block.js';
+import { initDiagnostics } from './diagnostics.js';
 import { runRanking3, rankCache } from './ui/tables/ranking.js';
 
 import { renderFundamentals, renderFundamentalsUnavailable } from './ui/fundamentals.js';
@@ -644,6 +646,12 @@ function bootstrap(){
   rebuildRanking3();
   extendGlossaryForRowCount();
   mobileLayer();
+
+  // EPIC-4 E4-4. Last, and after mobileLayer, so the panel picks up the mobile stylesheet.
+  // initDiagnostics only decides whether the panel is SHOWN; the failure buffer has been
+  // filling since the first module loaded.
+  initDiagnostics();
+  mountDiagnostics();
 }
 
 bootstrap();

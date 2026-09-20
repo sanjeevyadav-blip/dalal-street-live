@@ -28,6 +28,8 @@ export default [
         Image: 'readonly',
         URL: 'readonly',
         URLSearchParams: 'readonly',
+        Request: 'readonly',
+        Response: 'readonly',
         AbortController: 'readonly'
       }
     },
