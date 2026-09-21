@@ -108,10 +108,41 @@ describe('page boots', () => {
     }
   });
 
-  it('places the ranking section directly above the screener', () => {
+  it('places the ranking section above the screener', () => {
+    // Document order, not sibling adjacency. The phone shell sorts sections into five
+    // .tabpanel wrappers, so these two are no longer siblings — they sit in adjacent
+    // panels. What the original assertion was protecting is the reading order, and that
+    // is what DOCUMENT_POSITION_FOLLOWING checks, at whatever nesting depth.
     const rank = doc.getElementById('rankSection');
     const screener = doc.getElementById('largeCapBody').closest('section');
-    expect(rank.nextElementSibling).toBe(screener);
+    const FOLLOWING = 4; // Node.DOCUMENT_POSITION_FOLLOWING
+    expect(rank.compareDocumentPosition(screener) & FOLLOWING).toBeTruthy();
+
+    // And nothing else of substance between them: the ranking's panel is immediately
+    // followed by the screener's.
+    const rankPanel = rank.closest('.tabpanel') || rank;
+    const screenerPanel = screener.closest('.tabpanel') || screener;
+    expect(rankPanel.nextElementSibling).toBe(screenerPanel);
+  });
+
+  it('sorts every section into exactly one tab panel', () => {
+    // A section that no panel claims is unreachable on a phone: the panels are the only
+    // thing displayed, so a section left behind in .wrap simply never appears. This is
+    // the failure mode of the selector list in mobile-shell.js drifting from the markup,
+    // and it is silent on a desktop, where everything is visible regardless.
+    const panels = [...doc.querySelectorAll('.tabpanel')];
+    expect(panels.length).toBe(5);
+
+    const mustBeReachable = [
+      'section.watchlist', '#top20Section', 'section.ipo', '#rankSection',
+      'section.screener', '#marketNewsSection', '#glossarySection', '#manualSection'
+    ];
+    for (const sel of mustBeReachable){
+      const el = doc.querySelector(sel);
+      expect(el, `missing ${sel}`).not.toBeNull();
+      const owner = panels.filter(p => p.contains(el));
+      expect(owner.length, `${sel} is in ${owner.length} panels, not 1`).toBe(1);
+    }
   });
 });
 

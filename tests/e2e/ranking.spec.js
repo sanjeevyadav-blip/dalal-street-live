@@ -6,13 +6,14 @@
 // dropdown from 20 to 10 is the kind of thing nobody notices until the feed rate-limits.
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, showTab } from './helpers/fixture-routes.js';
 
 test.describe('ranking and screener', () => {
   test('ranking scores the whole universe, then slices to the selected count', async ({ page }) => {
     await stubFonts(page);
     const net = await installFixtureRoutes(page);
     await page.goto('/');
+    await showTab(page, 'rank');
 
     await page.locator('#rankLargeCount').selectOption('20');
     await page.locator('#rankLargeBtn').click();
@@ -41,6 +42,7 @@ test.describe('ranking and screener', () => {
     await stubFonts(page);
     await installFixtureRoutes(page);
     await page.goto('/');
+    await showTab(page, 'rank');
 
     await page.locator('#rankLargeCount').selectOption('10');
     await page.locator('#rankLargeBtn').click();
@@ -59,15 +61,31 @@ test.describe('ranking and screener', () => {
     await installFixtureRoutes(page);
     await page.goto('/');
 
-    const ids = ['#scrLargeCount', '#scrMidCount', '#rankLargeCount', '#rankMidCount'];
-    for (const id of ids) await expect(page.locator(id)).toBeVisible();
+    // Four distinct values, one per selector. The bug this guards against is two
+    // selectors sharing an element id, so moving one silently moves another.
+    //
+    // Grouped by tab because the screener and the ranking are separate views on a phone
+    // and only one is on screen at a time. On desktop showTab is a no-op and this reads
+    // as it always did. Setting them across a tab switch and reading them back after
+    // another switch also proves the panels keep their state rather than re-rendering.
+    const byTab = [
+      ['scr',  [['#scrLargeCount', '10'], ['#scrMidCount', '15']]],
+      ['rank', [['#rankLargeCount', '30'], ['#rankMidCount', '50']]]
+    ];
 
-    // Four distinct values, one per selector. The bug this guards against is two selectors
-    // sharing an element id, so moving one silently moves another.
-    const picks = ['10', '15', '30', '50'];
-    for (let i = 0; i < ids.length; i++) await page.locator(ids[i]).selectOption(picks[i]);
-    for (let i = 0; i < ids.length; i++) {
-      await expect(page.locator(ids[i]), ids[i] + ' did not hold its own value').toHaveValue(picks[i]);
+    for (const [tab, pairs] of byTab){
+      await showTab(page, tab);
+      for (const [id, value] of pairs){
+        await expect(page.locator(id)).toBeVisible();
+        await page.locator(id).selectOption(value);
+      }
+    }
+
+    for (const [tab, pairs] of byTab){
+      await showTab(page, tab);
+      for (const [id, value] of pairs){
+        await expect(page.locator(id), id + ' did not hold its own value').toHaveValue(value);
+      }
     }
   });
 
@@ -75,6 +93,7 @@ test.describe('ranking and screener', () => {
     await stubFonts(page);
     const net = await installFixtureRoutes(page);
     await page.goto('/');
+    await showTab(page, 'scr');
 
     await page.locator('#scrLargeCount').selectOption('10');
     await page.locator('#loadLargeCap').click();

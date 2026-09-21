@@ -5,7 +5,7 @@
 // user report".
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts, PROXY_GLOB } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, PROXY_GLOB, showTab } from './helpers/fixture-routes.js';
 
 test.describe('E4-2 — one dead feed never blanks the page', () => {
   test('the panel still renders when the option chain is down', async ({ page }) => {
@@ -51,6 +51,7 @@ test.describe('E4-4 — errors visible without a user report', () => {
     await stubFonts(page);
     await installFixtureRoutes(page);
     await page.goto('/');
+    await showTab(page, 'more');
     await expect(page.locator('#diagnosticsSection')).toBeVisible();
     await expect(page.locator('#diagToggle')).not.toBeChecked();
     // Off means the log is not shown, not that it is not being kept.
@@ -102,6 +103,7 @@ test.describe('E4-4 — errors visible without a user report', () => {
     await page.locator('#suggestions .item').first().click();
     await expect(page.locator('#optBlock')).toBeVisible({ timeout: 20000 });
 
+    await showTab(page, 'more');
     await page.locator('#diagToggle').check();
     await expect(page.locator('#diagRows')).toContainText('nseindia.com', { timeout: 10000 });
   });

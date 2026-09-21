@@ -186,3 +186,22 @@ export async function stubFonts(page) {
     route.fulfill({ status: 200, contentType: 'text/css', body: '' }));
   await page.route('**/fonts.gstatic.com/**', (route) => route.abort());
 }
+
+/**
+ * Bring a section on screen before interacting with it.
+ *
+ * At phone widths the app is five tabs and only the active one is displayed, so a spec
+ * that clicks straight into the ranking table finds a hidden element. At desktop widths
+ * every panel is visible and there is nothing to switch, which is why this is a no-op
+ * when the nav is not displayed rather than a hard requirement — the same spec then runs
+ * unchanged under both Playwright projects.
+ *
+ * Tab ids: top20, ipo, rank, scr, more.
+ */
+export async function showTab(page, id) {
+  const link = page.locator(`#mnav a[data-tab="${id}"]`);
+  if (await link.isVisible().catch(() => false)) {
+    await link.click();
+    await page.locator(`.tabpanel[data-tab="${id}"]`).waitFor({ state: 'visible' });
+  }
+}

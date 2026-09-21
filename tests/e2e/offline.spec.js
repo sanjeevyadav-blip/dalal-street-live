@@ -8,7 +8,7 @@
 // adds is the reader's view — what is actually on screen when nothing loads.
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, showTab } from './helpers/fixture-routes.js';
 
 test.describe('dead network', () => {
   test('the shell still loads when every upstream fails', async ({ page }) => {
@@ -21,8 +21,15 @@ test.describe('dead network', () => {
     await expect(page.locator('#searchInput')).toBeVisible();
     // mountRanking, mountManual and mountGlossary all create <section class="screener">, so
     // this has to address the screener by its own control rather than by class.
+    //
+    // Attached, not visible: on a phone these sit on tabs that are not the landing tab,
+    // and the claim here is that the shell BUILT them with every upstream dead, not that
+    // they happen to be on screen. showTab then proves they are reachable and rendered.
+    await expect(page.locator('#rankSection')).toBeAttached();
+    await showTab(page, 'scr');
     await expect(page.locator('#loadLargeCap')).toBeEnabled();
     await expect(page.locator('#largeCapBody')).toBeVisible();
+    await showTab(page, 'rank');
     await expect(page.locator('#rankSection')).toBeVisible();
   });
 

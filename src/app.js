@@ -27,6 +27,9 @@ import { loadIpos } from './ui/ipo.js';
 
 import { countSelectHtml, loadScreener3, scrCache } from './ui/tables/screener.js';
 import { mountDiagnostics } from './ui/diagnostics-block.js';
+import { mountTop20 } from './ui/top20.js';
+import { mountMarketNews } from './ui/market-news.js';
+import { mountMobileShell, openDetailView } from './ui/mobile-shell.js';
 import { initNativeShell, shouldRegisterServiceWorker } from './ui/native.js';
 import { initDiagnostics } from './diagnostics.js';
 import { runRanking3, rankCache } from './ui/tables/ranking.js';
@@ -118,6 +121,10 @@ async function loadStockDetail(symbol){
   const card = document.getElementById('detailCard');
   section.classList.add('show');
   card.innerHTML = `<div class="loading-dots" style="padding:30px 0; text-align:center;">Loading ${symbol.replace(/\.(NS|BO)$/,'')}…</div>`;
+  // On a phone the detail takes over the screen and the Back button returns you to the
+  // tab you came from. A no-op on desktop, where the panel stays in the page and the
+  // scroll below is the right behaviour.
+  openDetailView();
   section.scrollIntoView({ behavior:'smooth', block:'start' });
 
   let hist, niftyHist;
@@ -645,26 +652,12 @@ function mobileLayer(){
     '}'
   ].join('');
   document.head.appendChild(st);
+  // The element only. mountMobileShell fills it and wires the clicks, because the labels
+  // and the click behaviour belong with the panels they switch between \u2014 this used to
+  // hold five anchors that smooth-scrolled one very long page.
   const nav = document.createElement('nav');
   nav.id = 'mnav';
-  const items = [
-    ['\u25c9','Market','.indices'],
-    ['\u2605','Watchlist','section.watchlist'],
-    ['\u2637','Screener','#largeCapBody'],
-    ['\u2191','Top','#rankSection'],
-    ['?','Help','#manualSection']
-  ];
-  nav.innerHTML = items.map(function(it){
-    return '<a href="#" data-t="' + it[2] + '"><span class="ic">' + it[0] + '</span>' + it[1] + '</a>';
-  }).join('');
   document.body.appendChild(nav);
-  nav.addEventListener('click', function(e){
-    const a = e.target.closest('a');
-    if (!a) return;
-    e.preventDefault();
-    const el = document.querySelector(a.getAttribute('data-t'));
-    if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
-  });
   let deferred = null;
   window.addEventListener('beforeinstallprompt', function(e){
     e.preventDefault();
@@ -740,6 +733,13 @@ function bootstrap(){
   // EPIC-6. A no-op on the website; inside the Capacitor shell it routes external links to
   // the system browser, themes the status bar and dismisses the splash.
   initNativeShell();
+
+  // The two sections the phone shell adds, then the shell itself. Order matters twice:
+  // both must exist before the shell sorts sections into panels, and the shell must be
+  // last of everything, because it moves nodes that every earlier mount* wired up.
+  mountTop20();
+  mountMarketNews();
+  mountMobileShell();
 }
 
 bootstrap();

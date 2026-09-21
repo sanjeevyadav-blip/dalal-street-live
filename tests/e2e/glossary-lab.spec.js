@@ -10,7 +10,7 @@
 // a long-standing finding in CLAUDE.md. New terms must not join it.
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, showTab } from './helpers/fixture-routes.js';
 
 const LAB_TERMS = [
   'Geometric Brownian motion',
@@ -31,6 +31,7 @@ test.describe('probability lab glossary', () => {
 
   test('every lab term reaches the Glossary section, not just the tooltips', async ({ page }) => {
     await page.goto('/');
+    await showTab(page, 'more');
     const section = page.locator('#glossarySection');
     await expect(section).toBeVisible({ timeout: 15000 });
     const text = await section.innerText();
@@ -77,16 +78,15 @@ test.describe('probability lab glossary', () => {
     // the remedy CLAUDE.md recorded — would leave the manual appended at the foot of the
     // page instead. Rebuilding only the LIST avoids that, and this is what proves it.
     await page.goto('/');
-    const order = await page.evaluate(() => {
-      const wrap = document.querySelector('.wrap');
-      const ids = [];
-      for (const el of wrap.children){
-        if (el.id === 'manualSection') ids.push('manual');
-        else if (el.id === 'glossarySection') ids.push('glossary');
-        else if (el.classList.contains('controls')) ids.push('controls');
-      }
-      return ids;
-    });
+    await showTab(page, 'more');
+    // querySelectorAll returns document order, which is what "sits above" means and is
+    // what this test is actually about. It used to walk wrap.children, and that stopped
+    // seeing anything once the phone shell nested these three inside a .tabpanel — the
+    // reading order was unchanged, but the assertion was looking one level too high.
+    const order = await page.evaluate(() =>
+      [...document.querySelectorAll('#manualSection, #glossarySection, .wrap .controls')]
+        .map((el) => el.id === 'manualSection' ? 'manual'
+          : el.id === 'glossarySection' ? 'glossary' : 'controls'));
     expect(order).toEqual(['manual', 'glossary', 'controls']);
   });
 
@@ -95,6 +95,7 @@ test.describe('probability lab glossary', () => {
     // bound to the input and queries the entries at keystroke time, so it survives — but
     // that is the thing a rebuild is most likely to break.
     await page.goto('/');
+    await showTab(page, 'more');
     const entries = page.locator('#glossList .gloss-entry');
     const total = await entries.count();
     expect(total).toBeGreaterThan(50);
