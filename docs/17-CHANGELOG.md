@@ -78,10 +78,15 @@ Reverse chronological. Format: Conventional Commits categories.
 - `fix(native)` pinned the Gradle wrapper's line endings: `*.jar` is now explicitly binary
   rather than relying on git's content sniffing, and `gradlew.bat` is CRLF rather than being
   forced to LF by the repo-wide `eol=lf`.
-- **Blocked:** `npm run app:build` cannot run on this machine. Endpoint security blocks the
-  loopback socket pair Java NIO uses for `Pipe`/`Selector`, so Gradle's daemon cannot start.
-  Diagnose with `java scripts/diagnose-gradle-loopback.java`. Needs an IT exclusion for
-  `java.exe`; no code change can work around it.
+- `ci(native)` the APK is built on GitHub's runners —
+  `.github/workflows/android-build.yml`, on push to `refactor/**` or manual dispatch.
+  `npm run app:build` cannot run on the owner's machine: endpoint security blocks the
+  loopback socket pair Java NIO uses for `Pipe`/`Selector`, so Gradle's daemon cannot start
+  and no Java build tool works there at all. Diagnose with
+  `java scripts/diagnose-gradle-loopback.java`. The workflow is read-only, builds
+  `assembleDebug` and uploads the APK; it never runs on `main` and cannot touch Pages.
+- `fix(native)` `android/gradlew` was committed non-executable (mode 100644, generated on
+  Windows), which fails on a Linux runner. Now 100755.
 
 ## v1.9 — Mobile & PWA
 - `feat(mobile)` responsive layout ≤760px: sticky header, swipe indices strip, 2-column

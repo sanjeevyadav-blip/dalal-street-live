@@ -117,12 +117,22 @@ handshake and correct endpoint were found. **Re-test before concluding a source 
 ## Deployment — read before any git operation
 
 The dashboard is live and in use. **Do not push to `main`, do not merge to `main`, do not
-trigger the Pages deploy, do not `wrangler deploy`.** Work on a branch, and keep it local.
+trigger the Pages deploy.** Pages builds from `main`, so that — and only that — is what
+changes what users see.
 
-The owner does not use GitHub, so there is no CI to watch and nothing runs on push. The
-`.github/workflows/` files were deleted for that reason. **`npm run verify:full` is the gate**
-— lint, invariants, build, 378 offline tests, then 106 Playwright runs. Run it before and
-after any change. `npm run test:integration` is the weekly live-feed check, run by hand.
+**Pushing the feature branch to `origin` is allowed when the owner asks.** This reversed on
+2026-09-21. The position had been "no GitHub at all, everything local", and it changed
+because the Android build cannot run on this machine at all (see EPIC-6 below); offered the
+choice, the owner picked building the APK on GitHub's runners. Keep the two ideas apart:
+a branch push is routine, `main` is not.
+
+`wrangler deploy` is no longer forbidden outright either — E4-5 was deployed on the same
+day — but each deploy needs its own approval. Do not treat the last yes as a standing one.
+
+**`npm run verify:full` is still the gate** — lint, invariants, build, 378 offline tests,
+then 106 Playwright runs. Run it before and after any change. CI builds the APK and nothing
+else; it is not a substitute for verifying locally, and there is no test job to watch.
+`npm run test:integration` is the weekly live-feed check, run by hand.
 
 ## Findings surfaced by EPIC-1 — all four now closed
 
@@ -149,10 +159,11 @@ after any change. `npm run test:integration` is the weekly live-feed check, run 
 
 P0 ~~refactor the monolith~~ done · P0 ~~unit + regression tests~~ done ·
 P0 ~~E2E (`docs/10` §10.5)~~ done · P0 ~~live-API integration checks (§10.4)~~ done ·
-P0 ~~CI/CD (EPIC-3)~~ dropped — no GitHub; gates are local ·
+P0 ~~CI/CD (EPIC-3)~~ dropped as a pipeline — gates are local; CI now builds the APK only ·
 P1 ~~reliability hardening (EPIC-4)~~ done — E4-1..E4-5, **all deployed** ·
 P1 ~~ship the probability lab (EPIC-5)~~ done — E5-1..E5-5 ·
-P2 Capacitor wrapper (EPIC-6) — **E6-1 scaffold and E6-2 assets done; the APK build is not**.
+P2 Capacitor wrapper (EPIC-6) — E6-1 scaffold and E6-2 assets done; **the APK builds in CI,
+not locally**.
 
 ### EPIC-6 state
 
@@ -183,12 +194,30 @@ that handshake. Ordinary loopback is fine, so it is not a blanket firewall rule.
 **Consequence: no Java build tool works on this machine.** Gradle, Maven's daemon and Android
 Studio all fail identically. No Gradle flag, JDK swap or Capacitor change helps — it needs an
 endpoint-protection exclusion for `java.exe`, which on a managed machine is an IT request.
-Do not spend time re-attempting the build until that is done; re-run the diagnostic instead.
+Do not spend time re-attempting the build locally; re-run the diagnostic instead.
 
-iOS is not possible on Windows at all. E6-3 (Play Console signing) and E6-4 (TestFlight) need
-store accounts, and E6-5 is store CI, which is moot without GitHub.
+**The APK is built on GitHub's runners instead** — `.github/workflows/android-build.yml`,
+on push to `refactor/**` or by manual dispatch. Linux has no such restriction. The workflow
+is read-only, builds `assembleDebug` and uploads the APK as an artifact; download it from
+the Actions run page. It has nothing to do with Pages and cannot deploy anything.
 
-Native workflow: `npm run app:assets` · `npm run app:sync` · `npm run app:build`.
+Two things about that workflow are load-bearing and easy to undo by accident:
+
+- **`npm run app:sync` must run before Gradle.** Three things Gradle requires are gitignored
+  and absent from a clean checkout — `android/capacitor-cordova-android-plugins/` (which
+  `settings.gradle` includes as a project), the copied `dist` under
+  `app/src/main/assets/public`, and the generated `capacitor.*.json`. The sync regenerates
+  all three. Verified by running the whole sequence in a clean worktree.
+- **`android/gradlew` is committed mode 100755.** It was generated on Windows as 100644,
+  which fails on a Linux runner with permission denied. Fixed with
+  `git update-index --chmod=+x`; do not let it revert.
+
+`assembleRelease` is not an option yet: there is no keystore, and `*.keystore` / `*.jks` are
+gitignored on purpose. iOS is not possible on Windows at all. E6-3 (Play Console signing)
+and E6-4 (TestFlight) still need store accounts.
+
+Native workflow: `npm run app:assets` · `npm run app:sync` · `npm run app:build` (local
+build fails here — push instead, and collect the APK from Actions).
 
 ### The Worker deploy — done
 

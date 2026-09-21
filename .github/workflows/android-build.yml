@@ -1,0 +1,97 @@
+# Builds the Android APK on GitHub's runners, because it cannot be built locally.
+#
+# WHY THIS EXISTS
+#
+# `npm run app:build` fails on the owner's Windows machine with
+# `java.io.IOException: Unable to establish loopback connection`. Endpoint protection
+# blocks the loopback socket pair Java NIO uses for Pipe and Selector, so Gradle's daemon
+# cannot start. Ordinary loopback is fine, which is why the error is so misleading. The
+# consequence is that no Java build tool works there at all — Gradle, Maven's daemon and
+# Android Studio fail identically. Diagnose with `java scripts/diagnose-gradle-loopback.java`.
+# Linux runners have no such restriction, so the same build runs here instead.
+#
+# WHAT IT DELIBERATELY DOES NOT DO
+#
+# The live dashboard is served by GitHub Pages from `main`. This workflow never runs on
+# `main`, never writes to the repository, and has nothing to do with Pages. Its permissions
+# are read-only, so it could not publish even by accident. Building the APK must not be a
+# route by which the live site changes.
+
+name: Android APK
+
+on:
+  push:
+    branches: ['refactor/**']
+  workflow_dispatch:
+
+# Read-only. The job clones the code and uploads an artifact; it never pushes, tags,
+# comments or deploys. Artifact upload does not need `contents: write`.
+permissions:
+  contents: read
+
+# A second push while a build is running makes the first one irrelevant.
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `npm run app:sync` is `npm run build && cap sync android`. The sync is not optional
+      # scaffolding: several files Gradle requires are gitignored on purpose and are absent
+      # from a clean checkout, and this step is what regenerates them —
+      #   android/capacitor-cordova-android-plugins/   (settings.gradle includes it)
+      #   android/app/src/main/assets/public/          (the built dist)
+      #   android/app/src/main/assets/capacitor.*.json (generated config)
+      # Verified by building this exact sequence in a clean worktree.
+      - name: Build the web bundle and sync it into the Android project
+        run: npm run app:sync
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: android-actions/setup-android@v3
+
+      # Matches android/variables.gradle (compileSdk and targetSdk are both 34) and the
+      # local SDK install, so the runner builds against the same API level as the machine.
+      - name: Install the SDK packages the project targets
+        run: sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
+
+      # assembleDebug, not assembleRelease. There is no release keystore in this repo and
+      # *.keystore / *.jks are gitignored deliberately — release signing is EPIC-6 E6-3 and
+      # needs a Play Console account first. A debug APK installs fine by sideloading.
+      - name: Assemble the debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        working-directory: android
+
+      # Branch names contain slashes, which are not legal in an artifact name. Expanded in
+      # bash from an environment variable rather than interpolated straight into the script,
+      # so a branch name can never be read as shell.
+      - name: Derive a filesystem-safe artifact name
+        id: meta
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: echo "slug=${REF_NAME//\//-}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ steps.meta.outputs.slug }}-${{ github.sha }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          # Without this the job goes green having uploaded nothing, which is the failure
+          # mode that wastes the most time: a build that "passed" with no APK.
+          if-no-files-found: error
