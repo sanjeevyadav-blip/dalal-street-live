@@ -161,10 +161,32 @@ WebView-specific behaviour (external links to a Chrome Custom Tab, status-bar th
 service worker in the shell) while staying a complete no-op on the website. Icons and
 splashes are generated from the design tokens by `npm run app:assets`.
 
-**What is NOT done:** `npm run app:build` needs the Android SDK, which is not installed —
-roughly 2 GB. A JDK 17 is installed. iOS is not possible on Windows at all. E6-3 (Play
-Console signing) and E6-4 (TestFlight) need store accounts, and E6-5 is store CI, which is
-moot without GitHub.
+**The toolchain is now installed**: JDK 17 (Microsoft OpenJDK, via winget) and the Android
+SDK (cmdline-tools, platform-tools, `platforms;android-34`, `build-tools;34.0.0` — 422 MB at
+`%LOCALAPPDATA%\Android\Sdk`, licences accepted, `android/local.properties` written and
+gitignored). Gradle 8.2.1 downloaded.
+
+**`npm run app:build` still fails, and it is not a code problem.** Gradle dies with
+`java.io.IOException: Unable to establish loopback connection`. Diagnosed — run
+`java scripts/diagnose-gradle-loopback.java`:
+
+```
+ok    plain loopback socket (bind + connect on 127.0.0.1)
+FAIL  java.nio Pipe.open()
+FAIL  java.nio Selector.open()      <- what Gradle's daemon needs
+```
+
+Java NIO on Windows implements `Pipe` and `Selector` as a TCP socket pair on 127.0.0.1 — the
+JVM connects to itself and exchanges a secret. Endpoint protection on this machine blocks
+that handshake. Ordinary loopback is fine, so it is not a blanket firewall rule.
+
+**Consequence: no Java build tool works on this machine.** Gradle, Maven's daemon and Android
+Studio all fail identically. No Gradle flag, JDK swap or Capacitor change helps — it needs an
+endpoint-protection exclusion for `java.exe`, which on a managed machine is an IT request.
+Do not spend time re-attempting the build until that is done; re-run the diagnostic instead.
+
+iOS is not possible on Windows at all. E6-3 (Play Console signing) and E6-4 (TestFlight) need
+store accounts, and E6-5 is store CI, which is moot without GitHub.
 
 Native workflow: `npm run app:assets` · `npm run app:sync` · `npm run app:build`.
 

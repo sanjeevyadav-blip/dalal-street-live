@@ -5,7 +5,7 @@ Reverse chronological. Format: Conventional Commits categories.
 ## Unreleased
 - `refactor` EPIC-1: the 3,888-line monolithic `index.html` became 39 ES modules built by
   Vite into one `dist/index.html`. Behaviour proven unchanged against the deployed file.
-- `test` 348 offline tests against 31 committed API fixtures, including 33 golden snapshots.
+- `test` 378 offline tests against 31 committed API fixtures, including 33 golden snapshots.
 - `test` §10.4: 10 live-API integration checks (`npm run test:integration`), opt-in.
 - `test` §10.5: 53 Playwright E2E specs on desktop and mobile (`npm run test:e2e`), routed
   through the committed fixtures so they run deterministically and offline.
@@ -66,8 +66,19 @@ Reverse chronological. Format: Conventional Commits categories.
   no unit test reaches — the Yahoo crumb handshake, the NSE session handshake, and the E4-5
   rate-limit header — against a running Worker. Run it against `wrangler dev` before
   deploying and against the live URL after. `docs/11` §5.0 has the procedure and rollback.
+- `feat(native)` EPIC-6 E6-1/E6-2: Capacitor Android shell. `capacitor.config.json` and a
+  committed `android/` project; launcher icons and splash screens generated from the design
+  tokens by `npm run app:assets`; `src/ui/native.js` routes external links to a Chrome Custom
+  Tab, themes the status bar and skips the service worker inside the shell, while remaining a
+  complete no-op on the website (a test asserts the built artefact has no Capacitor runtime).
+- `fix(native)` pinned the Gradle wrapper's line endings: `*.jar` is now explicitly binary
+  rather than relying on git's content sniffing, and `gradlew.bat` is CRLF rather than being
+  forced to LF by the repo-wide `eol=lf`.
+- **Blocked:** `npm run app:build` cannot run on this machine. Endpoint security blocks the
+  loopback socket pair Java NIO uses for `Pipe`/`Selector`, so Gradle's daemon cannot start.
+  Diagnose with `java scripts/diagnose-gradle-loopback.java`. Needs an IT exclusion for
+  `java.exe`; no code change can work around it.
 - **Blocked:** the Worker deploy needs `wrangler login`, an interactive OAuth flow.
-- **Planned:** Capacitor native wrapper (needs a JDK and the Android SDK, neither installed).
 
 ## v1.9 — Mobile & PWA
 - `feat(mobile)` responsive layout ≤760px: sticky header, swipe indices strip, 2-column
