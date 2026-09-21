@@ -5,9 +5,9 @@ Reverse chronological. Format: Conventional Commits categories.
 ## Unreleased
 - `refactor` EPIC-1: the 3,888-line monolithic `index.html` became 39 ES modules built by
   Vite into one `dist/index.html`. Behaviour proven unchanged against the deployed file.
-- `test` 342 offline tests against 31 committed API fixtures, including 33 golden snapshots.
+- `test` 348 offline tests against 31 committed API fixtures, including 33 golden snapshots.
 - `test` §10.4: 10 live-API integration checks (`npm run test:integration`), opt-in.
-- `test` §10.5: 49 Playwright E2E specs on desktop and mobile (`npm run test:e2e`), routed
+- `test` §10.5: 53 Playwright E2E specs on desktop and mobile (`npm run test:e2e`), routed
   through the committed fixtures so they run deterministically and offline.
 - `fix(pwa)` **the build stopped shipping the PWA.** `publicDir: false` meant Vite emitted
   `index.html` alone, while the page still linked `manifest.json` and registered `sw.js`.
