@@ -53,6 +53,60 @@ test.describe('probability lab glossary', () => {
     expect(text).toMatch(/right about direction while being far too confident/i); // Brier
   });
 
+  test('every term added after mountGlossary reaches the section too', async ({ page }) => {
+    // The long-standing bug: mountGlossary read GLOSSARY once, and the four
+    // extendGlossaryFor* calls run after it, so thirteen terms were tooltips and nothing
+    // else. These are one term from each of those four functions — if the list is ever
+    // built before they register again, this fails.
+    await page.goto('/');
+    const text = await page.locator('#glossarySection').innerText();
+    for (const term of [
+      'Probability of a rise in one week',   // extendGlossaryForRanking
+      'Distance from the 52-week high',      // extendGlossaryForScreener
+      'Row count',                           // extendGlossaryForRowCount
+      'Brier score'                          // extendGlossaryForLab
+    ]){
+      expect(text, term + ' is registered after mountGlossary and is missing from the section')
+        .toContain(term);
+    }
+  });
+
+  test('the manual still sits above the glossary, and both above the controls', async ({ page }) => {
+    // The trap in the documented fix. mountManual positions itself with
+    // insertBefore(#glossarySection), so moving mountGlossary to the end of bootstrap —
+    // the remedy CLAUDE.md recorded — would leave the manual appended at the foot of the
+    // page instead. Rebuilding only the LIST avoids that, and this is what proves it.
+    await page.goto('/');
+    const order = await page.evaluate(() => {
+      const wrap = document.querySelector('.wrap');
+      const ids = [];
+      for (const el of wrap.children){
+        if (el.id === 'manualSection') ids.push('manual');
+        else if (el.id === 'glossarySection') ids.push('glossary');
+        else if (el.classList.contains('controls')) ids.push('controls');
+      }
+      return ids;
+    });
+    expect(order).toEqual(['manual', 'glossary', 'controls']);
+  });
+
+  test('the glossary search still filters after the list is rebuilt', async ({ page }) => {
+    // renderGlossaryList replaces every .gloss-entry under the search box. The listener is
+    // bound to the input and queries the entries at keystroke time, so it survives — but
+    // that is the thing a rebuild is most likely to break.
+    await page.goto('/');
+    const entries = page.locator('#glossList .gloss-entry');
+    const total = await entries.count();
+    expect(total).toBeGreaterThan(50);
+
+    await page.locator('#glossSearch').fill('brier');
+    await expect(entries.filter({ hasText: 'Brier' }).first()).toBeVisible();
+    const visible = await entries.evaluateAll((els) =>
+      els.filter((el) => el.style.display !== 'none').length);
+    expect(visible).toBeGreaterThan(0);
+    expect(visible).toBeLessThan(total);
+  });
+
   test('lab metric labels carry a tooltip marker', async ({ page }) => {
     await page.goto('/');
     await page.locator('#searchInput').fill('reli');

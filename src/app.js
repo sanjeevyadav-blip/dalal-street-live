@@ -265,6 +265,39 @@ function wireGlossary(){
   glossObserver.observe(document.body, { childList:true, subtree:true });
   setTimeout(function(){ annotateGlossary(); }, 600);
 }
+/**
+ * Rebuild the Glossary section's list from whatever is in GLOSSARY right now.
+ *
+ * Split out of mountGlossary because the two have to happen at different times.
+ *
+ * THE BUG THIS FIXES. mountGlossary read GLOSSARY once, and the four extendGlossaryFor*
+ * calls run after it, so thirteen terms worked as tooltips but never appeared in the
+ * section at all. CLAUDE.md recorded the remedy as "move mountGlossary to the end of
+ * bootstrap". That does not work: mountManual positions itself with
+ * insertBefore(#glossarySection), so mounting the glossary later leaves the manual
+ * appended after the controls at the foot of the page. The documented one-liner would have
+ * traded a missing-terms bug for a layout bug.
+ *
+ * So the section is still CREATED where it always was, leaving every other block's
+ * positioning untouched, and only its LIST is re-rendered at the end of bootstrap once
+ * every term has been registered. The search box listens on the input and queries
+ * .gloss-entry at keystroke time, so replacing the entries underneath it is safe.
+ */
+function renderGlossaryList(){
+  const list = document.getElementById('glossList');
+  if (!list) return 0;
+  const entries = Object.keys(GLOSSARY).map(function(k){ return GLOSSARY[k]; });
+  const seen = {}, uniq = [];
+  entries.forEach(function(e){ if (!seen[e[0]]){ seen[e[0]]=1; uniq.push(e); } });
+  uniq.sort(function(a,b){ return a[0].localeCompare(b[0]); });
+  list.innerHTML = uniq.map(function(e){
+    return '<div class="news-item gloss-entry" style="cursor:default">' +
+      '<div class="news-title" style="color:var(--gold)">' + e[0] + '</div>' +
+      '<div style="font-size:12.5px;line-height:1.65;color:var(--cream-dim);margin-top:4px">' + e[1] + '</div></div>';
+  }).join('');
+  return uniq.length;
+}
+
 function mountGlossary(){
   const wrap = document.querySelector('.wrap');
   if (!wrap) return;
@@ -272,20 +305,12 @@ function mountGlossary(){
   const sec = document.createElement('section');
   sec.className = 'screener';
   sec.id = 'glossarySection';
-  const entries = Object.keys(GLOSSARY).map(function(k){ return GLOSSARY[k]; });
-  const seen = {}, uniq = [];
-  entries.forEach(function(e){ if (!seen[e[0]]){ seen[e[0]]=1; uniq.push(e); } });
-  uniq.sort(function(a,b){ return a[0].localeCompare(b[0]); });
   sec.innerHTML =
     '<div class="section-head"><h2>Glossary</h2><span class="hint">Every term on this page, in plain English</span></div>' +
     '<div class="add-form"><input type="text" id="glossSearch" placeholder="Search a term \u2014 e.g. beta, DCF, open interest" autocomplete="off"></div>' +
-    '<div id="glossList" class="news-list">' +
-    uniq.map(function(e){
-      return '<div class="news-item gloss-entry" style="cursor:default">' +
-        '<div class="news-title" style="color:var(--gold)">' + e[0] + '</div>' +
-        '<div style="font-size:12.5px;line-height:1.65;color:var(--cream-dim);margin-top:4px">' + e[1] + '</div></div>';
-    }).join('') + '</div>';
+    '<div id="glossList" class="news-list"></div>';
   if (controls) wrap.insertBefore(sec, controls); else wrap.appendChild(sec);
+  renderGlossaryList();
   const inp = document.getElementById('glossSearch');
   if (inp) inp.addEventListener('input', function(){
     const q = inp.value.toLowerCase().trim();
@@ -665,7 +690,7 @@ function bootstrap(){
 
   mountRanking();
   wireGlossary();
-  extendGlossaryForLab();   // before mountGlossary, so these reach the Glossary section
+  extendGlossaryForLab();
   mountGlossary();
   fixRankNote();
   extendGlossaryForRanking();
@@ -676,6 +701,11 @@ function bootstrap(){
   rebuildRanking3();
   extendGlossaryForRowCount();
   mobileLayer();
+
+  // Every extendGlossaryFor* call has now run, so rebuild the list. Without this the
+  // thirteen terms they add exist as tooltips and nowhere else. See renderGlossaryList
+  // for why the section itself is not simply mounted later instead.
+  renderGlossaryList();
 
   // EPIC-4 E4-4. Last, and after mobileLayer, so the panel picks up the mobile stylesheet.
   // initDiagnostics only decides whether the panel is SHOWN; the failure buffer has been

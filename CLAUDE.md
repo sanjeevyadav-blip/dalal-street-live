@@ -25,7 +25,7 @@ Static site on GitHub Pages + one Cloudflare Worker as a CORS proxy. No backend,
 | `docs/07-DESIGN-SYSTEM-UX.md` | Tokens, components, mobile spec, PWA, native app routes |
 | `docs/08-SECURITY-COMPLIANCE.md` | Worker allowlist, privacy, SEBI position |
 | `docs/09-SDLC-PROCESS.md` | Branching, commits, definition of done, review checklist |
-| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 271 offline, 10 live-API, 34 E2E (68 runs) |
+| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 342 offline, 10 live-API, 49 E2E (102 runs) |
 | `docs/11-DEPLOYMENT-RUNBOOK.md` | Deploy, verify, health checks, failure playbook |
 | `docs/12-MAINTENANCE-SUPPORT.md` | Fragilities ranked, fallbacks if a feed dies |
 | `docs/13-RISK-REGISTER.md` | 15 risks; top three to act on |
@@ -64,11 +64,11 @@ src/public/     manifest.json sw.js    PWA — COPIED to dist, not inlined (see 
 worker/worker.js  worker/wrangler.toml  the CORS proxy
 tests/          342 offline tests against 31 committed API fixtures
 tests/integration/  10 live-API checks (§10.4) — opt-in, hits the real Worker
-tests/e2e/      46 Playwright specs, desktop + mobile (92 runs), fixture-routed
+tests/e2e/      49 Playwright specs, desktop + mobile (102 runs), fixture-routed
 scripts/        capture-fixtures.mjs, check-invariants.sh
 ```
 
-Run `npm run verify:full` — lint, invariants, build, 220 offline tests, then 54 Playwright
+Run `npm run verify:full` — lint, invariants, build, 342 offline tests, then 102 Playwright
 runs — before and after any change. `npm run verify` alone skips the browser and is the
 faster inner loop.
 Regenerate fixtures with `node scripts/capture-fixtures.mjs` (read-only; hits the Worker).
@@ -119,15 +119,18 @@ trigger the Pages deploy, do not `wrangler deploy`.** Work on a branch, and keep
 
 The owner does not use GitHub, so there is no CI to watch and nothing runs on push. The
 `.github/workflows/` files were deleted for that reason. **`npm run verify:full` is the gate**
-— lint, invariants, build, 220 offline tests, then 54 Playwright runs. Run it before and
+— lint, invariants, build, 342 offline tests, then 102 Playwright runs. Run it before and
 after any change. `npm run test:integration` is the weekly live-feed check, run by hand.
 
 ## Findings that are still open (surfaced by EPIC-1, deliberately not fixed)
 
-1. **Thirteen glossary terms are missing from the Glossary section.** `mountGlossary()` reads
-   `GLOSSARY` once to build the list, and the three `extendGlossaryFor*()` calls run after it.
-   They work as tooltips but never appear in the section. One-line fix: move `mountGlossary()`
-   to the end of `bootstrap()` in `src/app.js`. It is a behavioural change, hence untouched.
+1. ~~**Thirteen glossary terms are missing from the Glossary section.**~~ **Fixed.** Note
+   the recorded remedy — "move `mountGlossary()` to the end of `bootstrap()`" — would have
+   broken the layout: `mountManual()` positions itself with
+   `insertBefore(#glossarySection)`, so a later mount leaves the manual at the foot of the
+   page. The section is still created where it was; only its list is re-rendered at the end
+   of `bootstrap()`, by `renderGlossaryList()`. Both the terms and the section order are
+   asserted in `tests/e2e/glossary-lab.spec.js`.
 2. **`reverseDcf` cannot resolve implied growth at or below 4%.** Growth is floored at the
    terminal rate, so every value ≤ 4% is indistinguishable and reports the −20% bound. An
    implied-growth reading of −20% does not mean a 20% decline is expected. See `docs/10` §10.2.
