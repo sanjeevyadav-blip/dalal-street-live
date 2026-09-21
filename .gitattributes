@@ -13,3 +13,17 @@
 *.zip binary
 *.pdf binary
 *.docx binary
+
+# ---- Gradle wrapper (EPIC-6) ----
+# The blanket `* text=auto eol=lf` above is right for this repo's web sources and wrong for
+# the wrapper Capacitor generates:
+#
+#   *.jar    survives today only because text=auto sniffs NUL bytes and opts out. That is a
+#            heuristic, not a guarantee; a jar normalised as text is silently corrupted and
+#            the failure is an unreadable stack trace at build time. Made explicit.
+#   *.bat    cmd.exe is historically unreliable with LF-only batch files, particularly
+#            around labels and goto. Windows batch wants CRLF.
+#   gradlew  the POSIX shell script must stay LF whatever the platform.
+*.jar binary
+*.bat text eol=crlf
+gradlew text eol=lf
