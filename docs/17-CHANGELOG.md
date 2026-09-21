@@ -62,6 +62,11 @@ Reverse chronological. Format: Conventional Commits categories.
   for this deliberately; the four non-financial fixtures are unchanged.
 - `fix(ui)` `drawChart` and the three subplot renderers guard `getContext` returning null
   instead of dereferencing it.
+- `test(worker)` `scripts/worker-preflight.mjs`: a deploy gate that exercises the proxy path
+  no unit test reaches — the Yahoo crumb handshake, the NSE session handshake, and the E4-5
+  rate-limit header — against a running Worker. Run it against `wrangler dev` before
+  deploying and against the live URL after. `docs/11` §5.0 has the procedure and rollback.
+- **Blocked:** the Worker deploy needs `wrangler login`, an interactive OAuth flow.
 - **Planned:** Capacitor native wrapper (needs a JDK and the Android SDK, neither installed).
 
 ## v1.9 — Mobile & PWA

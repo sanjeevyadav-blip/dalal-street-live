@@ -153,5 +153,11 @@ P1 ~~ship the probability lab (EPIC-5)~~ done — E5-1..E5-5 ·
 **P2 Capacitor wrapper (EPIC-6) — next.** Detail in `engineering/18-DELIVERY-PLAN.md`.
 
 The one remaining EPIC-4 caveat: the Worker rate limit and structured logs exist in
-`worker/worker.js` but the deployed Worker is unchanged. Shipping them needs
-`npm run worker:deploy`, which is an explicit-approval action.
+`worker/worker.js` but the deployed Worker is unchanged. **The deploy is blocked on
+`wrangler login`** — an interactive browser OAuth flow that cannot be run from an automated
+session. The owner has to run it.
+
+Everything short of the upload is done and verified. The new Worker was run locally with
+`wrangler dev --local` and passes `npm run worker:preflight:local` **10/10 against the real
+Yahoo and NSE**, including both auth handshakes. The live Worker fails exactly the two E4-5
+checks, which is the expected difference. Procedure and rollback: `docs/11` §5.0.

@@ -18,7 +18,9 @@
     "invariants": "bash scripts/check-invariants.sh",
     "verify": "npm run lint && npm run invariants && npm run build && npm run test",
     "verify:full": "npm run verify && npm run test:e2e",
-    "worker:dev": "wrangler dev worker/worker.js",
+    "worker:dev": "wrangler dev worker/worker.js --local --port 8787",
+    "worker:preflight": "node scripts/worker-preflight.mjs",
+    "worker:preflight:local": "node scripts/worker-preflight.mjs http://127.0.0.1:8787",
     "worker:deploy": "wrangler deploy"
   },
   "devDependencies": {
