@@ -28,7 +28,22 @@ Reverse chronological. Format: Conventional Commits categories.
 - `feat(worker)` EPIC-4 E4-5: per-IP rate limit (300/min) and structured JSON logs.
   **Written but not deployed** — the live Worker is unchanged.
 - `chore` deleted `.github/workflows/`; the gates run locally via `npm run verify:full`.
-- **Planned:** probability lab deployment, Capacitor native wrapper.
+- `feat(models)` EPIC-5: the probability lab ships. GBM Monte Carlo, GARCH(1,1), a two-state
+  hidden Markov regime model, a walk-forward logistic classifier, a DCF Monte Carlo and a
+  Bayesian ensemble, as eight new modules under `src/models/` and `src/valuation/`.
+- `feat(ui)` the Probability lab block. Every model states what it says, what it assumes and
+  how it fails; the models are shown individually above the blend, and the blend is labelled
+  "read this last, and least". The options-implied probability is deliberately excluded — it
+  is risk-neutral, and the lab's models are real-world.
+- `fix(models)` the lab's GBM applied the Ito correction to a drift that was already a log
+  drift, subtracting it twice and disagreeing with the shipped closed form by nine points.
+- `fix(models)` the regime model's state-separation measure used only the mean gap, which
+  scored a genuinely regime-switching series below a random walk. Now Bhattacharyya distance.
+- `feat(ux)` eight glossary entries for the lab, each warning about the specific misreading
+  its model invites.
+- `refactor` `src/probability-lab.NOT-DEPLOYED.js` deleted; its duplicate `olsMulti` and
+  `normCdf` go with it (E5-5).
+- **Planned:** Capacitor native wrapper.
 
 ## v1.9 — Mobile & PWA
 - `feat(mobile)` responsive layout ≤760px: sticky header, swipe indices strip, 2-column

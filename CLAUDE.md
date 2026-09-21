@@ -53,19 +53,18 @@ src/diagnostics.js                      PII-free ring buffer of suppressed failu
 src/suppressed.js                       thin alias over diagnostics, 21 call sites
 src/data/       proxy nse news yahoo universes symbol-health
 src/indicators/ trend momentum volatility patterns intraday util
-src/valuation/  dcf reverse-dcf earnings-quality
+src/valuation/  dcf reverse-dcf earnings-quality dcf-monte-carlo
 src/options/    chain
-src/models/     normal ols gbm
+src/models/     normal ols gbm random stats monte-carlo garch hmm logistic ensemble
 src/ui/         detail detail-state charts snapshot thesis deep-analysis options-block
                 factors-block fundamentals news-block intraday-desk peers watchlist
                 glossary ipo format errors navigate symbol diagnostics-block
-                tables/{screener,ranking}
+                probability-lab tables/{screener,ranking}
 src/public/     manifest.json sw.js    PWA — COPIED to dist, not inlined (see vite.config.js)
-src/probability-lab.NOT-DEPLOYED.js     written, verified, never shipped — see doc 6
 worker/worker.js  worker/wrangler.toml  the CORS proxy
-tests/          271 offline tests against 31 committed API fixtures
+tests/          342 offline tests against 31 committed API fixtures
 tests/integration/  10 live-API checks (§10.4) — opt-in, hits the real Worker
-tests/e2e/      34 Playwright specs, desktop + mobile (68 runs), fixture-routed
+tests/e2e/      46 Playwright specs, desktop + mobile (92 runs), fixture-routed
 scripts/        capture-fixtures.mjs, check-invariants.sh
 ```
 
@@ -142,8 +141,8 @@ P0 ~~refactor the monolith~~ done · P0 ~~unit + regression tests~~ done ·
 P0 ~~E2E (`docs/10` §10.5)~~ done · P0 ~~live-API integration checks (§10.4)~~ done ·
 P0 ~~CI/CD (EPIC-3)~~ dropped — no GitHub; gates are local ·
 P1 ~~reliability hardening (EPIC-4)~~ done — E4-1..E4-5, though E4-5 is **not deployed** ·
-**P1 ship the probability lab (EPIC-5) — next** ·
-P2 Capacitor wrapper (EPIC-6). Detail in `engineering/18-DELIVERY-PLAN.md`.
+P1 ~~ship the probability lab (EPIC-5)~~ done — E5-1..E5-5 ·
+**P2 Capacitor wrapper (EPIC-6) — next.** Detail in `engineering/18-DELIVERY-PLAN.md`.
 
 The one remaining EPIC-4 caveat: the Worker rate limit and structured logs exist in
 `worker/worker.js` but the deployed Worker is unchanged. Shipping them needs

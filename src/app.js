@@ -466,6 +466,35 @@ function rebuildRanking3(){
   });
 }
 // Added AFTER mountGlossary has already built the list — see bootstrap() below.
+// Terms the probability lab introduces (EPIC-5 E5-4).
+//
+// glossaryLookup prefix-matches, so these keys attach to the lab's full metric labels even
+// though those carry a horizon in them ("geometric brownian motion — p(higher in 21
+// trading days)").
+//
+// Called BEFORE mountGlossary in bootstrap(), unlike the three extendGlossaryFor* functions
+// below it, so these terms appear in the Glossary section and not only as tooltips. That the
+// others do not is the long-standing finding recorded in CLAUDE.md; this does not fix it,
+// but new terms should not be added to it either.
+function extendGlossaryForLab(){
+  GLOSSARY['geometric brownian motion'] = ['Geometric Brownian motion (GBM)',
+    'The textbook model of a share price: a steady drift plus random noise, with the noise the same size every day. Its probability of finishing higher is honest arithmetic on the past two years — but it assumes moves are independent and normally distributed, and real prices cluster and gap. It therefore understates the chance of a big move, most when one is most likely. Read the first digit and ignore the decimal.'];
+  GLOSSARY['garch'] = ['GARCH(1,1)',
+    'A model of how volatility itself moves. Every other volatility figure on this page is an average over a window, which answers "how volatile has this been"; GARCH answers "how volatile is it now", because calm follows calm and turbulence follows turbulence. The half-life tells you how long a shock takes to fade. It cannot represent the fact that falls raise volatility more than rises do.'];
+  GLOSSARY['hidden markov regime model'] = ['Regime model (hidden Markov)',
+    'Assumes the market is always in one of two unobserved states with different drift and volatility, and infers which one it is probably in now. Two cautions. It is fitted on the whole window including today, so it is not an out-of-sample judgement — it will always look like it spotted the last crash. And check the state separation: below about 0.1 the two states overlap so heavily that the split is arbitrary, and the probability means nothing.'];
+  GLOSSARY['walk-forward classifier'] = ['Walk-forward classifier',
+    'A model trained on the older 70% of history and scored only on the newer 30% it never saw. The number that matters is the EDGE, not the accuracy: if a stock rose on 60% of test days, predicting "up" every time scores 60% and has learned nothing. No edge is the normal, expected result, and this row exists to report that rather than to be beaten.'];
+  GLOSSARY['blended'] = ['Blended probability',
+    'The models combined by adding their weighted log-odds. Trust it less than the rows above it, not more. Combining evidence this way assumes the models are independent, and they are not — they read the same price series and in places share a drift estimate — so agreement between them is partly an echo rather than confirmation. Where they disagree, the disagreement is the more useful finding.'];
+  GLOSSARY['dcf monte carlo'] = ['DCF Monte Carlo',
+    'Runs the discounted cash flow model thousands of times with growth, discount and terminal rates drawn from a range instead of fixed, and reports the spread. The headline is the share of runs valuing the company above its market price. It is NOT a probability the share price rises and carries no time horizon at all — a company can be 80% undervalued here and fall for three years. The width of the band is the real output.'];
+  GLOSSARY['state separation'] = ['State separation',
+    'How distinguishable the regime model’s two states actually are, measured across both their average return and their volatility. The model will always split the data in two and always report a confident-looking probability, even when there is nothing to split. Below roughly 0.1 treat that probability as noise; above 0.3 the two states are genuinely different.'];
+  GLOSSARY['brier score'] = ['Brier score',
+    'The average squared error of the probabilities themselves, so it judges calibration rather than direction. A model that always says 50% scores exactly 0.25. Below that is better than guessing; above it is worse. A model can be accurate and still score badly here, which means it is right about direction while being far too confident about it.'];
+}
+
 function extendGlossaryForRowCount(){
   GLOSSARY['show'] = ['Row count', 'How many rows this table displays. Each table keeps its own setting \u2014 changing one does not affect the others. In the ranking, the full universe is always scored first and the count only decides how much of the result you see.'];
 }
@@ -636,6 +665,7 @@ function bootstrap(){
 
   mountRanking();
   wireGlossary();
+  extendGlossaryForLab();   // before mountGlossary, so these reach the Glossary section
   mountGlossary();
   fixRankNote();
   extendGlossaryForRanking();

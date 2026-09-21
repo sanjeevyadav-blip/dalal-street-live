@@ -81,16 +81,20 @@ or KV.
 
 ---
 
-## EPIC-5 — Probability lab (P1)
-Source exists and passes `node --check` (`src/probability-lab.NOT-DEPLOYED.js`).
+## EPIC-5 — Probability lab (P1) — **COMPLETE**
 
-| ID | Story | Est | Acceptance |
-|---|---|---|---|
-| E5-1 | Port GBM Monte Carlo + GARCH(1,1) into `models/` | 2d | Unit-tested against known series |
-| E5-2 | Port HMM (Baum-Welch) + walk-forward logistic | 3d | Logistic reports out-of-sample edge vs base rate |
-| E5-3 | DCF Monte Carlo + Bayesian ensemble | 2d | P(undervalued) with P10/P90 |
-| E5-4 | UI block with per-model assumptions and limitations | 2d | Each model states its failure mode |
-| E5-5 | Remove duplicate `olsMulti` (already live in index.html) | 0.5d | Single definition |
+| ID | Story | Est | Acceptance | Status |
+|---|---|---|---|---|
+| E5-1 | Port GBM Monte Carlo + GARCH(1,1) into `models/` | 2d | Unit-tested against known series | **done** — synthetic series with known parameters; found and fixed a double Ito correction in the lab source |
+| E5-2 | Port HMM (Baum-Welch) + walk-forward logistic | 3d | Logistic reports out-of-sample edge vs base rate | **done** — edge is measured against the majority class, not 50%; replaced the HMM's state-separation measure |
+| E5-3 | DCF Monte Carlo + Bayesian ensemble | 2d | P(undervalued) with P10/P90 | **done** — priors travel with the result; infeasible draws discarded and counted |
+| E5-4 | UI block with per-model assumptions and limitations | 2d | Each model states its failure mode | **done** — enforced by an E2E spec that counts the caveats against the cards |
+| E5-5 | Remove duplicate `olsMulti` | 0.5d | Single definition | **done** — lab file retired entirely |
+
+EPIC-5 added 71 offline tests and 12 E2E specs. One piece of the lab was deliberately NOT
+ported: `scoreHeadlines`, a 26-word sentiment lexicon over ten headlines. It is in no story,
+and a keyword count over unfiltered search results does not clear the bar the rest of the
+block is held to. It remains in git history.
 
 ---
 

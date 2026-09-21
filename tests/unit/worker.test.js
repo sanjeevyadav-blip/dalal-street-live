@@ -124,16 +124,32 @@ describe('E4-5 — structured logs', () => {
   });
 
   it('never logs the query string, where the looked-up symbols live', async () => {
-    await proxied(
-      'https://query1.finance.yahoo.com/v8/finance/chart/RELIANCE.NS?interval=1d&range=1y',
-      freshIp()
-    );
-    // That host IS allowlisted, so this attempts an upstream fetch and logs either the
-    // response or the 502. Either way the symbol must not appear.
+    // query1.finance.yahoo.com IS allowlisted, so this reaches the proxy path — which is the
+    // point, because that is the only path that logs an endpoint label. Global fetch is
+    // stubbed so the offline suite stays offline: without it the Worker's cookie handshake
+    // fires a real request to fc.yahoo.com, and `npm run verify` must never touch a network.
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => new Response('{}', {
+      status: 200, headers: { 'Content-Type': 'application/json' }
+    }));
+    try {
+      await proxied(
+        'https://query1.finance.yahoo.com/v8/finance/chart/RELIANCE.NS?interval=1d&range=1y',
+        freshIp()
+      );
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+
     const joined = logs.join('\n');
+    // The symbol sits in the PATH, not only the query string — which is exactly how the
+    // first version of the endpoint label leaked it.
     expect(joined).not.toContain('RELIANCE');
     expect(joined).not.toContain('interval=');
     expect(joined).not.toContain('range=');
+    // The fixed label must still be logged. Redaction that records nothing is not
+    // redaction, it is silence, and it would make the logs useless.
+    expect(joined).toContain('"endpoint":"chart"');
   });
 
   it('logs the rate-limit refusal too, so abuse is visible', async () => {
