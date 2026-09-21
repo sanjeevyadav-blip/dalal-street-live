@@ -87,6 +87,14 @@ Reverse chronological. Format: Conventional Commits categories.
   `assembleDebug` and uploads the APK; it never runs on `main` and cannot touch Pages.
 - `fix(native)` `android/gradlew` was committed non-executable (mode 100644, generated on
   Windows), which fails on a Linux runner. Now 100755.
+- `fix(ci)` `android-actions/setup-android@v3` defaults to `packages: 'tools platform-tools'`
+  and `tools` no longer exists, so the action failed before installing anything. Pinned to
+  `@v4` with `packages` set explicitly. The log is misleading — it dumps licence text ending
+  in `Accept? (y/N):` just before the error, but licences were accepted; the real line is
+  `Warning: Failed to find package 'tools'`.
+- **EPIC-6 E6-1 acceptance met:** a 4.42 MB debug-signed APK builds in CI, carrying
+  `dev.dalalstreet.live` and the built web bundle. Still outstanding: E6-3 Play signing and
+  E6-4 TestFlight, both needing store accounts, and iOS, which needs a Mac.
 
 ## v1.9 — Mobile & PWA
 - `feat(mobile)` responsive layout ≤760px: sticky header, swipe indices strip, 2-column

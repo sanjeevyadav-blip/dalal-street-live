@@ -99,6 +99,13 @@ Regenerate fixtures with `node scripts/capture-fixtures.mjs` (read-only; hits th
   gives a year-old price. This shipped as 1D% == 1Y%.
 - `option-chain-equities` is dead. Use `option-chain-v3` **with an explicit expiry**.
 - Ticker universes rot (TATAMOTORS→TMPV, ZOMATO→ETERNAL, LTIM dead).
+- **`android-actions/setup-android@v3` cannot install its own default packages.** Its
+  default is `packages: 'tools platform-tools'`, and `tools` is the obsolete SDK Tools
+  package Google removed, so sdkmanager exits 1 on it. Use `@v4`. The log misdirects
+  badly: it prints pages of licence text ending in `Accept? (y/N):` right before the
+  error, which reads as an interactive prompt hanging in CI. It is not — the next line is
+  `All SDK package licenses accepted`. Read past the licence dump to
+  `Warning: Failed to find package 'tools'`.
 - **A green build does not mean a complete `dist/`.** Vite emitted only `index.html` while
   the page went on referencing `manifest.json` and `sw.js`, silently killing the PWA. All 217
   offline tests passed — none of them looked past `index.html`. `publicDir: 'public'` fixes
@@ -200,6 +207,11 @@ Do not spend time re-attempting the build locally; re-run the diagnostic instead
 on push to `refactor/**` or by manual dispatch. Linux has no such restriction. The workflow
 is read-only, builds `assembleDebug` and uploads the APK as an artifact; download it from
 the Actions run page. It has nothing to do with Pages and cannot deploy anything.
+
+**This works.** Run #2 (commit `476ee87`) produced a 4.42 MB debug-signed APK containing
+`dev.dalalstreet.live` and the 284,097-byte `assets/public/index.html`, byte-identical in
+size to the local `dist/index.html`, which is what shows the sync packaged the real bundle.
+Artifacts expire after 90 days, so re-run the workflow rather than hunting for an old one.
 
 Two things about that workflow are load-bearing and easy to undo by accident:
 
