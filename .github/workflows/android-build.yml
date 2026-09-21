@@ -65,7 +65,21 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - uses: android-actions/setup-android@v3
+      # v4, not v3. v3 defaults `packages` to 'tools platform-tools', and `tools` is the
+      # obsolete SDK Tools package that Google removed from the repository, so sdkmanager
+      # exits 1 with "Failed to find package 'tools'" and the action dies before anything
+      # is installed. That is what broke run #1. v4 drops it from the default.
+      #
+      # Worth recording because the failure reads as something else entirely: the log dumps
+      # pages of licence text ending in "Accept? (y/N):" immediately before the error, which
+      # invites the conclusion that licence acceptance hung. It did not — the next line is
+      # "All SDK package licenses accepted". The licences were fine; the package list was not.
+      #
+      # `packages` is set explicitly rather than relying on v4's default, so a future change
+      # to that default cannot quietly reintroduce the same class of failure.
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
 
       # Matches android/variables.gradle (compileSdk and targetSdk are both 34) and the
       # local SDK install, so the runner builds against the same API level as the machine.
