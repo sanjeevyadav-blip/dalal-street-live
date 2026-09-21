@@ -25,7 +25,7 @@ Static site on GitHub Pages + one Cloudflare Worker as a CORS proxy. No backend,
 | `docs/07-DESIGN-SYSTEM-UX.md` | Tokens, components, mobile spec, PWA, native app routes |
 | `docs/08-SECURITY-COMPLIANCE.md` | Worker allowlist, privacy, SEBI position |
 | `docs/09-SDLC-PROCESS.md` | Branching, commits, definition of done, review checklist |
-| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 348 offline, 10 live-API, 53 E2E (106 runs) |
+| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 378 offline, 10 live-API, 53 E2E (106 runs) |
 | `docs/11-DEPLOYMENT-RUNBOOK.md` | Deploy, verify, health checks, failure playbook |
 | `docs/12-MAINTENANCE-SUPPORT.md` | Fragilities ranked, fallbacks if a feed dies |
 | `docs/13-RISK-REGISTER.md` | 15 risks; top three to act on |
@@ -61,14 +61,16 @@ src/ui/         detail detail-state charts snapshot thesis deep-analysis options
                 glossary ipo format errors navigate symbol diagnostics-block
                 probability-lab tables/{screener,ranking}
 src/public/     manifest.json sw.js    PWA — COPIED to dist, not inlined (see vite.config.js)
+src/ui/native.js                        Capacitor shell behaviour; a no-op on the web
 worker/worker.js  worker/wrangler.toml  the CORS proxy
-tests/          348 offline tests against 31 committed API fixtures
+capacitor.config.json  android/          the native Android shell (EPIC-6)
+tests/          378 offline tests against 31 committed API fixtures
 tests/integration/  10 live-API checks (§10.4) — opt-in, hits the real Worker
 tests/e2e/      53 Playwright specs, desktop + mobile (106 runs), fixture-routed
 scripts/        capture-fixtures.mjs, check-invariants.sh
 ```
 
-Run `npm run verify:full` — lint, invariants, build, 348 offline tests, then 106 Playwright
+Run `npm run verify:full` — lint, invariants, build, 378 offline tests, then 106 Playwright
 runs — before and after any change. `npm run verify` alone skips the browser and is the
 faster inner loop.
 Regenerate fixtures with `node scripts/capture-fixtures.mjs` (read-only; hits the Worker).
@@ -119,7 +121,7 @@ trigger the Pages deploy, do not `wrangler deploy`.** Work on a branch, and keep
 
 The owner does not use GitHub, so there is no CI to watch and nothing runs on push. The
 `.github/workflows/` files were deleted for that reason. **`npm run verify:full` is the gate**
-— lint, invariants, build, 348 offline tests, then 106 Playwright runs. Run it before and
+— lint, invariants, build, 378 offline tests, then 106 Playwright runs. Run it before and
 after any change. `npm run test:integration` is the weekly live-feed check, run by hand.
 
 ## Findings surfaced by EPIC-1 — all four now closed
@@ -150,7 +152,21 @@ P0 ~~E2E (`docs/10` §10.5)~~ done · P0 ~~live-API integration checks (§10.4)~
 P0 ~~CI/CD (EPIC-3)~~ dropped — no GitHub; gates are local ·
 P1 ~~reliability hardening (EPIC-4)~~ done — E4-1..E4-5, though E4-5 is **not deployed** ·
 P1 ~~ship the probability lab (EPIC-5)~~ done — E5-1..E5-5 ·
-**P2 Capacitor wrapper (EPIC-6) — next.** Detail in `engineering/18-DELIVERY-PLAN.md`.
+P2 Capacitor wrapper (EPIC-6) — **E6-1 scaffold and E6-2 assets done; the APK build is not**.
+
+### EPIC-6 state
+
+`capacitor.config.json` + `android/` are committed and `src/ui/native.js` handles the
+WebView-specific behaviour (external links to a Chrome Custom Tab, status-bar theming, no
+service worker in the shell) while staying a complete no-op on the website. Icons and
+splashes are generated from the design tokens by `npm run app:assets`.
+
+**What is NOT done:** `npm run app:build` needs the Android SDK, which is not installed —
+roughly 2 GB. A JDK 17 is installed. iOS is not possible on Windows at all. E6-3 (Play
+Console signing) and E6-4 (TestFlight) need store accounts, and E6-5 is store CI, which is
+moot without GitHub.
+
+Native workflow: `npm run app:assets` · `npm run app:sync` · `npm run app:build`.
 
 The one remaining EPIC-4 caveat: the Worker rate limit and structured logs exist in
 `worker/worker.js` but the deployed Worker is unchanged. **The deploy is blocked on
