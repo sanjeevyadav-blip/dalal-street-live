@@ -35,23 +35,32 @@ export function renderIndices(){
 export function renderWatchlist(){
   const body = document.getElementById('watchlistBody');
   if (watchlist.length === 0){
-    body.innerHTML = `<tr><td colspan="5" style="color:var(--cream-dim); padding:16px 10px;">Your board is empty. Add a symbol above.</td></tr>`;
+    body.innerHTML = `<tr class="empty"><td colspan="5" style="color:var(--cream-dim); padding:16px 10px;">Your board is empty. Add a symbol above.</td></tr>`;
     return;
   }
   body.innerHTML = watchlist.map(sym => {
     const q = quoteCache[sym];
     const exch = sym.endsWith('.BO') ? 'BSE' : 'NSE';
     const displaySym = sym.replace(/\.(NS|BO)$/, '');
+    // Five cells always, even while a quote is still in flight. The mobile layout places
+    // these by grid area, and a colspan is ignored once the row is a grid — a loading row
+    // that collapsed to two cells used to land the price under the symbol.
     if (!q){
-      return `<tr class="rowlink" data-sym="${sym}"><td class="sym" data-label="Symbol">${displaySym}<span class="exch">${exch}</span></td><td class="price loading-dots" data-label="Price" colspan="3">fetching…</td><td class="remove" data-label=""><button data-remove="${sym}">×</button></td></tr>`;
+      return `<tr class="rowlink" data-sym="${sym}">
+        <td class="sym" data-label="Symbol"><span class="tk">${displaySym}</span><span class="exch">${exch}</span></td>
+        <td class="price loading-dots" data-label="Price">fetching…</td>
+        <td class="chg" data-label="Change"></td>
+        <td class="chg pct" data-label="% Chg"></td>
+        <td class="remove" data-label=""><button data-remove="${sym}" aria-label="Remove ${displaySym} from the watchlist">×</button></td>
+      </tr>`;
     }
     const up = q.change >= 0; const cls = up ? 'up':'down'; const arrow = up ? '▲' : '▼';
     return `<tr class="rowlink" data-sym="${sym}">
-      <td class="sym" data-label="Symbol">${displaySym}<span class="exch">${exch}</span></td>
+      <td class="sym" data-label="Symbol"><span class="tk">${displaySym}</span><span class="exch">${exch}</span></td>
       <td class="price" data-label="Price">₹${fmtNum(q.price,2)}</td>
       <td class="chg ${cls}" data-label="Change">${arrow} ${fmtNum(Math.abs(q.change),2)}</td>
-      <td class="chg ${cls}" data-label="% Chg">${fmtNum(Math.abs(q.changePercent),2)}%</td>
-      <td class="remove" data-label=""><button data-remove="${sym}">×</button></td>
+      <td class="chg pct ${cls}" data-label="% Chg">${fmtNum(Math.abs(q.changePercent),2)}%</td>
+      <td class="remove" data-label=""><button data-remove="${sym}" aria-label="Remove ${displaySym} from the watchlist">×</button></td>
     </tr>`;
   }).join('');
 

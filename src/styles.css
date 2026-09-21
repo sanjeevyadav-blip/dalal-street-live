@@ -309,5 +309,47 @@
     table.book td{ border:none; padding:3px 0; }
     table.book td.remove{ text-align:left; margin-top:4px; }
     table.book td::before{ content: attr(data-label); display:inline-block; width:78px; color:var(--cream-dim); font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; }
+
+    /* The watchlist is a quote list, not a data table, and the stacking above is wrong for
+       it: four labelled lines plus a boxed × turned one holding into a 169px block, so a
+       phone showed two names per screen. Every quote app — Groww, Kite, Yahoo — settles on
+       the same shape, because it is the one that works at this width: identity left, the
+       number that matters right, the move under it. Two lines, ~60px.
+
+           RELIANCE            ₹1,247.40   ×
+           NSE            ▲ 12.10  0.98%
+
+       Placed by grid area rather than source order, so the cells stay in the reading order
+       a screen reader and the desktop table both want. The wide tables keep the horizontal
+       scroller instead (see injectRankScrollStyles) — thirteen columns cannot become two
+       lines, and pretending otherwise is what the stacking rule was trying to do. */
+    table.book.quote-list tr.rowlink{
+      display:grid;
+      grid-template-columns:1fr auto auto 34px;
+      align-items:center;
+      column-gap:9px; row-gap:1px;
+      padding:10px 2px;
+    }
+    table.book.quote-list tr.rowlink td{ padding:0; border:none; }
+    table.book.quote-list tr.rowlink td::before{ content:none; }
+    table.book.quote-list td.sym{ grid-area:1 / 1 / 3 / 2; display:flex; flex-direction:column; gap:1px; min-width:0; }
+    table.book.quote-list td.sym span.tk{ font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    table.book.quote-list td.sym span.exch{ margin-left:0; font-size:10px; letter-spacing:0.07em; }
+    table.book.quote-list td.price{ grid-area:1 / 2 / 2 / 4; text-align:right; font-size:15px; font-weight:600; }
+    table.book.quote-list td.chg{ grid-area:2 / 2 / 3 / 3; text-align:right; font-size:12.5px; }
+    table.book.quote-list td.chg.pct{ grid-area:2 / 3 / 3 / 4; }
+    table.book.quote-list td.remove{ grid-area:1 / 4 / 3 / 5; text-align:right; margin:0; }
+    /* 34px is below the 44px ideal, but this sits inside a row that is itself the primary
+       tap target, and a bigger button would crowd the price. The row opens the stock; only
+       the button removes it. */
+    table.book.quote-list td.remove button{ width:30px; height:30px; }
+    table.book.quote-list tr.empty td{ display:block; }
+    table.book.quote-list tr.empty td::before{ content:none; }
+  }
+
+  /* Phones have no hover, so a row that only responds on :hover gives no feedback at all
+     that the tap registered before the detail panel loads. */
+  @media (hover:none){
+    table.book tbody tr.rowlink:active{ background:rgba(255,255,255,0.055); }
   }
   @media (prefers-reduced-motion: reduce){ .ticker-track{ animation:none; } .dot.open{ animation:none; } }

@@ -57,6 +57,37 @@ test.describe('mobile layout at 390×844', () => {
     expect(docWidth).toBeLessThanOrEqual(PHONE.width + 2);
   });
 
+  test('a watchlist row is a compact quote row, not a stack of labelled lines', async ({ page }) => {
+    // The generic mobile rule turns every table.book cell into its own labelled line. For
+    // the 13-column screener that is the wrong trade but an understandable one; for a
+    // 5-column quote list it was indefensible — one holding filled 169px, so a phone
+    // showed two names. This asserts the shape that replaced it: one grid row, both lines
+    // of it, well under the height of the old stack.
+    await page.goto('/');
+    const row = page.locator('#watchlistBody tr.rowlink').first();
+    await expect(row).toBeVisible();
+
+    expect(await row.evaluate((el) => window.getComputedStyle(el).display)).toBe('grid');
+
+    const height = await row.evaluate((el) => el.getBoundingClientRect().height);
+    expect(height, 'the watchlist row has gone back to stacking').toBeLessThan(90);
+
+    // The data-label prefixes belong to the stacked layout and must not print here.
+    const pseudo = await row.evaluate((el) =>
+      window.getComputedStyle(el.querySelector("td.sym"), "::before").content);
+    expect(['none', 'normal']).toContain(pseudo);
+
+    // Price and percent both right-align to the same edge, and nothing reaches past the
+    // viewport — the failure mode of a grid whose columns are sized by content.
+    const geom = await row.evaluate((el) => ({
+      price: el.querySelector('td.price').getBoundingClientRect().right,
+      pct: el.querySelector('td.chg.pct').getBoundingClientRect().right,
+      rowRight: el.getBoundingClientRect().right
+    }));
+    expect(Math.abs(geom.price - geom.pct)).toBeLessThan(2);
+    expect(geom.rowRight).toBeLessThanOrEqual(PHONE.width + 2);
+  });
+
   test('the detail panel stays within the viewport', async ({ page }) => {
     await page.goto('/');
     await page.locator('#searchInput').fill('reli');
