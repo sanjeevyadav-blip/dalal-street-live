@@ -408,7 +408,27 @@ function injectRankScrollStyles(){
     '.rank-scroll table.book tr{display:table-row;padding:0;border-bottom:1px solid var(--hair)}' +
     '.rank-scroll table.book td{display:table-cell;border:none;padding:12px}' +
     '.rank-scroll table.book td::before{content:none}' +
-    '}';
+    '}' +
+    // A thirteen-column table scrolled sideways loses the one column that says which row
+    // you are reading: by the time P/E is on screen the symbol is long gone, and every
+    // row is an anonymous line of numbers. Screener.in pins the name for exactly this
+    // reason. The first cell stays put while the rest slides under it.
+    //
+    // The pinned cell needs an OPAQUE background — the scroller's own is a 1.2% white
+    // wash over the page, and a translucent sticky cell has the scrolling columns
+    // travelling visibly through the text. --ink is the page ground beneath it.
+    //
+    // z-index matters in two directions: the pinned cell sits above the sliding body
+    // cells, and the pinned HEADER cell above both, or it is overlapped at the corner
+    // while scrolling.
+    '.rank-scroll table.book th:first-child,.rank-scroll table.book td:first-child{' +
+    'position:sticky;left:0;z-index:2;background:var(--ink);' +
+    'box-shadow:1px 0 0 var(--hair)}' +
+    '.rank-scroll table.book thead th:first-child{z-index:3}' +
+    // The sticky cell is painted from its own background, so the row hover and the
+    // zebra-free body would otherwise stop dead at the pinned column's edge.
+    '.rank-scroll table.book tbody tr:hover td:first-child{background:#0F1A26}' +
+    '@media (hover:none){.rank-scroll table.book tbody tr:active td:first-child{background:#0F1A26}}';
   document.head.appendChild(st);
 }
 function extendGlossaryForScreener(){

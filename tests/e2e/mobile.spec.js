@@ -55,6 +55,28 @@ test.describe('mobile layout at 390×844', () => {
 
     const docWidth = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(docWidth).toBeLessThanOrEqual(PHONE.width + 2);
+
+    // Scrolling right must not cost you the row's identity. By the time P/E is on screen
+    // the symbol would otherwise be long gone and every row is an anonymous line of
+    // numbers, which is the whole reason Screener.in pins its first column.
+    const pin = await scroller.evaluate(async (el) => {
+      const cell = el.querySelector('tbody tr td:first-child');
+      const before = cell.getBoundingClientRect().left;
+      el.scrollLeft = 600;
+      await new Promise((r) => setTimeout(r, 200));
+      const style = window.getComputedStyle(cell);
+      return {
+        moved: Math.abs(cell.getBoundingClientRect().left - before),
+        position: style.position,
+        // Translucent would let the sliding columns show through the pinned text.
+        opaque: !/rgba\(.*,\s*0(\.\d+)?\)$/.test(style.backgroundColor),
+        scrolled: el.scrollLeft
+      };
+    });
+    expect(pin.scrolled, 'the scroller did not actually move').toBeGreaterThan(100);
+    expect(pin.position).toBe('sticky');
+    expect(pin.moved, 'the symbol column scrolled away with the rest').toBeLessThan(2);
+    expect(pin.opaque, 'the pinned cell is see-through').toBe(true);
   });
 
   test('a watchlist row is a compact quote row, not a stack of labelled lines', async ({ page }) => {

@@ -20,5 +20,18 @@ export default defineConfig({
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
     { name: 'mobile',  use: { ...devices['Pixel 7'] } }
   ],
-  webServer: { command: 'npm run preview', port: 4173, reuseExistingServer: !process.env.CI }
+  // `vite preview` serves whatever is in dist/ and never builds. `npm run verify:full`
+  // builds first so the full gate is honest, but running `npx playwright test` directly —
+  // which is what you do when iterating on one spec — silently tested the previous build.
+  // A CSS change I had just made showed up as a failing assertion with no sign of why.
+  // Building here costs about half a second and removes the whole class of confusion.
+  //
+  // reuseExistingServer is still a hole: an already-running preview on 4173 is reused as
+  // is, stale dist and all. If a spec fails in a way the source contradicts, kill the
+  // preview server and run again before believing it.
+  webServer: {
+    command: 'npm run build && npm run preview',
+    port: 4173,
+    reuseExistingServer: !process.env.CI
+  }
 });
