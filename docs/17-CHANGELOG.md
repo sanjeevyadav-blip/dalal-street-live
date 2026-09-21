@@ -26,7 +26,11 @@ Reverse chronological. Format: Conventional Commits categories.
 - `feat(reliability)` EPIC-4 E4-1: dead or renamed tickers are named under the screener and
   ranking tables instead of silently vanishing from the row count.
 - `feat(worker)` EPIC-4 E4-5: per-IP rate limit (300/min) and structured JSON logs.
-  **Written but not deployed** — the live Worker is unchanged.
+  **Deployed 2026-09-21**, version `d454fc15`, verified 10/10 by `npm run worker:preflight`
+  against the live URL. The dashboard itself was not redeployed and `main` is untouched.
+- `fix(worker)` `npm run worker:deploy` ran from the repo root, where there is no
+  `wrangler.toml`. Wrangler searches upward, never down, so it never found the config in
+  `worker/`. Never caught before because the deploy had always failed on auth first.
 - `chore` deleted `.github/workflows/`; the gates run locally via `npm run verify:full`.
 - `feat(models)` EPIC-5: the probability lab ships. GBM Monte Carlo, GARCH(1,1), a two-state
   hidden Markov regime model, a walk-forward logistic classifier, a DCF Monte Carlo and a
@@ -78,7 +82,6 @@ Reverse chronological. Format: Conventional Commits categories.
   loopback socket pair Java NIO uses for `Pipe`/`Selector`, so Gradle's daemon cannot start.
   Diagnose with `java scripts/diagnose-gradle-loopback.java`. Needs an IT exclusion for
   `java.exe`; no code change can work around it.
-- **Blocked:** the Worker deploy needs `wrangler login`, an interactive OAuth flow.
 
 ## v1.9 — Mobile & PWA
 - `feat(mobile)` responsive layout ≤760px: sticky header, swipe indices strip, 2-column

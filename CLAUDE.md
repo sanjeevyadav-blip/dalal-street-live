@@ -150,7 +150,7 @@ after any change. `npm run test:integration` is the weekly live-feed check, run 
 P0 ~~refactor the monolith~~ done · P0 ~~unit + regression tests~~ done ·
 P0 ~~E2E (`docs/10` §10.5)~~ done · P0 ~~live-API integration checks (§10.4)~~ done ·
 P0 ~~CI/CD (EPIC-3)~~ dropped — no GitHub; gates are local ·
-P1 ~~reliability hardening (EPIC-4)~~ done — E4-1..E4-5, though E4-5 is **not deployed** ·
+P1 ~~reliability hardening (EPIC-4)~~ done — E4-1..E4-5, **all deployed** ·
 P1 ~~ship the probability lab (EPIC-5)~~ done — E5-1..E5-5 ·
 P2 Capacitor wrapper (EPIC-6) — **E6-1 scaffold and E6-2 assets done; the APK build is not**.
 
@@ -190,12 +190,26 @@ store accounts, and E6-5 is store CI, which is moot without GitHub.
 
 Native workflow: `npm run app:assets` · `npm run app:sync` · `npm run app:build`.
 
-The one remaining EPIC-4 caveat: the Worker rate limit and structured logs exist in
-`worker/worker.js` but the deployed Worker is unchanged. **The deploy is blocked on
-`wrangler login`** — an interactive browser OAuth flow that cannot be run from an automated
-session. The owner has to run it.
+### The Worker deploy — done
 
-Everything short of the upload is done and verified. The new Worker was run locally with
-`wrangler dev --local` and passes `npm run worker:preflight:local` **10/10 against the real
-Yahoo and NSE**, including both auth handshakes. The live Worker fails exactly the two E4-5
-checks, which is the expected difference. Procedure and rollback: `docs/11` §5.0.
+**EPIC-4 E4-5 is live.** The owner ran `wrangler login` and approved the upload on
+2026-09-21, so the deployed Worker now carries the per-IP rate limit and the structured
+logs, and `npm run worker:preflight` passes **10/10 against the live URL**.
+
+- deployed version `d454fc15-21c6-4f4a-8dd8-ea553a7f6707`
+- previous version, the rollback target, `1c1371c3-7eb0-4558-b7fe-8c458cab07e8`
+- procedure and rollback: `docs/11` §5.0
+
+This does not loosen the standing rule above. The Worker was deployed because the owner
+asked for that specific upload in that specific message. GitHub Pages, `main` and the
+dashboard itself are still untouched, and the next deploy needs its own approval.
+
+Two traps it surfaced, both worth knowing before the next one:
+
+- `npm run worker:deploy` used to run from the repo root. Wrangler searches **upward** for
+  `wrangler.toml` and never downward, so it never found `worker/wrangler.toml` and failed
+  with an unrelated complaint about an assets directory. The script now `cd`s into `worker/`.
+- The live preflight is flaky in a way the `wrangler dev` one is not. NSE intermittently
+  403s the Cloudflare edge — the documented trap, not a regression. **Retry before
+  concluding a deploy broke something:** the run straight after this deploy reported an NSE
+  403 and a `fetch failed`, and both passed a minute later with the Worker unchanged.
