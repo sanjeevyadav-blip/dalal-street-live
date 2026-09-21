@@ -5,10 +5,11 @@ Reverse chronological. Format: Conventional Commits categories.
 ## Unreleased
 - `refactor` EPIC-1: the 3,888-line monolithic `index.html` became 39 ES modules built by
   Vite into one `dist/index.html`. Behaviour proven unchanged against the deployed file.
-- `test` 378 offline tests against 31 committed API fixtures, including 33 golden snapshots.
+- `test` 379 offline tests against 31 committed API fixtures, including 33 golden snapshots.
 - `test` §10.4: 10 live-API integration checks (`npm run test:integration`), opt-in.
-- `test` §10.5: 53 Playwright E2E specs on desktop and mobile (`npm run test:e2e`), routed
-  through the committed fixtures so they run deterministically and offline.
+- `test` §10.5: 57 Playwright E2E specs on desktop and mobile — 114 runs
+  (`npm run test:e2e`), routed through the committed fixtures so they run deterministically
+  and offline.
 - `fix(pwa)` **the build stopped shipping the PWA.** `publicDir: false` meant Vite emitted
   `index.html` alone, while the page still linked `manifest.json` and registered `sw.js`.
   On a deploy the manifest would 404 and `sw.js` would be served the HTML fallback, failing
@@ -92,6 +93,29 @@ Reverse chronological. Format: Conventional Commits categories.
   `@v4` with `packages` set explicitly. The log is misleading — it dumps licence text ending
   in `Accept? (y/N):` just before the error, but licences were accepted; the real line is
   `Warning: Failed to find package 'tools'`.
+- `feat(mobile)` **the phone layout is an app, not a long page.** Five tabs — Top 20, IPO,
+  Top perf, Screener, News — replace five anchors that smooth-scrolled one document. The
+  three indices and the market status stay above all of them. Opening a tab loads it; the
+  screener no longer greets a phone with "Not loaded yet — pick a count and click Load".
+  Tapping a stock opens the detail as its own view with a Back button. Switching is CSS,
+  not JavaScript: sections are moved into five `.tabpanel` wrappers once and a media query
+  decides stacked (desktop, unchanged) or switched (phone), so there is no resize handler
+  and no teardown path.
+- `feat(mobile)` **the watchlist stopped being four labelled lines per holding.** Each row
+  was 169px — symbol, price, change and % change stacked with a boxed × underneath — so a
+  phone showed two names. Now the shape every quote app uses: identity left, price right,
+  the move under it, 61px, eight names a screen. Scoped to `.quote-list`; the eleven- and
+  thirteen-column tables keep their horizontal scroller.
+- `feat(mobile)` **the stock name stays pinned when a wide table scrolls sideways.** Past
+  the third column every row used to be an anonymous line of numbers. The pinned cell
+  paints an opaque background, because the scroller's own is a 1.2% white wash and the
+  columns showed through the text.
+- `feat(ui)` a market-wide news section — until now headlines existed only inside a
+  stock's detail panel, so you had to pick a company to ask what happened today.
+- `feat(ui)` a Top 20 list: the twenty largest NSE names with live price and change,
+  sharing `quoteCache` with the watchlist so a name in both is fetched once.
+- `fix(test)` `vite preview` serves `dist/` and never builds, so running `npx playwright
+  test` on its own tested the previous build. The Playwright `webServer` now builds first.
 - **EPIC-6 E6-1 acceptance met:** a 4.42 MB debug-signed APK builds in CI, carrying
   `dev.dalalstreet.live` and the built web bundle. Still outstanding: E6-3 Play signing and
   E6-4 TestFlight, both needing store accounts, and iOS, which needs a Mac.

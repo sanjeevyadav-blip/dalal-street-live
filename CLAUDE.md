@@ -25,7 +25,7 @@ Static site on GitHub Pages + one Cloudflare Worker as a CORS proxy. No backend,
 | `docs/07-DESIGN-SYSTEM-UX.md` | Tokens, components, mobile spec, PWA, native app routes |
 | `docs/08-SECURITY-COMPLIANCE.md` | Worker allowlist, privacy, SEBI position |
 | `docs/09-SDLC-PROCESS.md` | Branching, commits, definition of done, review checklist |
-| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 378 offline, 10 live-API, 53 E2E (106 runs) |
+| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 379 offline, 10 live-API, 57 E2E (114 runs) |
 | `docs/11-DEPLOYMENT-RUNBOOK.md` | Deploy, verify, health checks, failure playbook |
 | `docs/12-MAINTENANCE-SUPPORT.md` | Fragilities ranked, fallbacks if a feed dies |
 | `docs/13-RISK-REGISTER.md` | 15 risks; top three to act on |
@@ -62,18 +62,51 @@ src/ui/         detail detail-state charts snapshot thesis deep-analysis options
                 probability-lab tables/{screener,ranking}
 src/public/     manifest.json sw.js    PWA — COPIED to dist, not inlined (see vite.config.js)
 src/ui/native.js                        Capacitor shell behaviour; a no-op on the web
+src/ui/mobile-shell.js                  the phone app: 5 tabs, sticky summary, per-tab load
+src/ui/top20.js  src/ui/market-news.js   the two sections the phone shell added
 worker/worker.js  worker/wrangler.toml  the CORS proxy
 capacitor.config.json  android/          the native Android shell (EPIC-6)
-tests/          378 offline tests against 31 committed API fixtures
+tests/          379 offline tests against 31 committed API fixtures
 tests/integration/  10 live-API checks (§10.4) — opt-in, hits the real Worker
-tests/e2e/      53 Playwright specs, desktop + mobile (106 runs), fixture-routed
+tests/e2e/      57 Playwright specs, desktop + mobile (114 runs), fixture-routed
 scripts/        capture-fixtures.mjs, check-invariants.sh
 ```
 
-Run `npm run verify:full` — lint, invariants, build, 378 offline tests, then 106 Playwright
+Run `npm run verify:full` — lint, invariants, build, 379 offline tests, then 114 Playwright
 runs — before and after any change. `npm run verify` alone skips the browser and is the
 faster inner loop.
 Regenerate fixtures with `node scripts/capture-fixtures.mjs` (read-only; hits the Worker).
+
+## The phone layout is a different shape from the desktop one
+
+At 760px and below the page is an app: five tabs (Top 20, IPO, Top perf, Screener, News), a
+summary strip of the three indices above all of them, and the stock detail as its own view
+with a Back button. Above 760px it is the same single document it always was.
+
+`src/ui/mobile-shell.js` does this, and two things about it are load-bearing:
+
+- **The switching is CSS, not JavaScript.** Sections are moved into five `.tabpanel`
+  wrappers once, at the end of `bootstrap()`, and a media query decides whether panels
+  stack or switch. So there is no resize handler, no viewport branch in JS and no teardown
+  path — rotating a phone or dragging a window narrow just works. Do not "improve" this by
+  making it conditional on `window.innerWidth`.
+- **Panels are filled in document order**, not in the order the selector list is written.
+  The list is grouped by meaning and appending in that order silently reordered the page:
+  `mountManual` places the manual above the glossary with `insertBefore`, and naming the
+  glossary first moved the manual below it. A desktop spec caught it.
+
+A section that no panel's selector list claims is **invisible on a phone and fine on a
+desktop** — the panels are the only thing displayed. `tests/unit/boot.test.js` asserts every
+section lands in exactly one panel, because nothing else would catch it.
+
+Each tab loads itself on first view, not at boot: the ranking alone scores a 55-name
+universe. The Load and Re-run buttons stay, because "fetch again with fresh prices" is a
+real thing to want.
+
+**E2E specs must switch tabs.** `showTab(page, id)` in `tests/e2e/helpers/fixture-routes.js`
+clicks the nav on mobile and is a no-op on desktop, so one spec body serves both projects.
+A spec that reaches straight for `#rankLargeBtn` finds a hidden element under the mobile
+project only.
 
 ## Hard rules — these are deliberate, do not "fix" them
 
@@ -136,8 +169,8 @@ a branch push is routine, `main` is not.
 `wrangler deploy` is no longer forbidden outright either — E4-5 was deployed on the same
 day — but each deploy needs its own approval. Do not treat the last yes as a standing one.
 
-**`npm run verify:full` is still the gate** — lint, invariants, build, 378 offline tests,
-then 106 Playwright runs. Run it before and after any change. CI builds the APK and nothing
+**`npm run verify:full` is still the gate** — lint, invariants, build, 379 offline tests,
+then 114 Playwright runs. Run it before and after any change. CI builds the APK and nothing
 else; it is not a substitute for verifying locally, and there is no test job to watch.
 `npm run test:integration` is the weekly live-feed check, run by hand.
 
