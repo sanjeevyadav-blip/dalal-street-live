@@ -24,7 +24,7 @@
     "worker:dev": "wrangler dev worker/worker.js --local --port 8787",
     "worker:preflight": "node scripts/worker-preflight.mjs",
     "worker:preflight:local": "node scripts/worker-preflight.mjs http://127.0.0.1:8787",
-    "worker:deploy": "wrangler deploy"
+    "worker:deploy": "cd worker && wrangler deploy"
   },
   "devDependencies": {
     "@capacitor/android": "^6.2.2",
