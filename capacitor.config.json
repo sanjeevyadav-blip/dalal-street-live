@@ -1,0 +1,26 @@
+{
+  "appId": "dev.dalalstreet.live",
+  "appName": "Dalal Street Live",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#0B1520",
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "backgroundColor": "#0B1520",
+      "androidSpinnerStyle": "small",
+      "spinnerColor": "#C9A24B",
+      "showSpinner": true
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0B1520",
+      "overlaysWebView": false
+    }
+  }
+}

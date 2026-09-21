@@ -27,6 +27,7 @@ import { loadIpos } from './ui/ipo.js';
 
 import { countSelectHtml, loadScreener3, scrCache } from './ui/tables/screener.js';
 import { mountDiagnostics } from './ui/diagnostics-block.js';
+import { initNativeShell, shouldRegisterServiceWorker } from './ui/native.js';
 import { initDiagnostics } from './diagnostics.js';
 import { runRanking3, rankCache } from './ui/tables/ranking.js';
 
@@ -542,7 +543,10 @@ function mobileLayer(){
   meta('mobile-web-app-capable', 'yes');
   const vp = document.querySelector('meta[name="viewport"]');
   if (vp) vp.content = 'width=device-width, initial-scale=1, viewport-fit=cover';
-  if ('serviceWorker' in navigator){
+  // Not registered inside the Capacitor shell: the assets are already on the device, so the
+  // worker caches nothing worth caching, and its network-first-with-cache-fallback rule can
+  // keep a stale shell alive across an app update. See ui/native.js.
+  if ('serviceWorker' in navigator && shouldRegisterServiceWorker()){
     window.addEventListener('load', function(){
       navigator.serviceWorker.register('sw.js').catch(function(){});
     });
@@ -712,6 +716,10 @@ function bootstrap(){
   // filling since the first module loaded.
   initDiagnostics();
   mountDiagnostics();
+
+  // EPIC-6. A no-op on the website; inside the Capacitor shell it routes external links to
+  // the system browser, themes the status bar and dismisses the splash.
+  initNativeShell();
 }
 
 bootstrap();

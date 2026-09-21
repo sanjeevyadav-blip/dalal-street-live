@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dalal Street Live</string>
+    <string name="title_activity_main">Dalal Street Live</string>
+    <string name="package_name">dev.dalalstreet.live</string>
+    <string name="custom_url_scheme">dev.dalalstreet.live</string>
+</resources>
