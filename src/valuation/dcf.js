@@ -16,7 +16,53 @@
 // ADR-003 records that the result swings 40%+ across defensible assumptions, which is why
 // this feeds a range and never a target price.
 
-export function computeDcf(ann, price, shares, beta, netDebt){
+/**
+ * Sectors where OCF-minus-capex is not free cash flow, and this model must decline.
+ *
+ * For a bank, operating cash flow is dominated by deposit inflows and loan originations —
+ * financing activity that happens to be classified as operating. Capex is a rounding error
+ * against it. Their difference is not cash available to shareholders; it is mostly a
+ * measure of how fast the loan book grew that year, and it can be hugely positive in a bad
+ * year and negative in a good one. Insurers have the same problem with float.
+ *
+ * HDFCBANK was the case that exposed this: the model computed an intrinsic value with
+ * growth pinned at its +20% cap, from cash-flow swings that had nothing to do with the
+ * economics of the business. It produced a confident number that meant nothing, which
+ * CLAUDE.md invariant 3 exists to prevent — a filled cell has to be real.
+ *
+ * Valuing a lender properly needs a different model (residual income, or a P/B to ROE
+ * comparison against cost of equity). That is a feature, not a patch, and until it exists
+ * the honest output is an explanation rather than a figure.
+ */
+const NO_DCF_SECTORS = ['financial services', 'financial'];
+const NO_DCF_INDUSTRY_WORDS = ['bank', 'insurance', 'capital markets', 'asset management', 'credit services'];
+
+export function isDcfUnsuitableSector(sector, industry){
+  const s = String(sector || '').toLowerCase().trim();
+  const i = String(industry || '').toLowerCase().trim();
+  if (NO_DCF_SECTORS.includes(s)) return true;
+  return NO_DCF_INDUSTRY_WORDS.some((w) => i.includes(w));
+}
+
+/**
+ * @param {object} ann     annual OCF/capex/NI/revenue/assets series
+ * @param {number} price
+ * @param {number} shares
+ * @param {number} beta
+ * @param {number} netDebt
+ * @param {object} [profile]  `{ sector, industry }` from Yahoo's assetProfile. Optional so
+ *   existing callers keep working, but when it identifies a lender the model declines —
+ *   see NO_DCF_SECTORS above.
+ */
+export function computeDcf(ann, price, shares, beta, netDebt, profile){
+  if (profile && isDcfUnsuitableSector(profile.sector, profile.industry)){
+    return { error: 'A discounted cash flow is not a meaningful way to value a bank, insurer ' +
+      'or lender. For these businesses operating cash flow is dominated by deposits and loan ' +
+      'originations rather than by trading profit, so operating cash flow minus capital ' +
+      'expenditure is not free cash flow at all — it largely tracks how fast the loan book ' +
+      'grew. This model declines rather than printing a number that would look authoritative ' +
+      'and mean nothing. Use book value against return on equity for a lender instead.' };
+  }
   const ocf = ann.ocf.map(x=>x.v), capex = ann.capex.map(x=>Math.abs(x.v));
   if (!ocf.length || !shares) return null;
   const years = Math.min(ocf.length, capex.length || ocf.length);

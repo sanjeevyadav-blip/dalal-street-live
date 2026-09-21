@@ -91,38 +91,8 @@ exports[`golden output — hdfcbank > risk and momentum 1`] = `
 exports[`golden output — hdfcbank > valuation 1`] = `
 {
   "dcf": {
-    "base": "1065776300000",
-    "disc": "0.110000",
-    "growth": "0.200000",
-    "intrinsic": "1546.48",
-    "outcome": "computed",
-    "sens": [
-      {
-        "dr": "0.110000",
-        "vals": [
-          "1285.08",
-          "1546.48",
-          "1853.43",
-        ],
-      },
-      {
-        "dr": "0.130000",
-        "vals": [
-          "938.70",
-          "1130.68",
-          "1354.92",
-        ],
-      },
-      {
-        "dr": "0.150000",
-        "vals": [
-          "719.18",
-          "867.94",
-          "1040.81",
-        ],
-      },
-    ],
-    "upside": "111.56",
+    "error": "A discounted cash flow is not a meaningful way to value a bank, insurer or lender. For these businesses operating cash flow is dominated by deposits and loan originations rather than by trading profit, so operating cash flow minus capital expenditure is not free cash flow at all — it largely tracks how fast the loan book grew. This model declines rather than printing a number that would look authoritative and mean nothing. Use book value against return on equity for a lender instead.",
+    "outcome": "declined",
   },
   "earningsQuality": {
     "accr": "-0.7863",
@@ -155,10 +125,7 @@ exports[`golden output — hdfcbank > valuation 1`] = `
     "score": "4.0000",
     "years": "4.0000",
   },
-  "reverseDcf": {
-    "capped": true,
-    "implied": "-0.200000",
-  },
+  "reverseDcf": null,
 }
 `;
 

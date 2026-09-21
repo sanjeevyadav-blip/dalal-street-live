@@ -165,3 +165,37 @@ test.describe('detail panel', () => {
     expect(value).toBeLessThanOrEqual(capital);
   });
 });
+
+test.describe('valuation refusals', () => {
+  test.beforeEach(async ({ page }) => {
+    await stubFonts(page);
+    await installFixtureRoutes(page);
+  });
+
+  test('a bank is told why it gets no DCF, rather than being given one', async ({ page }) => {
+    // HDFCBANK used to receive an intrinsic value with growth pinned at the +20% cap,
+    // computed from cash-flow swings that mostly track loan-book growth. CLAUDE.md
+    // invariant 3: a filled cell has to be real, and that one was not.
+    await page.goto('/');
+    await page.locator('#searchInput').fill('hdfcbank');
+    await page.locator('#suggestions .item').first().click();
+    await expect(page.locator('#dcfBlock')).toBeVisible({ timeout: 25000 });
+    await expect(page.locator('#dcfBlock')).not.toContainText('Pulling multi-year cash flows', { timeout: 25000 });
+
+    const dcf = await page.locator('#dcfBlock').innerText();
+    expect(dcf).toMatch(/not a meaningful way to value a bank/i);
+    // And it must explain rather than merely refuse.
+    expect(dcf).toMatch(/deposits and loan originations/i);
+    // No intrinsic value anywhere in the block.
+    expect(dcf).not.toMatch(/Intrinsic value/i);
+  });
+
+  test('a non-financial still gets its DCF', async ({ page }) => {
+    // The guard has to be narrow. One that quietly stopped valuing ordinary companies
+    // would look deliberate and nobody would notice.
+    await page.goto('/');
+    await page.locator('#searchInput').fill('reli');
+    await page.locator('#suggestions .item').first().click();
+    await expect(page.locator('#dcfBlock')).toContainText('Intrinsic value', { timeout: 25000 });
+  });
+});

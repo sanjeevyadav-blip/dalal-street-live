@@ -57,22 +57,45 @@ export async function renderThesis(symbol, hist, price, dcf, quality, pa, atr){
   if (dcf && dcf.intrinsic) {
     const rev = reverseDcf(price, dcf.base, dcf.shares, dcf.disc, dcf.tg, dcf.netDebt);
     const histG = dcf.growth*100;
-    const impG = rev ? rev.implied*100 : null;
-    let verdictLine = '';
-    if (impG != null) {
+    const impG = (rev && rev.implied != null) ? rev.implied*100 : null;
+    const floorPct = rev ? rev.floorGrowth*100 : 4;
+
+    // Three outcomes, three different sentences. The middle one used to be rendered as
+    // "-20%", which read as "the market expects a 20% annual decline" and meant nothing of
+    // the kind \u2014 see the note at the top of valuation/reverse-dcf.js.
+    let impCell, gapCell, verdictLine = '';
+    if (rev && rev.belowFloor) {
+      impCell = 'Below ' + fmtNum(floorPct,0) + '%';
+      gapCell = '\u2014';
+      verdictLine = 'The price implies growth <b>below ' + fmtNum(floorPct,0) + '%</b>, and this model ' +
+        'cannot say how far below. It fades growth toward a ' + fmtNum(floorPct,0) + '% terminal rate ' +
+        'and never goes under it, so every assumption beneath that floor produces the same value \u2014 ' +
+        'the question stops having an answer rather than having a low one. What it does tell you is ' +
+        'that the market is pricing this business below the slowest growth the model can represent.';
+    } else if (impG != null) {
       const d = impG - histG;
+      impCell = fmtNum(impG,1) + '%' + (rev && rev.capped ? '+' : '');
+      gapCell = fmtNum(d,1) + ' pts';
       verdictLine = Math.abs(d) < 3
         ? 'The price is roughly consistent with what the business has actually been doing.'
         : d > 0
           ? 'The price requires <b>faster</b> growth than the company has delivered historically \u2014 the market is pricing in improvement.'
           : 'The price implies <b>slower</b> growth than history \u2014 the market is pricing in deterioration or sees risk the model does not.';
+      if (rev && rev.capped) {
+        verdictLine = 'The price implies growth <b>at or above ' + fmtNum(impG,0) + '%</b> \u2014 the top of ' +
+          'what this model will search, so treat it as a floor on expectations rather than a solved ' +
+          'figure. ' + verdictLine;
+      }
+    } else {
+      impCell = '\u2014';
+      gapCell = '\u2014';
     }
     dcfHtml =
       '<div class="metric-grid">' +
         '<div class="metric"><div class="k">Forward DCF value</div><div class="v ' + (dcf.upside>=0?'up':'down') + '">\u20b9' + fmtNum(dcf.intrinsic,2) + '</div><div class="sub">' + fmtNum(dcf.upside,1) + '% vs price</div></div>' +
         '<div class="metric"><div class="k">Growth we assumed</div><div class="v">' + fmtNum(histG,1) + '%</div><div class="sub">From ' + (dcf.rows?dcf.rows.length:5) + '-yr FCF history</div></div>' +
-        '<div class="metric"><div class="k">Reverse DCF \u2014 implied growth</div><div class="v info">' + (impG==null?'\u2014':fmtNum(impG,1)+'%' + (rev && rev.capped?'+':'')) + '</div><div class="sub">Growth the current price already assumes</div></div>' +
-        '<div class="metric"><div class="k">Expectation gap</div><div class="v ' + (impG!=null && impG<=histG?'up':'down') + '">' + (impG==null?'\u2014':fmtNum(impG-histG,1)+' pts') + '</div><div class="sub">Implied minus historical</div></div>' +
+        '<div class="metric"><div class="k">Reverse DCF \u2014 implied growth</div><div class="v info">' + impCell + '</div><div class="sub">Growth the current price already assumes</div></div>' +
+        '<div class="metric"><div class="k">Expectation gap</div><div class="v ' + (impG!=null && impG<=histG?'up':'down') + '">' + gapCell + '</div><div class="sub">Implied minus historical</div></div>' +
       '</div>' +
       (verdictLine ? '<div class="note-inline" style="margin-top:10px">' + verdictLine + ' Reverse DCF is often the more useful lens: instead of asking what the stock is worth, it asks what you would have to believe to pay today\u2019s price.</div>' : '');
   } else {

@@ -25,7 +25,7 @@ Static site on GitHub Pages + one Cloudflare Worker as a CORS proxy. No backend,
 | `docs/07-DESIGN-SYSTEM-UX.md` | Tokens, components, mobile spec, PWA, native app routes |
 | `docs/08-SECURITY-COMPLIANCE.md` | Worker allowlist, privacy, SEBI position |
 | `docs/09-SDLC-PROCESS.md` | Branching, commits, definition of done, review checklist |
-| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 342 offline, 10 live-API, 49 E2E (102 runs) |
+| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 348 offline, 10 live-API, 53 E2E (106 runs) |
 | `docs/11-DEPLOYMENT-RUNBOOK.md` | Deploy, verify, health checks, failure playbook |
 | `docs/12-MAINTENANCE-SUPPORT.md` | Fragilities ranked, fallbacks if a feed dies |
 | `docs/13-RISK-REGISTER.md` | 15 risks; top three to act on |
@@ -62,13 +62,13 @@ src/ui/         detail detail-state charts snapshot thesis deep-analysis options
                 probability-lab tables/{screener,ranking}
 src/public/     manifest.json sw.js    PWA — COPIED to dist, not inlined (see vite.config.js)
 worker/worker.js  worker/wrangler.toml  the CORS proxy
-tests/          342 offline tests against 31 committed API fixtures
+tests/          348 offline tests against 31 committed API fixtures
 tests/integration/  10 live-API checks (§10.4) — opt-in, hits the real Worker
-tests/e2e/      49 Playwright specs, desktop + mobile (102 runs), fixture-routed
+tests/e2e/      53 Playwright specs, desktop + mobile (106 runs), fixture-routed
 scripts/        capture-fixtures.mjs, check-invariants.sh
 ```
 
-Run `npm run verify:full` — lint, invariants, build, 342 offline tests, then 102 Playwright
+Run `npm run verify:full` — lint, invariants, build, 348 offline tests, then 106 Playwright
 runs — before and after any change. `npm run verify` alone skips the browser and is the
 faster inner loop.
 Regenerate fixtures with `node scripts/capture-fixtures.mjs` (read-only; hits the Worker).
@@ -119,24 +119,29 @@ trigger the Pages deploy, do not `wrangler deploy`.** Work on a branch, and keep
 
 The owner does not use GitHub, so there is no CI to watch and nothing runs on push. The
 `.github/workflows/` files were deleted for that reason. **`npm run verify:full` is the gate**
-— lint, invariants, build, 342 offline tests, then 102 Playwright runs. Run it before and
+— lint, invariants, build, 348 offline tests, then 106 Playwright runs. Run it before and
 after any change. `npm run test:integration` is the weekly live-feed check, run by hand.
 
-## Findings that are still open (surfaced by EPIC-1, deliberately not fixed)
+## Findings surfaced by EPIC-1 — all four now closed
 
-1. ~~**Thirteen glossary terms are missing from the Glossary section.**~~ **Fixed.** Note
-   the recorded remedy — "move `mountGlossary()` to the end of `bootstrap()`" — would have
-   broken the layout: `mountManual()` positions itself with
-   `insertBefore(#glossarySection)`, so a later mount leaves the manual at the foot of the
-   page. The section is still created where it was; only its list is re-rendered at the end
-   of `bootstrap()`, by `renderGlossaryList()`. Both the terms and the section order are
-   asserted in `tests/e2e/glossary-lab.spec.js`.
-2. **`reverseDcf` cannot resolve implied growth at or below 4%.** Growth is floored at the
-   terminal rate, so every value ≤ 4% is indistinguishable and reports the −20% bound. An
-   implied-growth reading of −20% does not mean a 20% decline is expected. See `docs/10` §10.2.
-3. **A bank still gets a DCF.** HDFCBANK computes one with growth pinned at the +20% cap;
-   OCF-minus-capex is not meaningful for a bank. Product question, not an engineering one.
-4. **`drawChart` does not guard `getContext` returning null.** Harmless in a browser.
+1. ~~Thirteen glossary terms missing from the Glossary section.~~ **Fixed.** The recorded
+   remedy — "move `mountGlossary()` to the end of `bootstrap()`" — would have broken the
+   layout: `mountManual()` positions itself with `insertBefore(#glossarySection)`. The
+   section is still created where it was; only its list is re-rendered at the end of
+   `bootstrap()` by `renderGlossaryList()`.
+2. ~~`reverseDcf` cannot resolve implied growth at or below 4%.~~ **Fixed.** It was
+   reporting `-20%`, the bottom of a bracket it never searched, which read as "the market
+   expects a 20% annual decline". It now returns `implied: null` with `belowFloor: true`
+   and `floorGrowth`, and the UI says the price implies growth below the terminal rate and
+   that the model cannot say how far below. Three outcomes now, all distinct: solved,
+   capped at the top, below the floor.
+3. ~~A bank still gets a DCF.~~ **Fixed.** `computeDcf` takes an optional `{sector,
+   industry}` and declines for banks, insurers and other lenders with an explanation — for
+   them OCF-minus-capex tracks loan-book growth, not free cash flow. The HDFCBANK golden
+   snapshot was re-baselined for this in its own commit; the other four fixtures are
+   unchanged, which is what shows the guard is narrow.
+4. ~~`drawChart` does not guard `getContext` returning null.~~ **Fixed.** All three call
+   sites in `ui/charts.js` return early instead of dereferencing null.
 
 ## First tasks
 

@@ -44,7 +44,7 @@ export async function renderDeepAnalysis(symbol, hist, price){
   host.appendChild(wrap);
   try {
     const ann = await fetchAnnuals(symbol);
-    let shares = null, beta = null, netDebt = 0;
+    let shares = null, beta = null, netDebt = 0, profile = null;
     try {
       const f = await fetchFundamentals(symbol);
       const ks = f.defaultKeyStatistics || {}, fd = f.financialData || {};
@@ -52,9 +52,14 @@ export async function renderDeepAnalysis(symbol, hist, price){
       beta = val(ks.beta);
       const td = val(fd.totalDebt) || 0, tc = val(fd.totalCash) || 0;
       netDebt = td - tc;
+      // Sector and industry decide whether a DCF is meaningful at all — see the note on
+      // NO_DCF_SECTORS in valuation/dcf.js. Without them the model cannot tell a bank from
+      // a manufacturer and will value the bank anyway.
+      const ap = f.assetProfile || {};
+      profile = { sector: ap.sector, industry: ap.industry };
     } catch (err) { suppressed('dcf inputs: fundamentals', err); }
     const dcfEl = document.getElementById('dcfBlock');
-    const d = computeDcf(ann, price, shares, beta, netDebt);
+    const d = computeDcf(ann, price, shares, beta, netDebt, profile);
     // Hand the inputs to the probability lab (EPIC-5 E5-4) rather than making it fetch the
     // annuals and fundamentals a second time. Only set when the DCF actually computed: the
     // lab must not run on a company whose cash-flow history could not support one.

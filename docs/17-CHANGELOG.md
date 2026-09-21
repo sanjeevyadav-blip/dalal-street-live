@@ -49,7 +49,20 @@ Reverse chronological. Format: Conventional Commits categories.
   its list is re-rendered at the end of `bootstrap()` — moving the mount, which is what the
   open-findings note recommended, would have left the user manual stranded at the foot of
   the page, because `mountManual` positions itself relative to the glossary section.
-- **Planned:** Capacitor native wrapper.
+- `fix(valuation)` **`reverseDcf` reported −20% when it could not resolve at all.** The model
+  floors growth at the 4% terminal rate, so every rate below that produces an identical
+  value and the bisection has nothing to search. It returned the bottom of its bracket,
+  which read as "the market expects a 20% annual decline". It now reports `belowFloor` with
+  no figure, and the UI explains that the price implies growth below the floor and the model
+  cannot say how far below.
+- `fix(valuation)` **a bank no longer gets a DCF.** `computeDcf` accepts the Yahoo sector and
+  industry and declines for lenders: their operating cash flow is dominated by deposits and
+  loan originations, so OCF-minus-capex is not free cash flow. HDFCBANK previously reported
+  an intrinsic value with growth pinned at the +20% cap. The golden snapshot was re-baselined
+  for this deliberately; the four non-financial fixtures are unchanged.
+- `fix(ui)` `drawChart` and the three subplot renderers guard `getContext` returning null
+  instead of dereferencing it.
+- **Planned:** Capacitor native wrapper (needs a JDK and the Android SDK, neither installed).
 
 ## v1.9 — Mobile & PWA
 - `feat(mobile)` responsive layout ≤760px: sticky header, swipe indices strip, 2-column

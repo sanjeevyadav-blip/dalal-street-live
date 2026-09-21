@@ -30,6 +30,13 @@ export function drawChart(){
   const w = canvas.clientWidth, h = canvas.clientHeight;
   canvas.width = w*dpr; canvas.height = h*dpr;
   const ctx = canvas.getContext('2d');
+  // getContext returns null when the 2D context cannot be created — a headless or
+  // synthetic DOM, a canvas already bound to a different context type, or a browser that
+  // has lost the GPU context. Every line below would then throw on a null dereference,
+  // and because these run inside a detail block that failure would surface as a dead
+  // panel rather than a missing chart. Returning leaves the canvas blank, which is the
+  // honest outcome: there is nothing to draw on.
+  if (!ctx) return;
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
 
@@ -107,6 +114,13 @@ function drawSubplot(canvas, series /* [{data,color,type:'line'|'bar',width}] */
   const w = canvas.clientWidth, h = canvas.clientHeight;
   canvas.width = w*dpr; canvas.height = h*dpr;
   const ctx = canvas.getContext('2d');
+  // getContext returns null when the 2D context cannot be created — a headless or
+  // synthetic DOM, a canvas already bound to a different context type, or a browser that
+  // has lost the GPU context. Every line below would then throw on a null dereference,
+  // and because these run inside a detail block that failure would surface as a dead
+  // panel rather than a missing chart. Returning leaves the canvas blank, which is the
+  // honest outcome: there is nothing to draw on.
+  if (!ctx) return;
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
   const padding = { top:8, right:10, bottom:6, left:44 };
@@ -158,7 +172,9 @@ export function drawVolumeSubplot(dates){
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.clientWidth, h = canvas.clientHeight;
   canvas.width = w*dpr; canvas.height = h*dpr;
-  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;   // see the note in drawChart
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
   const padding = { top:8, right:10, bottom:6, left:44 };
   const plotW = w-padding.left-padding.right, plotH = h-padding.top-padding.bottom;
   const maxV = Math.max(...vols, 1);

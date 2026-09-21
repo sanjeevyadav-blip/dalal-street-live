@@ -121,13 +121,21 @@ describe.each(STOCKS)('golden output — %s', (sym) => {
     const beta = val(ks.beta);
     const netDebt = (val(fd.totalDebt) || 0) - (val(fd.totalCash) || 0);
 
-    const d = computeDcf(a, price, shares, beta, netDebt);
+    // The profile is passed because the real caller passes it: a DCF is not meaningful for
+    // a lender, and without sector/industry the model cannot tell a bank from a
+    // manufacturer. See NO_DCF_SECTORS in src/valuation/dcf.js.
+    const ap = f.assetProfile || {};
+    const d = computeDcf(a, price, shares, beta, netDebt, { sector: ap.sector, industry: ap.industry });
 
     // HDFCBANK is in the fixture set because a bank has no meaningful OCF-minus-capex.
-    // Note what today's code actually does: it computes one anyway, with growth pinned at
-    // the +20% cap. That is captured here as-is — EPIC-1 preserves behaviour, it does not
-    // correct it. Whether a bank should get a DCF at all is a product question, raised
-    // separately; changing it here would make the parity gate meaningless.
+    // Through EPIC-1 this snapshot recorded what the code DID rather than what was right:
+    // it computed an intrinsic value anyway, with growth pinned at the +20% cap, from
+    // cash-flow swings that mostly track loan-book growth. That was left alone deliberately
+    // — EPIC-1 preserved behaviour and did not correct it.
+    //
+    // It is corrected now, as its own deliberate change, and this snapshot was re-baselined
+    // with it: HDFCBANK reports `declined` with an explanation. The other four fixtures are
+    // unaffected, which is what shows the guard is narrow rather than blunt.
     const dcf = !d
       ? { outcome: 'no-dcf' }
       : d.error

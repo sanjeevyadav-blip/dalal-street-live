@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { computeDcf } from '../../src/valuation/dcf.js';
+import { computeDcf, isDcfUnsuitableSector } from '../../src/valuation/dcf.js';
 import { reverseDcf } from '../../src/valuation/reverse-dcf.js';
 import { earningsQuality } from '../../src/valuation/earnings-quality.js';
 import { nCdf } from '../../src/models/normal.js';
@@ -142,6 +142,64 @@ describe('computeDcf', () => {
   });
 });
 
+describe('computeDcf declines for lenders', () => {
+  // The bank case, closed as its own deliberate change. HDFCBANK used to get an intrinsic
+  // value with growth pinned at the +20% cap, computed from cash-flow swings that mostly
+  // track loan-book growth rather than anything shareholders can have. A confident number
+  // that means nothing is exactly what CLAUDE.md invariant 3 forbids.
+
+  const ann = {
+    ocf: [{ date: '2021-03-31', v: 100 }, { date: '2022-03-31', v: 120 }, { date: '2023-03-31', v: 150 }],
+    capex: [{ date: '2021-03-31', v: -10 }, { date: '2022-03-31', v: -12 }, { date: '2023-03-31', v: -15 }],
+    ni: [], rev: [], assets: []
+  };
+
+  it('identifies lenders by sector or by industry', () => {
+    expect(isDcfUnsuitableSector('Financial Services', 'Banks - Regional')).toBe(true);
+    expect(isDcfUnsuitableSector('Financial Services', '')).toBe(true);
+    // Industry alone is enough: Yahoo's sector field is sometimes blank or odd.
+    expect(isDcfUnsuitableSector('', 'Insurance - Life')).toBe(true);
+    expect(isDcfUnsuitableSector('', 'Capital Markets')).toBe(true);
+    expect(isDcfUnsuitableSector('', 'Credit Services')).toBe(true);
+    expect(isDcfUnsuitableSector('', 'Asset Management')).toBe(true);
+  });
+
+  it('does not catch ordinary companies', () => {
+    // A blunt guard that swallowed anything with "financial" in it would quietly stop
+    // valuing half the market, and nobody would notice because a decline looks deliberate.
+    expect(isDcfUnsuitableSector('Technology', 'Information Technology Services')).toBe(false);
+    expect(isDcfUnsuitableSector('Energy', 'Oil & Gas Refining & Marketing')).toBe(false);
+    expect(isDcfUnsuitableSector('Consumer Cyclical', 'Auto Manufacturers')).toBe(false);
+    expect(isDcfUnsuitableSector('Industrials', 'Engineering & Construction')).toBe(false);
+    expect(isDcfUnsuitableSector(null, null)).toBe(false);
+    expect(isDcfUnsuitableSector(undefined, undefined)).toBe(false);
+  });
+
+  it('returns an explanation rather than a number for a bank', () => {
+    const out = computeDcf(ann, 100, 1000, 1.0, 0, { sector: 'Financial Services', industry: 'Banks - Regional' });
+    expect(out.error).toBeTruthy();
+    expect(out.intrinsic).toBeUndefined();
+    // The message has to say WHY, not just refuse — a reader who does not know why a bank
+    // is different will assume the page is broken.
+    expect(out.error).toMatch(/deposits and loan originations/i);
+    expect(out.error).toMatch(/not free cash flow/i);
+  });
+
+  it('still values a non-financial company given the same figures', () => {
+    const out = computeDcf(ann, 100, 1000, 1.0, 0, { sector: 'Technology', industry: 'Software' });
+    expect(out.error).toBeUndefined();
+    expect(out.intrinsic).toBeGreaterThan(0);
+  });
+
+  it('values the company when no profile is supplied at all', () => {
+    // The parameter is optional so existing callers keep working. Declining without
+    // evidence would be worse than the bug being fixed.
+    const out = computeDcf(ann, 100, 1000, 1.0, 0);
+    expect(out.error).toBeUndefined();
+    expect(out.intrinsic).toBeGreaterThan(0);
+  });
+});
+
 describe('reverseDcf', () => {
   // Base FCF 500 over 100 shares spans roughly 58 (at the -20% floor) to 426 (at the +60%
   // ceiling) per share. A price outside that band is correctly reported as capped, so the
@@ -181,16 +239,21 @@ describe('reverseDcf', () => {
     for (const g of [-0.2, -0.1, 0, 0.02, 0.04]) {
       expect(probe.valueAt(g)).toBeCloseTo(atTerminal, 9);
     }
-    // So a price anywhere in that flat region reports the -20% floor. Note the `capped`
-    // flag is NOT set exactly on the boundary — the guard is a strict `>` — so the bisection
-    // runs and converges to the floor anyway. Below the boundary the flag does fire.
+    // Exactly on the boundary the answer IS the terminal rate, and that is a real solution:
+    // the price is consistent with growth at 4%.
     const atBoundary = reverseDcf(atTerminal, 500, 100, 0.13, 0.04, 0);
-    expect(atBoundary.implied).toBeCloseTo(-0.2, 6);
-    expect(atBoundary.capped).toBe(false);
+    expect(atBoundary.implied).toBeCloseTo(0.04, 6);
+    expect(atBoundary.belowFloor).toBe(false);
 
+    // Below it there is no answer to give, and the function now says so instead of
+    // reporting the bottom of a bracket it never searched. This used to return
+    // { implied: -0.20, capped: true }, which read as "the market expects a 20% annual
+    // decline" and meant only "this model cannot resolve it" — a fabricated metric under
+    // CLAUDE.md invariant 3.
     const belowBoundary = reverseDcf(atTerminal * 0.99, 500, 100, 0.13, 0.04, 0);
-    expect(belowBoundary.implied).toBeCloseTo(-0.2, 10);
-    expect(belowBoundary.capped).toBe(true);
+    expect(belowBoundary.implied).toBeNull();
+    expect(belowBoundary.belowFloor).toBe(true);
+    expect(belowBoundary.floorGrowth).toBeCloseTo(0.04, 10);
   });
 
   it('flags the answer as capped when the price implies more than +60% growth', () => {
@@ -199,10 +262,34 @@ describe('reverseDcf', () => {
     expect(rd.implied).toBeCloseTo(0.6, 10);
   });
 
-  it('flags the answer as capped when the price implies less than -20%', () => {
+  it('declines to invent a figure when the price implies less than the model can express', () => {
+    // A price of 0.01 against a ₹500 base is far below anything the model can produce. The
+    // honest answer is "below the floor, and I cannot say how far" — not a number.
     const rd = reverseDcf(0.01, 500, 100, 0.13, 0.04, 0);
-    expect(rd.capped).toBe(true);
-    expect(rd.implied).toBeCloseTo(-0.2, 10);
+    expect(rd.belowFloor).toBe(true);
+    expect(rd.implied).toBeNull();
+    expect(rd.capped).toBe(false);
+  });
+
+  it('distinguishes the three outcomes from one another', () => {
+    // The whole point of the change: a caller has to be able to tell "solved" from
+    // "off the top" from "off the bottom", and the old shape conflated the last two.
+    const solved = reverseDcf(...args);
+    expect(solved.implied).not.toBeNull();
+    expect(solved.capped).toBe(false);
+    expect(solved.belowFloor).toBe(false);
+
+    // A price far above anything the model reaches: capped at the upper bracket, and that
+    // IS a number worth showing — it is a genuine floor on expectations.
+    const tooHigh = reverseDcf(1e9, 500, 100, 0.13, 0.04, 0);
+    expect(tooHigh.capped).toBe(true);
+    expect(tooHigh.belowFloor).toBe(false);
+    expect(tooHigh.implied).toBeCloseTo(0.60, 10);
+
+    const tooLow = reverseDcf(0.01, 500, 100, 0.13, 0.04, 0);
+    expect(tooLow.capped).toBe(false);
+    expect(tooLow.belowFloor).toBe(true);
+    expect(tooLow.implied).toBeNull();
   });
 
   it('returns null rather than a number on unusable inputs', () => {
