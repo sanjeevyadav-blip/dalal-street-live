@@ -89,10 +89,24 @@ certutil -encode upload-keystore.jks keystore.b64
 
 Paste the body of `keystore.b64` **without** the `-----BEGIN/END CERTIFICATE-----` lines.
 
-Then run the **Android release bundle** workflow from the Actions tab, give it a version
-name, and download `app-release.aab` from the run. The workflow checks the bundle is
-actually signed before uploading it, because an unsigned AAB is rejected by Play with a
-message about the upload certificate that never mentions the real cause.
+Then trigger the build by **pushing a tag**:
+
+```bash
+git tag android-release-1.9.1 && git push origin android-release-1.9.1
+```
+
+and download `app-release.aab` from the run.
+
+A tag rather than the Actions **Run workflow** button, and this is not a preference: GitHub
+only offers `workflow_dispatch` for workflows that exist on the **default branch**. This
+one lives on the feature branch, and the default branch is `main`, which serves the live
+dashboard. Pushing a tag puts nothing on `main`, changes no branch, and does not trigger the
+Pages build — that fires only on a push to the Pages source branch. Bump the number for each
+new tag; the tag name after `android-release-` becomes the version name on the listing.
+
+The workflow checks the bundle is actually signed before uploading it, because an unsigned
+AAB is rejected by Play with a message about the upload certificate that never mentions the
+real cause.
 
 ---
 
@@ -299,7 +313,7 @@ strangers. Consider whether you want that before promoting past the closed test.
 1. Register and complete identity verification — days, so start now
 2. Generate the upload key, back it up off this machine
 3. Add the four repository secrets
-4. Run the **Android release bundle** workflow, download the AAB
+4. Push an `android-release-*` tag, download the AAB from the run
 5. Create the app in Play Console; enrol in Play App Signing
 6. Publish the privacy policy at a public URL
 7. Fill in the store listing from §5, upload the icon and feature graphic

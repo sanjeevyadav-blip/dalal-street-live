@@ -25,9 +25,28 @@
 # per-device slice rather than one universal binary. You cannot sideload an .aab; that is
 # what android-build.yml's debug APK is for.
 
+# HOW TO RUN IT
+#
+# Push a tag:
+#
+#     git tag android-release-1.9.1
+#     git push origin android-release-1.9.1
+#
+# A tag, and not the Run workflow button, because GitHub only offers workflow_dispatch for
+# workflows that exist on the DEFAULT branch — and this repo's default branch is `main`,
+# which serves the live dashboard through Pages and is off limits. Pushing a tag puts
+# nothing on `main`, changes no branch, and does not trigger the Pages build, which fires
+# only on a push to the Pages source branch.
+#
+# workflow_dispatch is declared as well so the button works if this ever does reach `main`.
+
 name: Android release bundle
 
 on:
+  push:
+    # Tags only. Never a branch: this job handles the signing key, and a release bundle
+    # built automatically on every commit is one nobody asked for.
+    tags: ['android-release-*']
   workflow_dispatch:
     inputs:
       version_name:
@@ -44,6 +63,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Work out the version name
+        id: ver
+        # From the dispatch input, or from the tag with its prefix stripped. Via the
+        # environment rather than interpolated into the script, so a tag name can never be
+        # read as shell.
+        env:
+          INPUT_VERSION: ${{ inputs.version_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            V="$INPUT_VERSION"
+          else
+            V="${REF_NAME#android-release-}"
+          fi
+          echo "name=$V" >> "$GITHUB_OUTPUT"
+          echo "version name: $V"
 
       - name: Refuse early if the signing secrets are missing
         # Without this the build runs for two minutes and quietly produces an UNSIGNED
@@ -110,7 +146,7 @@ jobs:
           # Play refuses a versionCode it has already accepted. The run number only ever
           # increases, so every dispatch is automatically uploadable.
           ANDROID_VERSION_CODE: ${{ github.run_number }}
-          ANDROID_VERSION_NAME: ${{ inputs.version_name }}
+          ANDROID_VERSION_NAME: ${{ steps.ver.outputs.name }}
         run: ./gradlew bundleRelease --no-daemon --stacktrace
         working-directory: android
 
@@ -135,6 +171,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: aab-${{ inputs.version_name }}-${{ github.run_number }}
+          name: aab-${{ steps.ver.outputs.name }}-${{ github.run_number }}
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error

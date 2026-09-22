@@ -167,10 +167,13 @@ describe('Play Store release signing — E6-3', () => {
     expect(wf).toMatch(/rm -f .*upload-keystore\.jks/);
     // Read-only: a workflow holding the signing key has no business writing to the repo.
     expect(wf).toMatch(/permissions:\s*\n\s*contents: read/);
-    // Manual only. An automatic release build on every push would sign and publish
-    // artefacts nobody asked for.
+    // Deliberate triggers only. A release bundle built on every commit would sign
+    // artefacts nobody asked for, so the push trigger is scoped to tags and must never
+    // grow a `branches:` key.
     expect(wf).toContain('workflow_dispatch');
-    expect(wf).not.toMatch(/^\s{2}push:/m);
+    expect(wf).toMatch(/tags: \['android-release-\*'\]/);
+    const pushBlock = wf.slice(wf.indexOf('\n  push:'), wf.indexOf('workflow_dispatch:'));
+    expect(pushBlock, 'the release workflow runs on a branch push').not.toMatch(/branches:/);
   });
 });
 
