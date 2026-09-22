@@ -1,14 +1,60 @@
 apply plugin: 'com.android.application'
 
+// ---- release signing (EPIC-6 E6-3) -----------------------------------------------------
+//
+// The key itself is never in this repo and never in git. It is read from one of two places,
+// in this order:
+//
+//   1. android/keystore.properties  — a local file, gitignored, for building on a machine
+//   2. ANDROID_KEYSTORE_* environment variables — for CI, fed from repository secrets
+//
+// When NEITHER is present the release build is simply unsigned, which is what keeps
+// `assembleDebug` and a clean checkout working for anyone who has no key. A missing key is
+// not an error here; it only becomes one if you ask for a release artefact.
+//
+// LOSING THIS KEY IS UNRECOVERABLE unless Play App Signing is enrolled: Google would have
+// no way to accept an update to an app signed by a key nobody holds any more, and the only
+// remedy is publishing a new listing under a new applicationId and asking every user to
+// reinstall. Back it up somewhere that is not this machine.
+def keystorePropsFile = rootProject.file('keystore.properties')
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+
+def signingStoreFile = keystoreProps['storeFile'] ?: System.getenv('ANDROID_KEYSTORE_FILE')
+def signingStorePassword = keystoreProps['storePassword'] ?: System.getenv('ANDROID_KEYSTORE_PASSWORD')
+def signingKeyAlias = keystoreProps['keyAlias'] ?: System.getenv('ANDROID_KEY_ALIAS')
+def signingKeyPassword = keystoreProps['keyPassword'] ?: System.getenv('ANDROID_KEY_PASSWORD')
+def hasSigningKey = signingStoreFile != null && file(signingStoreFile).exists()
+
+// Play rejects an upload whose versionCode it has already seen, so this has to move on
+// every submission. CI passes the run number; a local build falls back to 1 and you would
+// set it by hand. versionName is what a human reads on the store listing.
+def buildVersionCode = (System.getenv('ANDROID_VERSION_CODE') ?: '1') as Integer
+def buildVersionName = System.getenv('ANDROID_VERSION_NAME') ?: '1.9.1'
+
 android {
     namespace "dev.dalalstreet.live"
     compileSdk rootProject.ext.compileSdkVersion
+
+    signingConfigs {
+        release {
+            if (hasSigningKey) {
+                storeFile file(signingStoreFile)
+                storePassword signingStorePassword
+                keyAlias signingKeyAlias
+                keyPassword signingKeyPassword
+            }
+        }
+    }
+
     defaultConfig {
         applicationId "dev.dalalstreet.live"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode buildVersionCode
+        versionName buildVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -20,7 +66,28 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Unsigned when no key is configured, rather than failing the configure phase.
+            // An unsigned release AAB still builds and is still useful for inspection; it
+            // just cannot be uploaded.
+            if (hasSigningKey) {
+                signingConfig signingConfigs.release
+            }
         }
+    }
+}
+
+// Says out loud which of the three states a release build is in, because "did it pick up my
+// key?" is otherwise invisible until Play rejects the upload.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.name.toLowerCase().contains('release') }) {
+        if (hasSigningKey) {
+            println "release signing: key found (${signingStoreFile}), alias ${signingKeyAlias}"
+        } else if (signingStoreFile != null) {
+            println "release signing: NONE — ${signingStoreFile} was named but does not exist"
+        } else {
+            println 'release signing: NONE — no keystore.properties and no ANDROID_KEYSTORE_FILE'
+        }
+        println "version: ${buildVersionName} (code ${buildVersionCode})"
     }
 }
 

@@ -116,6 +116,84 @@ describe('generated launcher assets', () => {
   });
 });
 
+describe('Play Store release signing — E6-3', () => {
+  const gradle = () => read('android/app/build.gradle');
+
+  it('never hardcodes a keystore path, password or alias', () => {
+    // The whole point of reading these from a gitignored file or the environment is that
+    // they cannot end up in the repository. A committed password would be worse than a
+    // lost key: anyone with the repo could ship an update that Play and every installed
+    // device accept as genuine.
+    const g = gradle();
+    expect(g).not.toMatch(/storePassword\s+["'][^"']+["']/);
+    expect(g).not.toMatch(/keyPassword\s+["'][^"']+["']/);
+    expect(g).not.toMatch(/storeFile\s+file\(["'][^"']*\.jks["']\)/);
+  });
+
+  it('reads signing material from keystore.properties or the environment', () => {
+    const g = gradle();
+    expect(g).toContain('keystore.properties');
+    for (const v of ['ANDROID_KEYSTORE_FILE', 'ANDROID_KEYSTORE_PASSWORD',
+                     'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD']){
+      expect(g, v + ' is not read from the environment').toContain(v);
+    }
+  });
+
+  it('leaves the release build unsigned rather than failing when no key is present', () => {
+    // A clean checkout has no key, and `assembleDebug` has to keep working for anyone who
+    // just wants to sideload. Guarding the signingConfig assignment is what allows that.
+    expect(gradle()).toMatch(/if\s*\(hasSigningKey\)\s*\{\s*signingConfig signingConfigs\.release/);
+  });
+
+  it('takes the version from the environment, so CI can guarantee it increases', () => {
+    // Play refuses a versionCode it has already accepted. A literal 1 here means every
+    // upload after the first is rejected.
+    const g = gradle();
+    expect(g).toContain('ANDROID_VERSION_CODE');
+    expect(g).toMatch(/versionCode buildVersionCode/);
+    expect(g).not.toMatch(/versionCode\s+1\b/);
+  });
+
+  it('gitignores every form signing material takes', () => {
+    const ignore = read('.gitignore');
+    for (const pattern of ['*.keystore', '*.jks', '*.p12', 'keystore.properties']){
+      expect(ignore, pattern + ' is not ignored').toContain(pattern);
+    }
+  });
+
+  it('the release workflow destroys the keystore even when the build fails', () => {
+    const wf = read('.github/workflows/android-release.yml');
+    expect(wf).toContain('if: always()');
+    expect(wf).toMatch(/rm -f .*upload-keystore\.jks/);
+    // Read-only: a workflow holding the signing key has no business writing to the repo.
+    expect(wf).toMatch(/permissions:\s*\n\s*contents: read/);
+    // Manual only. An automatic release build on every push would sign and publish
+    // artefacts nobody asked for.
+    expect(wf).toContain('workflow_dispatch');
+    expect(wf).not.toMatch(/^\s{2}push:/m);
+  });
+});
+
+describe('Play Store listing graphics — E6-3', () => {
+  it('uses the same two design tokens as everything else', () => {
+    const script = read('scripts/make-play-assets.mjs');
+    expect(script).toContain("INK = '" + INK + "'");
+    expect(script).toContain("GOLD = '" + GOLD + "'");
+  });
+
+  it('asserts the dimensions Play enforces, rather than trusting them', () => {
+    // Play rejects an icon that is not exactly 512x512 or a feature graphic that is not
+    // exactly 1024x500, and it rejects either with an alpha channel. Finding that out on
+    // upload wastes a round trip.
+    const script = read('scripts/make-play-assets.mjs');
+    expect(script).toMatch(/icon\.width !== 512/);
+    expect(script).toMatch(/feature\.width !== 1024/);
+    expect(script).toMatch(/icon\.hasAlpha/);
+    expect(script).toMatch(/feature\.hasAlpha/);
+    expect(script).toContain('flatten');
+  });
+});
+
 describe('what the native shell must not break on the web', () => {
   it('the web bundle does not import the Capacitor runtime', () => {
     // ui/native.js reaches through window.Capacitor precisely so the plugins stay out of

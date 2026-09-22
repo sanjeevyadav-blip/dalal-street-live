@@ -21,6 +21,8 @@
     "app:assets": "node scripts/make-app-assets.mjs && cap assets generate --android",
     "app:sync": "npm run build && cap sync android",
     "app:build": "npm run app:sync && cd android && gradlew.bat assembleDebug",
+    "app:bundle": "npm run app:sync && cd android && gradlew.bat bundleRelease",
+    "app:playassets": "node scripts/make-play-assets.mjs",
     "worker:dev": "wrangler dev worker/worker.js --local --port 8787",
     "worker:preflight": "node scripts/worker-preflight.mjs",
     "worker:preflight:local": "node scripts/worker-preflight.mjs http://127.0.0.1:8787",

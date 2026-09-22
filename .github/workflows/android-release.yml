@@ -1,0 +1,140 @@
+# Builds the signed Android App Bundle for a Play Store upload — EPIC-6 E6-3.
+#
+# Separate from android-build.yml on purpose. That one runs on every push and produces an
+# unsigned debug APK anyone can sideload. This one runs ONLY when you ask it to, touches the
+# signing key, and produces the artefact that goes to Google.
+#
+# WHAT YOU NEED BEFORE THIS WILL WORK
+#
+# Four repository secrets (Settings -> Secrets and variables -> Actions -> New secret):
+#
+#   ANDROID_KEYSTORE_BASE64    the .jks file, base64-encoded. On Windows:
+#                                certutil -encode upload-keystore.jks keystore.b64
+#                              then paste the body WITHOUT the BEGIN/END lines.
+#   ANDROID_KEYSTORE_PASSWORD  the store password you chose
+#   ANDROID_KEY_ALIAS          the alias you chose, e.g. upload
+#   ANDROID_KEY_PASSWORD       the key password you chose
+#
+# The key never appears in the repository, in a log, or in the artefact. It is written to a
+# file outside the workspace, used, and destroyed in a step that runs even if the build
+# fails. GitHub also masks a secret's value if it is ever echoed.
+#
+# WHY AAB AND NOT APK
+#
+# Play has required the App Bundle format for new applications since August 2021. It ships a
+# per-device slice rather than one universal binary. You cannot sideload an .aab; that is
+# what android-build.yml's debug APK is for.
+
+name: Android release bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version shown on the listing, e.g. 1.9.1'
+        required: true
+        default: '1.9.1'
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refuse early if the signing secrets are missing
+        # Without this the build runs for two minutes and quietly produces an UNSIGNED
+        # bundle, which Play rejects with a message about the upload certificate that does
+        # not mention the real cause.
+        env:
+          HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+          HAS_STORE_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD != '' }}
+          HAS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS != '' }}
+          HAS_KEY_PW: ${{ secrets.ANDROID_KEY_PASSWORD != '' }}
+        run: |
+          missing=""
+          [ "$HAS_KEYSTORE" = "true" ] || missing="$missing ANDROID_KEYSTORE_BASE64"
+          [ "$HAS_STORE_PW" = "true" ] || missing="$missing ANDROID_KEYSTORE_PASSWORD"
+          [ "$HAS_ALIAS" = "true" ]    || missing="$missing ANDROID_KEY_ALIAS"
+          [ "$HAS_KEY_PW" = "true" ]   || missing="$missing ANDROID_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "Missing repository secrets:$missing"
+            echo "See the header of this workflow file for how to create them."
+            exit 1
+          fi
+          echo "All four signing secrets are present."
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the web bundle and sync it into the Android project
+        run: npm run app:sync
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Install the SDK packages the project targets
+        run: sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Write the keystore
+        # RUNNER_TEMP, not the workspace: nothing under the workspace can then be swept into
+        # an artefact upload by a careless path change later.
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
+          # Size only. Never print the file, and never run keytool -list on it in a way that
+          # would put the certificate fingerprint in a public log.
+          echo "keystore written, $(stat -c %s "$RUNNER_TEMP/upload-keystore.jks") bytes"
+
+      - name: Assemble the release bundle
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/upload-keystore.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # Play refuses a versionCode it has already accepted. The run number only ever
+          # increases, so every dispatch is automatically uploadable.
+          ANDROID_VERSION_CODE: ${{ github.run_number }}
+          ANDROID_VERSION_NAME: ${{ inputs.version_name }}
+        run: ./gradlew bundleRelease --no-daemon --stacktrace
+        working-directory: android
+
+      - name: Destroy the keystore
+        # `always()`: a failed build must not leave the key on the runner for whatever runs
+        # next. The runner is ephemeral, but relying on that is not a security posture.
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload-keystore.jks"
+
+      - name: Confirm the bundle is signed
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          test -f "$AAB" || { echo "no bundle at $AAB"; exit 1; }
+          # An AAB is a zip. A signed one carries META-INF/*.RSA (or .EC); an unsigned one
+          # does not, and that is the difference Play checks first.
+          if unzip -l "$AAB" | grep -qE 'META-INF/.*\.(RSA|EC|DSA)'; then
+            echo "signed — $(stat -c %s "$AAB") bytes"
+          else
+            echo "THE BUNDLE IS NOT SIGNED. Play will reject it."
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aab-${{ inputs.version_name }}-${{ github.run_number }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
