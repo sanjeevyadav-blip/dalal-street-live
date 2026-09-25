@@ -4,10 +4,11 @@
 // session — there is no account, no backend and no persistence (docs/01). Adding storage
 // would be the first thing that makes this app hold personal data.
 //
-// wireSearch needs three characters before it will rank suggestions, because a one- or
-// two-letter prefix matches too much of the directory to be useful.
+// wireSearch suggests from every NSE-listed company (data/search.js), falling back to a
+// live Yahoo search for BSE-only names and anything listed since the list was built.
 
-import { INDICES, STOCK_DIRECTORY } from '../data/universes.js';
+import { INDICES } from '../data/universes.js';
+import { localMatches, remoteMatches, mergeRemote } from '../data/search.js';
 import { fetchQuote } from '../data/yahoo.js';
 import { fmtNum } from './format.js';
 import { fullSymbol } from './symbol.js';
@@ -103,38 +104,67 @@ export function wireSearch(){
   const exchSel = document.getElementById('searchExchange');
   const box = document.getElementById('suggestions');
   let activeIdx = -1, currentMatches = [];
+  // Every keystroke bumps this, and a live-search response only renders if it still
+  // matches. Without it a slow reply for "zy" lands after the fast one for "zydus" and
+  // replaces the right answer with a worse one.
+  let generation = 0;
+  let remoteTimer = null;
 
-  function renderSuggestions(matches){
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  function renderSuggestions(matches, { searching = false } = {}){
     currentMatches = matches; activeIdx = -1;
-    if (matches.length === 0){ box.classList.remove('show'); box.innerHTML=''; return; }
-    box.innerHTML = matches.map(([sym,name]) => `<div class="item" data-sym="${sym}"><span class="sy">${sym}</span><span class="nm">${name}</span></div>`).join('');
+    if (matches.length === 0 && !searching){ box.classList.remove('show'); box.innerHTML=''; return; }
+    box.innerHTML = matches.map(m =>
+      `<div class="item" data-sym="${escapeHtml(m.sym)}" data-exch="${m.exch}">` +
+      `<span class="sy">${escapeHtml(m.sym)}${m.exch === 'BO' ? '<span class="xb">BSE</span>' : ''}</span>` +
+      `<span class="nm">${escapeHtml(m.name)}</span></div>`).join('') +
+      (searching ? '<div class="searching">Searching all listings\u2026</div>' : '');
     box.classList.add('show');
-    box.querySelectorAll('.item').forEach(el => el.addEventListener('click', () => {
-      input.value = el.getAttribute('data-sym'); box.classList.remove('show'); runSearch();
-    }));
+    box.querySelectorAll('.item').forEach(el => el.addEventListener('click', () => pick(el)));
+  }
+
+  // The suggestion carries its own exchange. Picking a BSE-only company must open the BSE
+  // listing even if the dropdown still says NSE — fullSymbol would otherwise swap the
+  // suffix and open a ticker that does not exist on NSE.
+  function pick(el){
+    input.value = el.getAttribute('data-sym');
+    const exch = el.getAttribute('data-exch');
+    if (exch && [...exchSel.options].some(o => o.value === exch)) exchSel.value = exch;
+    box.classList.remove('show');
+    runSearch();
   }
 
   input.addEventListener('input', () => {
-    const q = input.value.trim().toLowerCase();
-    if (q.length < 3){ renderSuggestions([]); return; }
-    const scored = [];
-    STOCK_DIRECTORY.forEach(([sym,name]) => {
-      const s = sym.toLowerCase(), nm = name.toLowerCase();
-      let score = -1;
-      if (s.startsWith(q)) score = 0;
-      else if (nm.startsWith(q)) score = 1;
-      else if (s.includes(q)) score = 2;
-      else if (nm.includes(q)) score = 3;
-      if (score >= 0) scored.push([score, sym, name]);
-    });
-    scored.sort((a,b) => a[0]-b[0]);
-    renderSuggestions(scored.slice(0,10).map(([,sym,name]) => [sym,name]));
+    const q = input.value.trim();
+    const mine = ++generation;
+    clearTimeout(remoteTimer);
+    // Two characters, not three as before: "LT" and "MM" are real tickers, and exact-
+    // ticker matches rank first, so a short query no longer buries the right answer.
+    if (q.length < 2){ renderSuggestions([]); return; }
+
+    const local = localMatches(q, 10);
+    // Local covers every NSE-listed company, so a full page of local hits means there is
+    // nothing the network would add worth waiting for.
+    if (local.length >= 6 || q.length < 3){ renderSuggestions(local); return; }
+
+    renderSuggestions(local, { searching: true });
+    // Debounced: fire once the typing pauses, not per keystroke.
+    remoteTimer = setTimeout(() => {
+      remoteMatches(q).then(remote => {
+        if (mine !== generation) return;
+        renderSuggestions(local.concat(mergeRemote(local, remote)).slice(0, 12));
+      });
+    }, 350);
   });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown'){ e.preventDefault(); activeIdx = Math.min(activeIdx+1, currentMatches.length-1); highlight(); }
     else if (e.key === 'ArrowUp'){ e.preventDefault(); activeIdx = Math.max(activeIdx-1, 0); highlight(); }
     else if (e.key === 'Enter'){
-      if (activeIdx >= 0 && currentMatches[activeIdx]){ input.value = currentMatches[activeIdx][0]; }
+      const el = activeIdx >= 0 ? box.querySelectorAll('.item')[activeIdx] : null;
+      if (el){ pick(el); return; }
       box.classList.remove('show'); runSearch();
     } else if (e.key === 'Escape'){ box.classList.remove('show'); }
   });
