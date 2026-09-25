@@ -26,6 +26,7 @@ import { fmtNum } from '../format.js';
 import { openStock } from '../navigate.js';
 import { suppressed } from '../../suppressed.js';
 import { renderDeadSymbolNote } from './screener.js';
+import { isShown } from '../live.js';
 
 export async function scoreStock20(ticker, niftyRet){
   const symbol = ticker + '.NS';
@@ -132,3 +133,35 @@ export async function runRanking3(univ, key, bodyId, btnId, selId, force){
   renderDeadSymbolNote(bodyId, univ);
   btn.disabled = false; btn.textContent = 'Re-run';
 }
+
+/**
+ * Live prices for the ranking tables. Only the Price cell moves. The score, the sub-scores,
+ * RSI and the P(up) odds are computed from daily history when the ranking runs, and re-scoring
+ * a 55-stock universe every 15 seconds on intraday ticks would both cost the whole request
+ * budget and mix a live price into daily-bar models. Re-run refreshes those.
+ */
+export const rankingLive = {
+  name: 'ranking',
+  symbols(){
+    const out = [];
+    for (const id of ['rankLargeBody', 'rankMidBody']){
+      const body = document.getElementById(id);
+      if (!isShown(body)) continue;
+      body.querySelectorAll('tr[data-sym]').forEach(tr => out.push(tr.getAttribute('data-sym')));
+    }
+    return out;
+  },
+  apply(map){
+    for (const id of ['rankLargeBody', 'rankMidBody']){
+      const body = document.getElementById(id);
+      if (!body) continue;
+      body.querySelectorAll('tr[data-sym]').forEach(tr => {
+        const q = map.get(tr.getAttribute('data-sym'));
+        const cell = tr.children[1];
+        if (!q || !cell) return;
+        const text = '\u20b9' + fmtNum(q.price, 2);
+        if (cell.textContent !== text) cell.textContent = text;
+      });
+    }
+  }
+};

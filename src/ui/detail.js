@@ -379,3 +379,36 @@ export function renderDetail(symbol, hist, niftyHist) {
   runBlocks(DETAIL_BLOCKS, ctx);
   return ctx;
 }
+
+/**
+ * Move an open stock's headline price to a live quote, in place. Only the price, the day's
+ * change and the "as of" time — the chart, indicators and valuation are built from daily
+ * history and are not re-derived from a tick.
+ *
+ * The price flashes briefly green or red when it changes, which is how a reader can tell a
+ * live number from a frozen one at a glance. Skipped under prefers-reduced-motion by CSS.
+ */
+export function updateDetailPrice(q){
+  const hero = document.querySelector('#detailCard .price-hero');
+  if (!hero || !q || typeof q.price !== 'number') return;
+  const big = hero.querySelector('.big');
+  const chg = hero.querySelector('.chg');
+  const asof = hero.querySelector('.asof');
+  const text = '\u20b9' + fmtNum(q.price, 2);
+  if (big && big.textContent !== text){
+    const before = parseFloat(big.textContent.replace(/[^\d.]/g, ''));
+    big.textContent = text;
+    if (Number.isFinite(before) && before !== q.price){
+      big.classList.remove('tick-up', 'tick-down');
+      // Restart the animation: the class is removed and re-added on the next frame.
+      void big.offsetWidth;
+      big.classList.add(q.price > before ? 'tick-up' : 'tick-down');
+    }
+  }
+  if (chg && q.change != null && q.changePercent != null){
+    const up = q.change >= 0;
+    chg.className = 'chg ' + (up ? 'up' : 'down');
+    chg.textContent = (up ? '\u25b2' : '\u25bc') + ' ' + fmtNum(Math.abs(q.change), 2) + ' (' + fmtNum(Math.abs(q.changePercent), 2) + '%)';
+  }
+  if (asof && q.time) asof.textContent = 'as of ' + new Date(q.time).toLocaleString('en-IN', { hour12: false });
+}

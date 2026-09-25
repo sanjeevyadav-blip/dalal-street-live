@@ -6,7 +6,7 @@
 // paint. A module that fails to load shows up here and almost nowhere else.
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, showTab, PROXY_GLOB } from './helpers/fixture-routes.js';
 
 test.beforeEach(async ({ page }) => {
   await stubFonts(page);
@@ -45,4 +45,49 @@ test('the status pill and IST clock come alive', async ({ page }) => {
 test('the ticker tape is populated', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('#tickerTrack .ticker-item').first()).toBeVisible({ timeout: 10000 });
+});
+
+// A Thursday, 10:30 IST: inside NSE hours whenever the suite actually runs. Without it the
+// refresh loop correctly drops to once every five minutes after the close, and a spec run in
+// the evening would wait for a price that is, rightly, not being asked for.
+const MARKET_OPEN = new Date('2026-09-24T10:30:00+05:30');
+
+test('prices on screen update by themselves, with no one touching the app', async ({ page }) => {
+  await page.clock.setFixedTime(MARKET_OPEN);
+
+  // Registered after the fixture routes, so it answers first. Every batch quote returns a
+  // RELIANCE price one rupee higher than the last, so a refresh that happened is visible.
+  let calls = 0;
+  await page.route(PROXY_GLOB, async (route) => {
+    const raw = new URL(route.request().url()).searchParams.get('url') || '';
+    if (!raw.includes('/v7/finance/quote')) return route.fallback();
+    calls++;
+    const syms = new URL(raw).searchParams.get('symbols').split(',');
+    const result = syms.slice(0, 21).map((s) => {
+      const price = s === 'RELIANCE.NS' ? 1000 + calls : 500;
+      return { symbol: s, regularMarketPrice: price, regularMarketPreviousClose: price - 5,
+        regularMarketChange: 5, regularMarketChangePercent: 0.5,
+        regularMarketTime: Math.floor(MARKET_OPEN.getTime() / 1000), marketState: 'REGULAR' };
+    });
+    return route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ quoteResponse: { result, error: null } }) });
+  });
+
+  await page.goto('/');
+  await showTab(page, 'top20');
+  const cell = page.locator('#top20Body tr[data-sym="RELIANCE.NS"] td.price');
+  await expect(cell).toHaveText(/₹1,0\d\d\.00/, { timeout: 20000 });
+  const first = await cell.innerText();
+
+  // Nothing is clicked from here on. The next 15-second cycle must move it.
+  await expect(cell).not.toHaveText(first, { timeout: 25000 });
+  await expect(page.locator('#liveStamp')).toContainText('Live');
+  // Batched: the whole screen is a handful of requests, never one per stock.
+  expect(calls).toBeLessThan(12);
+});
+
+test('outside market hours the line says so, instead of implying the prices are moving', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-26T11:00:00+05:30'));   // a Saturday
+  await page.goto('/');
+  await expect(page.locator('#liveStamp')).toContainText('Market closed', { timeout: 20000 });
 });

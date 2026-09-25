@@ -13,7 +13,8 @@
 // are, by default — is fetched once and rendered twice.
 
 import { UNIV_LARGE } from '../data/universes.js';
-import { fetchQuote } from '../data/yahoo.js';
+import { fetchQuote, fetchQuotesBatch } from '../data/yahoo.js';
+import { isShown } from './live.js';
 import { runPool } from '../data/proxy.js';
 import { quoteCache, quoteRow } from './watchlist.js';
 import { openStock } from './navigate.js';
@@ -61,6 +62,30 @@ export function loadTop20(){
   started = true;
   const missing = SYMBOLS.filter(s => !quoteCache[s]);
   if (!missing.length){ renderTop20(); return Promise.resolve(); }
+  // One batched request for all twenty, instead of twenty. If the batch endpoint fails the
+  // old one-per-stock path still fills the list.
+  return fetchQuotesBatch(missing)
+    .then(map => {
+      for (const s of missing){ const q = map.get(s); if (q) quoteCache[s] = q; }
+      renderTop20();
+      const still = missing.filter(s => !quoteCache[s]);
+      return still.length ? loadOneByOne(still) : undefined;
+    })
+    .catch(() => loadOneByOne(missing));
+}
+
+/** Live while the list is on screen; nothing is fetched for it while its tab is hidden. */
+export const top20Live = {
+  name: 'top20',
+  symbols: () => (started && isShown(document.getElementById('top20Body'))) ? SYMBOLS : [],
+  apply(map){
+    let any = false;
+    for (const s of SYMBOLS){ const q = map.get(s); if (q){ quoteCache[s] = q; any = true; } }
+    if (any) renderTop20();
+  }
+};
+
+function loadOneByOne(missing){
   return runPool(missing, (sym) =>
     fetchQuote(sym)
       .then(q => { quoteCache[sym] = q; })

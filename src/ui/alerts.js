@@ -12,7 +12,7 @@
 // On the website there is only the first. The copy says which applies, because "alert"
 // implies a promise, and the reader should know exactly how much of one this is.
 
-import { fetchQuote } from '../data/yahoo.js';
+import { fetchQuote, fetchQuotesBatch } from '../data/yahoo.js';
 import {
   listAlerts, addAlert, removeAlert, applyFired, evaluate, isMarketOpen, validateNewAlert,
   onAlertsChanged, pullFromRunner, requestNotificationPermission, inNativeApp
@@ -188,9 +188,16 @@ export async function checkNow({ force = false } = {}){
   try {
     const syms = [...new Set(active.map(a => a.sym))];
     const prices = {};
-    await Promise.all(syms.map(s => fetchQuote(s)
-      .then(q => { prices[s] = q && q.price; })
-      .catch(err => suppressed('alerts: quote', err))));
+    // Batched, like every other live price: thirty alerts is two requests, not thirty.
+    try {
+      const map = await fetchQuotesBatch(syms);
+      for (const s of syms){ const q = map.get(s); if (q) prices[s] = q.price; }
+    } catch (err) {
+      suppressed('alerts: batch', err);
+      await Promise.all(syms.map(s => fetchQuote(s)
+        .then(q => { prices[s] = q && q.price; })
+        .catch(e => suppressed('alerts: quote', e))));
+    }
     const { fired } = evaluate(listAlerts(), prices, new Date().toISOString());
     if (fired.length){
       applyFired(fired);

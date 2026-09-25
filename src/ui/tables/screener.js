@@ -23,6 +23,7 @@ import { fmtNum, fmtCr } from '../format.js';
 import { COUNTS } from '../../data/universes.js';
 import { openStock } from '../navigate.js';
 import { suppressed } from '../../suppressed.js';
+import { isShown } from '../live.js';
 
 export async function fetchScreenerRow2(ticker){
   const symbol = ticker + '.NS';
@@ -53,7 +54,30 @@ export async function fetchScreenerRow2(ticker){
     divY = val(sd.dividendYield);
   } catch (err) { suppressed('screener row: fundamentals', err); }
   return { symbol, ticker, price, change1d, change1y, rsi, pe, offHigh,
-    mcap, roe: roe!=null?roe*100:null, de, divY: divY!=null?divY*100:null, vs200, volRatio };
+    mcap, roe: roe!=null?roe*100:null, de, divY: divY!=null?divY*100:null, vs200, volRatio,
+    // Kept so a live price can recompute the columns that depend on it (see livePrice):
+    // the price a year ago, the 52-week high, and the 200-day average.
+    base1y: c.length > 1 ? c[0] : null, wkHigh: wkHigh || null, a200: a200 != null ? a200 : null };
+}
+
+/**
+ * Apply a live quote to a screener row. Price, 1D % and the three columns derived from price
+ * move with it. RSI, P/E and the rest are daily or fundamental figures and are left as
+ * loaded — recomputing RSI from an intraday tick would mix a live price into a daily series.
+ * Returns whether anything changed.
+ */
+export function livePrice(r, q){
+  if (!q || typeof q.price !== 'number' || !Number.isFinite(q.price) || q.price === r.price) return false;
+  r.price = q.price;
+  if (typeof q.changePercent === 'number' && Number.isFinite(q.changePercent)) r.change1d = q.changePercent;
+  if (r.base1y) r.change1y = (q.price / r.base1y - 1) * 100;
+  if (r.wkHigh){
+    // A new high today moves the 52-week high with it; "off high" is then zero, not positive.
+    r.wkHigh = Math.max(r.wkHigh, q.price);
+    r.offHigh = ((q.price - r.wkHigh) / r.wkHigh) * 100;
+  }
+  if (r.a200) r.vs200 = ((q.price - r.a200) / r.a200) * 100;
+  return true;
 }
 
 export function screenerRow2Html(r){
@@ -332,6 +356,35 @@ function syncFilterControls(){
   const clear = document.getElementById('scrFilterClear');
   if (clear) clear.hidden = !SCREENER_FILTERS.some(f => v.filters[f.id] != null) && !v.sort;
 }
+
+/**
+ * Live prices for whichever screener tables are loaded and on screen. Re-rendered through
+ * applyView, so the sort and filters apply to the new numbers too.
+ */
+export const screenerLive = {
+  name: 'screener',
+  symbols(){
+    const out = [];
+    for (const key of ['large', 'mid']){
+      const st = loaded[key];
+      if (!st || !isShown(document.getElementById(st.bodyId))) continue;
+      for (const t of st.list) if (scrCache[key][t]) out.push(t + '.NS');
+    }
+    return out;
+  },
+  apply(map){
+    for (const key of ['large', 'mid']){
+      const st = loaded[key];
+      if (!st) continue;
+      let changed = false;
+      for (const t of st.list){
+        const r = scrCache[key][t];
+        if (r && livePrice(r, map.get(t + '.NS'))) changed = true;
+      }
+      if (changed) applyView(key);
+    }
+  }
+};
 
 /** The filter bar, placed above both screener tables by app.js. */
 export function screenerFilterBarHtml(){

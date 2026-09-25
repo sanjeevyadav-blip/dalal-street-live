@@ -151,3 +151,67 @@ export function resolvePrevClose(meta, closes, spot){
   }
   return closes[closes.length - 2];
 }
+
+// ---- live prices, many stocks per request --------------------------------------------------
+//
+// fetchQuote above costs one request per stock: it pulls a five-day chart to read two prices
+// off it. Refreshing every price on screen that way is dozens of requests every 30 seconds,
+// against a Worker limit of 300 a minute per IP — and on a mobile network many users share one
+// IP. Yahoo's v7 quote endpoint takes a list of symbols and answers in one request, through
+// the existing Worker, with prices seconds old during market hours.
+//
+// THE CAP IS 21, AND IT IS SILENT. Asked for 110 symbols, Yahoo returned 21 and no error; 22
+// also returns 21. So requests are chunked at 20, and tests/e2e/helpers/fixture-routes.js
+// truncates at 21 the same way, so a regression that stops chunking loses rows in the E2E
+// suite instead of in front of a user.
+
+export const QUOTE_BATCH = 20;
+
+/**
+ * Live quotes for many symbols: Map(symbol -> { price, change, changePercent, prevClose,
+ * time, marketState, name }). Symbols Yahoo does not return are simply absent — a caller must
+ * treat a missing entry as "no update", never as a price of zero.
+ *
+ * Rejects only if EVERY chunk fails, so the caller can fall back to per-symbol requests; one
+ * failed chunk among several just leaves those symbols out of this round.
+ */
+export async function fetchQuotesBatch(symbols){
+  const unique = [...new Set(symbols.filter(Boolean))];
+  const out = new Map();
+  if (!unique.length) return out;
+  const chunks = [];
+  for (let i = 0; i < unique.length; i += QUOTE_BATCH) chunks.push(unique.slice(i, i + QUOTE_BATCH));
+
+  let failures = 0;
+  await Promise.all(chunks.map(async (chunk) => {
+    try {
+      const url = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=' +
+        chunk.map(encodeURIComponent).join(',');
+      const data = await fetchJsonThroughProxy(url);
+      const rows = (data && data.quoteResponse && data.quoteResponse.result) || [];
+      for (const q of rows){
+        const price = q.regularMarketPrice;
+        if (typeof price !== 'number' || !Number.isFinite(price) || price <= 0) continue;
+        const prev = q.regularMarketPreviousClose;
+        const change = typeof q.regularMarketChange === 'number' ? q.regularMarketChange
+          : (typeof prev === 'number' && prev > 0 ? price - prev : null);
+        const changePercent = typeof q.regularMarketChangePercent === 'number' ? q.regularMarketChangePercent
+          : (change != null && prev > 0 ? (change / prev) * 100 : null);
+        out.set(q.symbol, {
+          symbol: q.symbol,
+          name: q.shortName || q.longName || q.symbol,
+          price, change, changePercent,
+          prevClose: typeof prev === 'number' ? prev : null,
+          time: typeof q.regularMarketTime === 'number' ? q.regularMarketTime * 1000 : null,
+          marketState: q.marketState || null,
+          currency: q.currency || 'INR',
+          stale: false
+        });
+      }
+    } catch {
+      failures++;
+    }
+  }));
+  if (failures === chunks.length) throw new Error('every quote batch failed');
+  return out;
+}

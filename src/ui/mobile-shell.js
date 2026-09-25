@@ -165,6 +165,8 @@ export function showTab(id){
   // scrolled into the middle of a short one.
   window.scrollTo({ top: 0, behavior: 'auto' });
 
+  document.dispatchEvent(new window.CustomEvent('dsl:viewchange', { detail: { tab: id } }));
+
   if (!loaded[id] && typeof tab.load === 'function'){
     loaded[id] = true;
     try { tab.load(); } catch (err) { loaded[id] = false; throw err; }

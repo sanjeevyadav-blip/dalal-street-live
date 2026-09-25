@@ -83,6 +83,39 @@ function chartResponse(target) {
   return syntheticChart(symbol, range);
 }
 
+/**
+ * Yahoo's v7 batch quote, built from each symbol's own chart fixture so the prices agree with
+ * everything else a spec sees.
+ *
+ * Truncated at 21 results exactly as Yahoo does — silently, with no error. The app must chunk
+ * its requests; if it ever stops, specs lose rows here rather than a user losing prices.
+ */
+const YAHOO_QUOTE_CAP = 21;
+function quoteBatchResponse(target) {
+  const symbols = (target.searchParams.get('symbols') || '').split(',').filter(Boolean);
+  const result = [];
+  for (const symbol of symbols.slice(0, YAHOO_QUOTE_CAP)) {
+    const chart = chartResponse(new URL('https://query1.finance.yahoo.com/v8/finance/chart/' +
+      encodeURIComponent(symbol) + '?range=5d&interval=1d'));
+    const meta = chart && chart.chart && chart.chart.result && chart.chart.result[0] && chart.chart.result[0].meta;
+    if (!meta || typeof meta.regularMarketPrice !== 'number') continue;
+    const prev = meta.previousClose != null ? meta.previousClose : meta.chartPreviousClose;
+    const change = prev ? meta.regularMarketPrice - prev : null;
+    result.push({
+      symbol,
+      shortName: meta.shortName || symbol,
+      regularMarketPrice: meta.regularMarketPrice,
+      regularMarketPreviousClose: prev,
+      regularMarketChange: change,
+      regularMarketChangePercent: change != null ? (change / prev) * 100 : null,
+      regularMarketTime: meta.regularMarketTime,
+      marketState: 'REGULAR',
+      currency: meta.currency || 'INR'
+    });
+  }
+  return { quoteResponse: { result, error: null } };
+}
+
 function quoteSummaryResponse(target) {
   const m = /\/v10\/finance\/quoteSummary\/([^?]+)/.exec(target.pathname + target.search);
   if (!m) return null;
@@ -145,6 +178,9 @@ export async function installFixtureRoutes(page, opts = {}) {
       const data = chartResponse(target);
       if (!data) return route.fulfill({ status: 404, body: 'no fixture' });
       return json(historyBars ? truncateChart(data, historyBars) : data);
+    }
+    if (path.includes('/v7/finance/quote')) {
+      return json(quoteBatchResponse(target));
     }
     if (path.includes('/v10/finance/quoteSummary/')) {
       const data = quoteSummaryResponse(target);

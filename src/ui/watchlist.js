@@ -13,6 +13,7 @@ import { fetchQuote } from '../data/yahoo.js';
 import { fmtNum } from './format.js';
 import { fullSymbol } from './symbol.js';
 import { openStock } from './navigate.js';
+import { renderStamp } from './live.js';
 
 export let watchlist = ['RELIANCE.NS','TCS.NS','HDFCBANK.NS','INFY.NS','ICICIBANK.NS','ITC.NS','SBIN.NS','BHARTIARTL.NS'];
 
@@ -30,8 +31,27 @@ export function renderIndices(){
       <div class="delta ${cls}">${arrow} ${fmtNum(Math.abs(q.change),2)} (${fmtNum(Math.abs(q.changePercent),2)}%)</div>
       ${q.stale ? `<div class="stale">last known — feed unreachable</div>` : ''}
     </div>`;
-  }).join('');
+  }).join('') +
+  // Inside the index strip, because on a phone that strip is the one thing on screen on
+  // every tab. It says how old the prices are — "Live · updated 8s ago", or "Market closed" —
+  // so a number that has stopped moving is never mistaken for one that is still live.
+  `<div class="live-stamp" id="liveStamp" role="status" aria-live="off"></div>`;
+  renderStamp();
 }
+
+/** The index strip, the watchlist and the ticker: on screen everywhere, so always refreshed. */
+export const boardLive = {
+  name: 'board',
+  symbols: () => INDICES.map(i => i.symbol).concat(watchlist),
+  apply(map){
+    let any = false;
+    for (const s of INDICES.map(i => i.symbol).concat(watchlist)){
+      const q = map.get(s);
+      if (q){ quoteCache[s] = q; any = true; }
+    }
+    if (any){ renderIndices(); renderWatchlist(); renderTicker(); }
+  }
+};
 
 // One row shape, used by the watchlist and by the Top 20 list. They looked identical when
 // they were two copies, which is exactly how two copies start; the mobile grid in

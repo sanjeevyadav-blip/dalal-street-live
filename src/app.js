@@ -25,15 +25,15 @@ import { GLOSSARY, hideGloss, annotateGlossary } from './ui/glossary.js';
 import { drawChart } from './ui/charts.js';
 import { loadIpos } from './ui/ipo.js';
 
-import { countSelectHtml, loadScreener3, scrCache, screenerFilterBarHtml, wireScreenerControls } from './ui/tables/screener.js';
+import { countSelectHtml, loadScreener3, scrCache, screenerFilterBarHtml, wireScreenerControls, screenerLive } from './ui/tables/screener.js';
 import { mountDiagnostics } from './ui/diagnostics-block.js';
-import { mountTop20 } from './ui/top20.js';
+import { mountTop20, top20Live } from './ui/top20.js';
 import { mountMarketNews } from './ui/market-news.js';
 import { mountMobileShell, openDetailView } from './ui/mobile-shell.js';
 import { mountDetailTabs, setDetailTab } from './ui/detail-tabs.js';
 import { initNativeShell, shouldRegisterServiceWorker } from './ui/native.js';
 import { initDiagnostics } from './diagnostics.js';
-import { runRanking3, rankCache } from './ui/tables/ranking.js';
+import { runRanking3, rankCache, rankingLive } from './ui/tables/ranking.js';
 
 import { renderFundamentals, renderFundamentalsUnavailable } from './ui/fundamentals.js';
 import { renderNews, renderNewsUnavailable } from './ui/news-block.js';
@@ -42,10 +42,11 @@ import { renderPeers } from './ui/peers.js';
 import { mountCompare } from './ui/compare.js';
 import { renderShareholding } from './ui/shareholding.js';
 import { mountAlertForm, startAlerts } from './ui/alerts.js';
-import { watchlist, quoteCache, renderIndices, renderWatchlist, renderTicker, addSymbolToWatchlist, wireSearch } from './ui/watchlist.js';
+import { registerLive, refreshLive, startLive, isShown } from './ui/live.js';
+import { watchlist, quoteCache, renderIndices, renderWatchlist, renderTicker, addSymbolToWatchlist, wireSearch, boardLive } from './ui/watchlist.js';
 
 
-import { renderDetail } from './ui/detail.js';
+import { renderDetail, updateDetailPrice } from './ui/detail.js';
 
 // The IIFE that used to wrap this file is gone. It existed to keep the app out of the
 // global scope when everything shipped as one inline <script>; an ES module already has
@@ -99,10 +100,28 @@ import { renderDetail } from './ui/detail.js';
 // ================= Rendering: watchlist =================
 
 
-// ================= Refresh cycle (indices + watchlist) =================
+// ================= Refresh cycle: every price on screen =================
+//
+// ui/live.js collects the symbols each visible view is showing and fetches them in batched
+// requests. If the batch endpoint fails outright, the index strip and watchlist fall back to
+// the original one-request-per-stock path below, so the parts that were always live stay
+// live whatever happens to the faster route.
 let refreshing = false;
-async function refreshAll(){
+async function refreshAll({ force = false } = {}){
   if (refreshing) return; refreshing = true;
+  try {
+    const res = await refreshLive({ force });
+    if (res.failed) await refreshBoardOneByOne();
+    else if (!res.skipped) clearError();
+    if (!res.skipped){
+      document.getElementById('lastUpdated').textContent = 'Last updated ' + new Date().toLocaleTimeString('en-IN', { hour12:false });
+    }
+  } finally {
+    refreshing = false;
+  }
+}
+
+async function refreshBoardOneByOne(){
   let anyFailure = false;
   const symbols = INDICES.map(i => i.symbol).concat(watchlist);
   await runPool(symbols, async (sym) => {
@@ -110,10 +129,22 @@ async function refreshAll(){
     catch { anyFailure = true; if (quoteCache[sym]) quoteCache[sym].stale = true; }
     renderIndices(); renderWatchlist(); renderTicker();
   }, 5);
-  if (anyFailure) showError('Some prices couldn\'t be refreshed — the free CORS relay may be rate-limited right now. Showing last known values where available.');
+  if (anyFailure) showError('Some prices couldn\'t be refreshed — the price feed may be rate-limited right now. Showing last known values where available.');
   else clearError();
-  document.getElementById('lastUpdated').textContent = 'Last updated ' + new Date().toLocaleTimeString('en-IN', { hour12:false });
-  refreshing = false;
+}
+
+// Which views show prices, and how each takes a fresh quote. Order does not matter: every
+// provider is offered the same batch.
+function registerLiveViews(){
+  registerLive(boardLive);
+  registerLive(top20Live);
+  registerLive(screenerLive);
+  registerLive(rankingLive);
+  registerLive({
+    name: 'detail',
+    symbols: () => (detailState.symbol && isShown(document.querySelector('#detailCard .price-hero'))) ? [detailState.symbol] : [],
+    apply: (map) => { const q = map.get(detailState.symbol); if (q) updateDetailPrice(q); }
+  });
 }
 
 // ================= Stock detail =================
@@ -225,7 +256,8 @@ function setAutoRefresh(ms){ if (autoTimer) clearInterval(autoTimer); if (ms > 0
 function wireControls(){
   document.getElementById('loadIpos').addEventListener('click', loadIpos);
   document.getElementById('intervalSelect').addEventListener('change', (e) => setAutoRefresh(parseInt(e.target.value,10)));
-  document.getElementById('refreshNowBtn').addEventListener('click', refreshAll);
+  // A deliberate press refreshes even with the market shut, when the loop would skip.
+  document.getElementById('refreshNowBtn').addEventListener('click', () => refreshAll({ force: true }));
   document.getElementById('addForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const input = document.getElementById('symbolInput');
@@ -246,8 +278,12 @@ function startApp(){
   wireSearch();
   renderIndices(); renderWatchlist(); renderTicker();
   updateClock(); setInterval(updateClock, 1000);
-  setAutoRefresh(30000);
-  refreshAll();
+  registerLiveViews();
+  startLive();
+  // Every 15 seconds while the market is open; ui/live.js drops to every five minutes when
+  // it is shut, because the prices cannot move.
+  setAutoRefresh(15000);
+  refreshAll({ force: true });
 }
 
 
