@@ -8,7 +8,7 @@
 // live Yahoo search for BSE-only names and anything listed since the list was built.
 
 import { INDICES } from '../data/universes.js';
-import { localMatches, remoteMatches, mergeRemote } from '../data/search.js';
+import { localMatches, remoteMatches, mergeRemote, ensureFullIndex } from '../data/search.js';
 import { fetchQuote } from '../data/yahoo.js';
 import { fmtNum } from './format.js';
 import { fullSymbol } from './symbol.js';
@@ -159,6 +159,12 @@ export function wireSearch(){
       });
     }, 350);
   });
+  // The full NSE list is fetched on first focus, not bundled. It lands well before a second
+  // keystroke; if someone was quicker, their query is re-run once it arrives so the
+  // suggestions catch up without them typing again.
+  input.addEventListener('focus', () => {
+    ensureFullIndex(() => { if (input.value.trim().length >= 2) input.dispatchEvent(new window.Event('input')); });
+  }, { once: true });
   input.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown'){ e.preventDefault(); activeIdx = Math.min(activeIdx+1, currentMatches.length-1); highlight(); }
     else if (e.key === 'ArrowUp'){ e.preventDefault(); activeIdx = Math.max(activeIdx-1, 0); highlight(); }

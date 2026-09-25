@@ -11,7 +11,7 @@
 // is a fact about direction, not a judgement.
 
 import { fetchHistory, fetchFundamentals, val, resolvePrevClose } from '../data/yahoo.js';
-import { localMatches } from '../data/search.js';
+import { localMatches, ensureFullIndex } from '../data/search.js';
 import { fmtNum, fmtCr } from './format.js';
 import { rsiLast } from '../indicators/momentum.js';
 import { suppressed } from '../suppressed.js';
@@ -104,6 +104,10 @@ export function mountCompare(symbol){
   const box = document.getElementById('cmpSuggest');
   const out = document.getElementById('cmpOut');
   let token = 0;
+
+  input.addEventListener('focus', () => {
+    ensureFullIndex(() => { if (input.value.trim().length >= 2) input.dispatchEvent(new window.Event('input')); });
+  }, { once: true });
 
   input.addEventListener('input', () => {
     const matches = localMatches(input.value, 8).filter(m => m.sym !== self);

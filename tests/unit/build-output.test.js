@@ -81,6 +81,19 @@ suite('built artefact is self-contained', () => {
     expect(existsSync(resolve(process.cwd(), 'dist/sw.js')), 'dist/sw.js missing').toBe(true);
   });
 
+  it('ships the NSE equity list beside the page, not inside it', () => {
+    // The same trap as manifest.json, the third time a file here is fetched at runtime: the
+    // page asks for nse-equities.json by URL, so a build that forgets to copy it passes every
+    // test that only reads index.html while search quietly knows 109 names instead of 2,585.
+    const path = resolve(process.cwd(), 'dist/nse-equities.json');
+    expect(existsSync(path), 'dist/nse-equities.json missing').toBe(true);
+    const list = JSON.parse(readFileSync(path, 'utf8'));
+    expect(list.count).toBeGreaterThan(2000);
+    expect(list.packed.split('\n').length).toBe(list.count);
+    // And it must not also be inlined: bundling it is what broke the size budget.
+    expect(html).not.toContain('ZYDUSLIFE\\tZydus');
+  });
+
   it('ships a service worker that never caches market data', () => {
     // A cached quote is a wrong quote. The worker must bail out of any request bound for
     // the proxy or Yahoo, and of anything cross-origin, before it reaches its cache-put.

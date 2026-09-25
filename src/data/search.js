@@ -15,10 +15,13 @@
 // a user who gets no suggestion reasonably concludes the stock is not covered.
 
 import { STOCK_DIRECTORY, UNIV_LARGE, UNIV_MID } from './universes.js';
-import { nseEquities } from './nse-equities.js';
+import { nseEquities, loadNseEquities } from './nse-equities.js';
 import { fetchJsonThroughProxy } from './proxy.js';
 
 let index = null;
+// The index is rebuilt once the full NSE list arrives: until then it holds only the curated
+// directory, so the size of the list it was built from is the cache key.
+let indexedFrom = -1;
 
 /**
  * [{ sym, name, exch }] — curated names win over NSE's official ones, because "Tata
@@ -26,9 +29,11 @@ let index = null;
  * NSE's ALL-CAPS variants) is not.
  */
 export function searchIndex(){
-  if (index) return index;
+  const list = nseEquities();
+  if (index && indexedFrom === list.length) return index;
+  indexedFrom = list.length;
   const bySym = new Map();
-  for (const [sym, name] of nseEquities()) bySym.set(sym, { sym, name, exch: 'NS', prominent: false });
+  for (const [sym, name] of list) bySym.set(sym, { sym, name, exch: 'NS', prominent: false });
   // Prominence: the names people actually look for. Without it, 2,600 names tie-break
   // alphabetically and "reli" suggested RELIABLE — a microcap — above RELIANCE, because B
   // sorts before N. The curated directory and the two screener universes are exactly the
@@ -38,6 +43,17 @@ export function searchIndex(){
   for (const row of bySym.values()) if (known.has(row.sym)) row.prominent = true;
   index = [...bySym.values()];
   return index;
+}
+
+/**
+ * Start loading the full NSE list, and call back once it is in so the caller can re-run
+ * whatever the user has typed so far. Called on a search box's first focus. A failure is
+ * swallowed here: search keeps working from the curated directory and Yahoo.
+ */
+export function ensureFullIndex(onReady){
+  return loadNseEquities()
+    .then(() => { if (typeof onReady === 'function') onReady(); })
+    .catch(() => {});
 }
 
 /**

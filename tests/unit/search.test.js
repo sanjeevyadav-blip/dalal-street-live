@@ -3,24 +3,41 @@
 // Suggestions used to know 109 companies. These pin the cases that motivated the change and
 // the ranking rules that stop 2,600 names from burying the right answer.
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 vi.mock('../../src/data/proxy.js', () => ({ fetchJsonThroughProxy: vi.fn() }));
 
 import { fetchJsonThroughProxy } from '../../src/data/proxy.js';
 import { searchIndex, localMatches, remoteMatches, mergeRemote } from '../../src/data/search.js';
-import { nseEquities, NSE_EQUITIES_AS_OF } from '../../src/data/nse-equities.js';
+import { nseEquities, nseEquitiesAsOf, setNseEquities, loadNseEquities } from '../../src/data/nse-equities.js';
 
+const LIST = JSON.parse(readFileSync(resolve(process.cwd(), 'src/public/nse-equities.json'), 'utf8'));
 const syms = (rows) => rows.map(r => r.sym);
 
+describe('before the full list has loaded', () => {
+  it('search still works from the curated directory', () => {
+    // The list is fetched on first focus. Until then — and if it never arrives — the
+    // well-known names must still be findable.
+    expect(nseEquities()).toEqual([]);
+    expect(syms(localMatches('reli'))[0]).toBe('RELIANCE');
+    expect(searchIndex().length).toBeLessThan(200);
+  });
+});
+
 describe('the local index', () => {
+  beforeAll(() => { setNseEquities(LIST); });
+
   it('covers every NSE mainboard company, not a curated hundred', () => {
     expect(nseEquities().length).toBeGreaterThan(2000);
+    // Rebuilt once the list arrives, not stuck on the curated-only index built above.
     expect(searchIndex().length).toBeGreaterThan(2000);
   });
 
   it('records when the list was generated, so staleness is visible', () => {
-    expect(NSE_EQUITIES_AS_OF).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(nseEquitiesAsOf()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(LIST.count).toBe(nseEquities().length);
   });
 
   it('has no duplicate symbols after merging the curated directory in', () => {
@@ -72,6 +89,26 @@ describe('ranking', () => {
 
   it('local results are NSE listings', () => {
     expect(localMatches('reli').every(r => r.exch === 'NS')).toBe(true);
+  });
+});
+
+describe('loading the list', () => {
+  it('shares one request between concurrent callers, and retries after a failure', async () => {
+    // A fresh module instance, so the already-installed list above does not short-circuit.
+    vi.resetModules();
+    const mod = await import('../../src/data/nse-equities.js');
+    let calls = 0;
+    const failing = () => { calls++; return Promise.resolve({ ok:false, status:503 }); };
+    await expect(Promise.all([mod.loadNseEquities(failing), mod.loadNseEquities(failing)])).rejects.toThrow('503');
+    expect(calls).toBe(1);
+    const ok = () => { calls++; return Promise.resolve({ ok:true, json: () => Promise.resolve(LIST) }); };
+    const list = await mod.loadNseEquities(ok);
+    expect(list.length).toBeGreaterThan(2000);
+    expect(calls).toBe(2);
+  });
+
+  it('is unaffected in this module instance', () => {
+    expect(typeof loadNseEquities).toBe('function');
   });
 });
 
