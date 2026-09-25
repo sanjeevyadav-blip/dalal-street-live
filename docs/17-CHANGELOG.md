@@ -5,6 +5,10 @@ Reverse chronological. Format: Conventional Commits categories.
 ## Unreleased
 - `refactor` EPIC-1: the 3,888-line monolithic `index.html` became 39 ES modules built by
   Vite into one `dist/index.html`. Behaviour proven unchanged against the deployed file.
+- `feat(live)` **every price on screen refreshes itself**, every 15 seconds while the market
+  is open — the Top 20 list, an open stock, the screener and the ranking, not just the index
+  strip and watchlist. One batched request serves a whole screen. A line under the indices
+  says how old the prices are, on every tab.
 - `feat(search)` **suggestions cover every NSE company**, 2,585 of them, instead of 109.
   Typing "zyd" or "polyc" used to return nothing. NSE's own list is fetched on first focus of
   a search box (`src/public/nse-equities.json`), with Yahoo's search as a live fallback for
@@ -31,9 +35,9 @@ Reverse chronological. Format: Conventional Commits categories.
   broke the build with an inconsistent JVM-target error.
 - `perf` `index.html` 409,672 → 336,923 bytes, by fetching the equity list instead of
   bundling it, rather than raising the 400 KB budget.
-- `test` 480 offline tests against 33 committed API fixtures, including 33 golden snapshots.
+- `test` 493 offline tests against 33 committed API fixtures, including 33 golden snapshots.
 - `test` §10.4: 10 live-API integration checks (`npm run test:integration`), opt-in.
-- `test` §10.5: 62 Playwright E2E specs on desktop and mobile — 124 runs
+- `test` §10.5: 64 Playwright E2E specs on desktop and mobile — 128 runs
   (`npm run test:e2e`), routed through the committed fixtures so they run deterministically
   and offline.
 - `fix(pwa)` **the build stopped shipping the PWA.** `publicDir: false` meant Vite emitted

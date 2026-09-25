@@ -25,7 +25,7 @@ Static site on GitHub Pages + one Cloudflare Worker as a CORS proxy. No backend,
 | `docs/07-DESIGN-SYSTEM-UX.md` | Tokens, components, mobile spec, PWA, native app routes |
 | `docs/08-SECURITY-COMPLIANCE.md` | Worker allowlist, privacy, SEBI position |
 | `docs/09-SDLC-PROCESS.md` | Branching, commits, definition of done, review checklist |
-| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 480 offline, 10 live-API, 62 E2E (124 runs) |
+| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 493 offline, 10 live-API, 64 E2E (128 runs) |
 | `docs/11-DEPLOYMENT-RUNBOOK.md` | Deploy, verify, health checks, failure playbook |
 | `docs/12-MAINTENANCE-SUPPORT.md` | Fragilities ranked, fallbacks if a feed dies |
 | `docs/13-RISK-REGISTER.md` | 15 risks; top three to act on |
@@ -68,17 +68,18 @@ src/ui/detail-tabs.js                   the stock page's six sub-tabs, on a phon
 src/ui/compare.js  src/ui/shareholding.js  two-stock compare; NSE shareholding + pledge
 src/data/search.js                      search over every NSE company, Yahoo as fallback
 src/data/alerts.js  src/ui/alerts.js    price alerts: storage, in-app check, UI
+src/ui/live.js                          live prices for every view on screen, batched
 src/public/nse-equities.json            2,585 NSE equities, fetched on first search focus
 src/public/runners/alerts.js            the Android background alert check (not bundled)
 worker/worker.js  worker/wrangler.toml  the CORS proxy
 capacitor.config.json  android/          the native Android shell (EPIC-6)
-tests/          480 offline tests against 33 committed API fixtures
+tests/          493 offline tests against 33 committed API fixtures
 tests/integration/  10 live-API checks (§10.4) — opt-in, hits the real Worker
-tests/e2e/      62 Playwright specs, desktop + mobile (124 runs), fixture-routed
+tests/e2e/      64 Playwright specs, desktop + mobile (128 runs), fixture-routed
 scripts/        capture-fixtures.mjs, check-invariants.sh
 ```
 
-Run `npm run verify:full` — lint, invariants, build, 480 offline tests, then 124 Playwright
+Run `npm run verify:full` — lint, invariants, build, 493 offline tests, then 128 Playwright
 runs — before and after any change. `npm run verify` alone skips the browser and is the
 faster inner loop.
 Regenerate fixtures with `node scripts/capture-fixtures.mjs` (read-only; hits the Worker).
@@ -166,6 +167,14 @@ reads the block's own `data-dtab` and opens that tab — the mapping lives in on
 - **NSE drops connections from Cloudflare's edge** in bad spells — Cloudflare 520s on every
   NSE endpoint, measured at about half of requests, the option chain included. Not a bug in
   whatever you just changed. Blocks that depend on NSE offer a Retry button.
+- **Yahoo's v7 batch quote returns at most 21 symbols, silently.** Ask for 110 and 21 come
+  back with no error. `fetchQuotesBatch` chunks at 20, and the E2E fixture router truncates
+  at 21 the same way. Every live price goes through it: a view registers what it shows with
+  `registerLive` in `src/ui/live.js`, and one refresh serves them all — about two requests
+  per 15-second cycle for a full phone screen. Do not add a per-stock fetch loop to a view.
+- **Live-price specs pin the clock** with `page.clock.setFixedTime` inside NSE hours. The
+  loop rightly drops to every five minutes after the close, so without it a spec run in the
+  evening waits for a refresh that is, correctly, not happening.
 - **Three files are fetched by URL at runtime**, not inlined: `manifest.json`, `sw.js` and
   `nse-equities.json`, plus `runners/alerts.js` inside the Android app. Each lives in
   `src/public/`, and `tests/unit/build-output.test.js` asserts every one reaches `dist/`.
@@ -199,8 +208,8 @@ a branch push is routine, `main` is not.
 `wrangler deploy` is no longer forbidden outright either — E4-5 was deployed on the same
 day — but each deploy needs its own approval. Do not treat the last yes as a standing one.
 
-**`npm run verify:full` is still the gate** — lint, invariants, build, 480 offline tests,
-then 124 Playwright runs. Run it before and after any change. CI builds the APK and nothing
+**`npm run verify:full` is still the gate** — lint, invariants, build, 493 offline tests,
+then 128 Playwright runs. Run it before and after any change. CI builds the APK and nothing
 else; it is not a substitute for verifying locally, and there is no test job to watch.
 `npm run test:integration` is the weekly live-feed check, run by hand.
 
