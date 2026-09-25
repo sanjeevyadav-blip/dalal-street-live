@@ -1,7 +1,9 @@
 ext {
-    // 23, not 22: @capacitor/background-runner (price alerts) requires Android 6.0.
-    // Android 5.1 is well under 1% of devices in use.
-    minSdkVersion = 23
+    // 22 still works with price alerts because @capacitor/background-runner is pinned to
+    // 2.0.0, the release built for Capacitor 6. 2.1.0 onward needs Android 6.0 (23) AND
+    // compiles for Java 21, which the rest of this Capacitor 6 project does not use — the
+    // build fails with "Inconsistent JVM-target compatibility". See package.json.
+    minSdkVersion = 22
     compileSdkVersion = 34
     targetSdkVersion = 34
     androidxActivityVersion = '1.8.0'

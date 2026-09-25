@@ -197,8 +197,15 @@ describe('price alerts in the background', () => {
     expect(manifest()).toMatch(/android\.permission\.POST_NOTIFICATIONS"\s*\/>/);
   });
 
-  it('targets Android 6+, the plugin’s minimum', () => {
-    expect(read('android/variables.gradle')).toMatch(/minSdkVersion = 23/);
+  it('pins the background runner to the release built for Capacitor 6', () => {
+    // 2.1.0+ compiles for Java 21 while Capacitor 6, every other plugin and this app target
+    // Java 17. The CI build failed on exactly that: "Inconsistent JVM-target compatibility
+    // detected for tasks compileDebugJavaWithJavac (21) and compileDebugKotlin (17)". A caret
+    // range would let an npm update pull the Java 21 release straight back in.
+    const pkg = JSON.parse(read('package.json'));
+    expect(pkg.devDependencies['@capacitor/background-runner']).toBe('2.0.0');
+    // 2.0.0 supports Android 5.1 (API 22), so the app does not have to drop those devices.
+    expect(read('android/variables.gradle')).toMatch(/minSdkVersion = 22/);
   });
 
   it('registers the runner, repeating no faster than Android allows', () => {
