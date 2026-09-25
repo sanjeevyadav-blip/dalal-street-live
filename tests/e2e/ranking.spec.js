@@ -108,4 +108,40 @@ test.describe('ranking and screener', () => {
     const added = net.count() - afterTen;
     expect(added, 'widening 10→15 refetched more than the five new names').toBeLessThan(afterTen);
   });
+
+  test('tapping a heading sorts the screener, and a filter says what it hid', async ({ page }) => {
+    await stubFonts(page);
+    await installFixtureRoutes(page);
+    await page.goto('/');
+    await showTab(page, 'scr');
+
+    await page.locator('#scrLargeCount').selectOption('10');
+    await page.locator('#loadLargeCap').click();
+    const rows = page.locator('#largeCapBody tr[data-sym]');
+    await expect(rows).toHaveCount(10, { timeout: 60000 });
+
+    // Column 7 (index 6) is P/E. First tap sorts highest first.
+    const peHead = page.locator('#largeCapBody').locator('xpath=ancestor::table').locator('thead th').nth(6);
+    await peHead.click();
+    await expect(peHead).toHaveAttribute('aria-sort', 'descending');
+
+    // Read the P/E column back: non-increasing, with any blank ("—") only at the end.
+    const pes = await page.locator('#largeCapBody tr[data-sym] td:nth-child(7)').allInnerTexts();
+    const nums = pes.map((s) => (s.trim() === '—' ? null : parseFloat(s.replace(/,/g, ''))));
+    const firstBlank = nums.indexOf(null);
+    if (firstBlank >= 0) expect(nums.slice(firstBlank).every((x) => x === null), 'a blank P/E sorted above a real one').toBe(true);
+    const real = nums.filter((x) => x !== null);
+    for (let i = 1; i < real.length; i++) expect(real[i]).toBeLessThanOrEqual(real[i - 1]);
+
+    // A filter narrows the rows and says so, including anything hidden for missing data.
+    await page.locator('#scrFilter-pe').selectOption('15');
+    await expect(page.locator('.screener-group .filter-summary').first()).toContainText(/Showing \d+ of 10/);
+    const after = await page.locator('#largeCapBody tr[data-sym] td:nth-child(7)').allInnerTexts();
+    for (const s of after) expect(parseFloat(s.replace(/,/g, ''))).toBeLessThanOrEqual(15);
+
+    // Clearing restores the full list.
+    await page.locator('#scrFilterClear').click();
+    await expect(rows).toHaveCount(10);
+    await expect(page.locator('.screener-group .filter-summary')).toHaveCount(0);
+  });
 });

@@ -25,7 +25,7 @@ import { GLOSSARY, hideGloss, annotateGlossary } from './ui/glossary.js';
 import { drawChart } from './ui/charts.js';
 import { loadIpos } from './ui/ipo.js';
 
-import { countSelectHtml, loadScreener3, scrCache } from './ui/tables/screener.js';
+import { countSelectHtml, loadScreener3, scrCache, screenerFilterBarHtml, wireScreenerControls } from './ui/tables/screener.js';
 import { mountDiagnostics } from './ui/diagnostics-block.js';
 import { mountTop20 } from './ui/top20.js';
 import { mountMarketNews } from './ui/market-news.js';
@@ -474,8 +474,10 @@ function rebuildScreener3(){
     'There is deliberately no \u201ctarget price\u201d or \u201cprobability of success\u201d column: nobody can honestly compute the odds a stock reaches a price by a date, and a target is a forecast dressed as a fact. ' +
     'In India, publishing buy/sell/target recommendations is restricted to <a href="https://www.sebi.gov.in" target="_blank" rel="noopener">SEBI</a>-registered Research Analysts and Investment Advisers. ' +
     'A starting point for your own research, not a tip sheet.</p>' +
+    screenerFilterBarHtml() +
     group('Large cap', 'largeCapBody', 'loadLargeCap', 'scrLargeCount') +
     group('Mid cap', 'midCapBody', 'loadMidCap', 'scrMidCount');
+  wireScreenerControls();
   document.getElementById('loadLargeCap').addEventListener('click', function(){ loadScreener3(UNIV_LARGE,'large','largeCapBody','loadLargeCap','scrLargeCount'); });
   document.getElementById('loadMidCap').addEventListener('click', function(){ loadScreener3(UNIV_MID,'mid','midCapBody','loadMidCap','scrMidCount'); });
   document.getElementById('scrLargeCount').addEventListener('change', function(){

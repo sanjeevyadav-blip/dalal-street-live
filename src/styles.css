@@ -290,6 +290,20 @@
   }
   .screener-head button:hover{ border-color:var(--gold); color:var(--gold); }
   table.screener-table tbody tr{ cursor:pointer; }
+
+  /* Screener sort and filter. The chips are selects styled as pills rather than custom
+     widgets: a native select opens the phone's own picker, which is the best control a
+     phone has for choosing one of four values. */
+  .scr-filters{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:14px 0 6px; }
+  .scr-filters .chip{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--hair); border-radius:999px; padding:3px 4px 3px 12px; background:var(--panel); font-size:12.5px; color:var(--cream-dim); }
+  .scr-filters .chip select{ background:transparent; border:none; color:var(--cream); font-family:var(--mono); font-size:12.5px; padding:4px 6px; border-radius:999px; cursor:pointer; min-height:30px; }
+  .scr-filters .chip-clear{ background:none; border:1px solid var(--hair); color:var(--gold); border-radius:999px; padding:6px 12px; font-size:12px; font-family:var(--sans); cursor:pointer; }
+  .filter-summary{ font-size:11.5px; color:var(--cream-dim); margin:0 0 7px; line-height:1.55; }
+  table.screener-table thead th.sortable{ cursor:pointer; user-select:none; white-space:nowrap; }
+  table.screener-table thead th.sortable:hover{ color:var(--cream); }
+  table.screener-table thead th.sortable:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+  table.screener-table thead th[aria-sort="ascending"], table.screener-table thead th[aria-sort="descending"]{ color:var(--gold); }
+  table.screener-table thead th .sort-ind{ font-size:9px; }
   table.screener-table td.num{ font-family:var(--mono); }
   table.screener-table td.num.up{ color:var(--gain); } table.screener-table td.num.down{ color:var(--loss); }
 

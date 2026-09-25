@@ -102,18 +102,287 @@ export async function loadScreener3(univ, key, bodyId, btnId, selId){
     try {
       const r = await fetchScreenerRow2(t);
       cache[t] = r;
+      failed[key].delete(t);
       const row = document.getElementById('s3-' + key + '-' + t);
       if (row) row.outerHTML = screenerRow2Html(r);
     } catch {
+      failed[key].add(t);
       const row = document.getElementById('s3-' + key + '-' + t);
-      if (row) row.outerHTML = '<tr><td class="sym">' + t + '</td><td colspan="12" style="color:var(--cream-dim)">Couldn\u2019t load</td></tr>';
+      if (row) row.outerHTML = failedRowHtml(t);
     }
   }, 5);
-  tbody.querySelectorAll('tr[data-sym]').forEach(function(tr){
-    tr.addEventListener('click', function(){ openStock(tr.getAttribute('data-sym')); });
-  });
+  loaded[key] = { list, bodyId };
+  bindRowClicks(tbody);
   renderDeadSymbolNote(bodyId, list);
+  // Sorting and filtering apply once the rows are in. Doing it per arriving row would
+  // reorder the table under the reader's thumb while it is still filling.
+  applyView(key);
   btn.disabled = false; btn.textContent = 'Refresh';
+}
+
+function failedRowHtml(t){
+  return '<tr class="failed"><td class="sym">' + t + '</td><td colspan="12" style="color:var(--cream-dim)">Couldn\u2019t load</td></tr>';
+}
+
+// Delegated, once per tbody: applyView re-renders the rows wholesale, and per-row listeners
+// would be lost on every sort.
+function bindRowClicks(tbody){
+  if (tbody.dataset.clicks) return;
+  tbody.dataset.clicks = '1';
+  tbody.addEventListener('click', function(e){
+    const tr = e.target.closest('tr[data-sym]');
+    if (tr && tbody.contains(tr)) openStock(tr.getAttribute('data-sym'));
+  });
+}
+
+// ---- sort and filter -------------------------------------------------------------------
+//
+// Screener.in's core interaction is "show me only the ones that pass, in the order I care
+// about". This gives most of that without its query language: tap a column heading to sort,
+// and three filter chips for the questions people ask first.
+//
+// THE RULE THAT MATTERS: a missing value is never treated as a number. It sorts LAST in
+// both directions, and it FAILS a filter rather than passing it. A loss-making company has
+// no P/E; ranking it as the cheapest stock on screen, or letting it through "P/E under 15",
+// would be a fabricated reading of a blank cell (CLAUDE.md hard rule 3). The count of rows
+// hidden for want of data is shown, so the exclusion is visible rather than silent.
+
+const failed = { large: new Set(), mid: new Set() };
+const loaded = { large: null, mid: null };
+
+// Column order matches the <th> order built in app.js rebuildScreener3.
+export const SCREENER_COLUMNS = [
+  { field:'ticker',    label:'Symbol',        text:true },
+  { field:'price',     label:'Price' },
+  { field:'change1d',  label:'1D %' },
+  { field:'change1y',  label:'1Y %' },
+  { field:'mcap',      label:'Market cap' },
+  { field:'rsi',       label:'RSI(14)' },
+  { field:'pe',        label:'P/E' },
+  { field:'roe',       label:'ROE' },
+  { field:'de',        label:'Debt / Equity' },
+  { field:'divY',      label:'Dividend yield' },
+  { field:'vs200',     label:'vs 200-DMA' },
+  { field:'volRatio',  label:'Volume vs avg' },
+  { field:'offHigh',   label:'Off 52w high' }
+];
+
+export const SCREENER_FILTERS = [
+  { id:'pe',  field:'pe',  label:'P/E',         op:'max', options:[15, 25, 40],   unit:'',
+    why:'no P/E reported (often a loss-maker)' },
+  { id:'roe', field:'roe', label:'ROE',         op:'min', options:[10, 15, 20],   unit:'%',
+    why:'no ROE reported' },
+  { id:'de',  field:'de',  label:'Debt/Equity', op:'max', options:[25, 50, 100],  unit:'',
+    why:'no debt/equity reported (common for banks)' }
+];
+
+const STORE_KEY = 'dsl.screener.view.v1';
+
+function defaultView(){ return { sort:null, filters:{ pe:null, roe:null, de:null } }; }
+
+// Saved on the device, never sent anywhere. Every access is guarded: storage can be
+// unavailable (private mode, a locked-down WebView) and the screener must work regardless.
+export function loadView(){
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return defaultView();
+    const v = JSON.parse(raw);
+    const out = defaultView();
+    if (v && v.sort && SCREENER_COLUMNS.some(c => c.field === v.sort.field) && (v.sort.dir === 1 || v.sort.dir === -1)){
+      out.sort = { field:v.sort.field, dir:v.sort.dir };
+    }
+    for (const f of SCREENER_FILTERS){
+      const x = v && v.filters ? v.filters[f.id] : null;
+      out.filters[f.id] = f.options.includes(x) ? x : null;
+    }
+    return out;
+  } catch { return defaultView(); }
+}
+
+function saveView(v){
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(v)); } catch { /* storage unavailable */ }
+}
+
+let view = null;
+function currentView(){ if (!view) view = loadView(); return view; }
+
+/** Rows that pass every active filter, plus a per-filter count of rows hidden for missing data. */
+export function filterRows(rows, filters){
+  const missing = {};
+  const kept = rows.filter(r => {
+    for (const f of SCREENER_FILTERS){
+      const limit = filters[f.id];
+      if (limit == null) continue;
+      const x = r[f.field];
+      if (x == null || !Number.isFinite(x)){ missing[f.id] = (missing[f.id] || 0) + 1; return false; }
+      if (f.op === 'max' && x > limit) return false;
+      if (f.op === 'min' && x < limit) return false;
+    }
+    return true;
+  });
+  return { kept, missing };
+}
+
+/** Stable sort; missing values last whichever way the column is sorted. */
+export function sortRows(rows, sort){
+  if (!sort) return rows.slice();
+  const col = SCREENER_COLUMNS.find(c => c.field === sort.field);
+  if (!col) return rows.slice();
+  return rows
+    .map((r, i) => [r, i])
+    .sort((a, b) => {
+      const x = a[0][sort.field], y = b[0][sort.field];
+      const xn = x == null || (!col.text && !Number.isFinite(x));
+      const yn = y == null || (!col.text && !Number.isFinite(y));
+      if (xn && yn) return a[1] - b[1];
+      if (xn) return 1;
+      if (yn) return -1;
+      const c = col.text ? String(x).localeCompare(String(y)) : x - y;
+      return c !== 0 ? c * sort.dir : a[1] - b[1];
+    })
+    .map(p => p[0]);
+}
+
+export function applyView(key){
+  const state = loaded[key];
+  if (!state) return;
+  const tbody = document.getElementById(state.bodyId);
+  if (!tbody) return;
+  const v = currentView();
+  const rows = state.list.map(t => scrCache[key][t]).filter(Boolean);
+  const { kept, missing } = filterRows(rows, v.filters);
+  const shown = sortRows(kept, v.sort);
+  const failedRows = state.list.filter(t => failed[key].has(t)).map(failedRowHtml);
+
+  tbody.innerHTML = shown.map(screenerRow2Html).join('') +
+    (shown.length === 0 && rows.length > 0
+      ? '<tr class="empty"><td colspan="13" style="color:var(--cream-dim);padding:14px 12px">' +
+        'No stock in this list passes the filters. Loosen one, or show more rows.</td></tr>'
+      : '') +
+    failedRows.join('');
+  bindRowClicks(tbody);
+  renderFilterSummary(key, rows.length, shown.length, missing);
+  renderSortIndicators(tbody);
+}
+
+function renderFilterSummary(key, total, shown, missing){
+  const state = loaded[key];
+  const body = document.getElementById(state.bodyId);
+  const host = body && body.closest('.screener-group');
+  if (!host) return;
+  let el = host.querySelector('.filter-summary');
+  const active = SCREENER_FILTERS.some(f => currentView().filters[f.id] != null);
+  if (!active){ if (el) el.remove(); return; }
+  if (!el){
+    el = document.createElement('div');
+    el.className = 'filter-summary';
+    host.insertBefore(el, host.querySelector('.rank-scroll'));
+  }
+  const hiddenForData = SCREENER_FILTERS
+    .filter(f => missing[f.id])
+    .map(f => missing[f.id] + ' with ' + f.why);
+  el.textContent = 'Showing ' + shown + ' of ' + total + '.' +
+    (hiddenForData.length ? ' Hidden for missing data: ' + hiddenForData.join('; ') + '.' : '');
+}
+
+function renderSortIndicators(tbody){
+  const table = tbody.closest('table');
+  if (!table) return;
+  const v = currentView();
+  table.querySelectorAll('thead th').forEach((th, i) => {
+    const col = SCREENER_COLUMNS[i];
+    if (!col) return;
+    const on = v.sort && v.sort.field === col.field;
+    th.setAttribute('aria-sort', on ? (v.sort.dir === 1 ? 'ascending' : 'descending') : 'none');
+    let ind = th.querySelector('.sort-ind');
+    if (!ind){ ind = document.createElement('span'); ind.className = 'sort-ind'; ind.setAttribute('aria-hidden', 'true'); th.appendChild(ind); }
+    ind.textContent = on ? (v.sort.dir === 1 ? ' \u25b2' : ' \u25bc') : '';
+  });
+}
+
+function setSort(field){
+  const v = currentView();
+  const col = SCREENER_COLUMNS.find(c => c.field === field);
+  if (!col) return;
+  // First tap: the direction a reader most often wants \u2014 highest first for numbers, A to Z
+  // for names. Second tap reverses. Third clears back to load order.
+  const first = col.text ? 1 : -1;
+  if (!v.sort || v.sort.field !== field) v.sort = { field, dir:first };
+  else if (v.sort.dir === first) v.sort = { field, dir:-first };
+  else v.sort = null;
+  saveView(v);
+  applyView('large'); applyView('mid');
+  syncFilterControls();
+}
+
+function setFilter(id, value){
+  const v = currentView();
+  v.filters[id] = value;
+  saveView(v);
+  applyView('large'); applyView('mid');
+  syncFilterControls();
+}
+
+function syncFilterControls(){
+  const v = currentView();
+  for (const f of SCREENER_FILTERS){
+    const sel = document.getElementById('scrFilter-' + f.id);
+    if (sel) sel.value = v.filters[f.id] == null ? '' : String(v.filters[f.id]);
+  }
+  const clear = document.getElementById('scrFilterClear');
+  if (clear) clear.hidden = !SCREENER_FILTERS.some(f => v.filters[f.id] != null) && !v.sort;
+}
+
+/** The filter bar, placed above both screener tables by app.js. */
+export function screenerFilterBarHtml(){
+  return '<div class="scr-filters" role="group" aria-label="Filter the screener">' +
+    SCREENER_FILTERS.map(f =>
+      '<label class="chip"><span>' + f.label + (f.op === 'max' ? ' \u2264' : ' \u2265') + '</span>' +
+      '<select id="scrFilter-' + f.id + '"><option value="">Any</option>' +
+      f.options.map(o => '<option value="' + o + '">' + o + f.unit + '</option>').join('') +
+      '</select></label>').join('') +
+    '<button type="button" id="scrFilterClear" class="chip-clear" hidden>Clear sort &amp; filters</button>' +
+    '</div>' +
+    '<p class="scroll-hint">Tap a column heading to sort. Your choices are saved on this device.</p>';
+}
+
+/** Wire the headings and the filter bar. Idempotent; call after the section is rendered. */
+export function wireScreenerControls(){
+  for (const f of SCREENER_FILTERS){
+    const sel = document.getElementById('scrFilter-' + f.id);
+    if (!sel || sel.dataset.wired) continue;
+    sel.dataset.wired = '1';
+    sel.addEventListener('change', () => setFilter(f.id, sel.value === '' ? null : Number(sel.value)));
+  }
+  const clear = document.getElementById('scrFilterClear');
+  if (clear && !clear.dataset.wired){
+    clear.dataset.wired = '1';
+    clear.addEventListener('click', () => {
+      view = defaultView(); saveView(view);
+      applyView('large'); applyView('mid'); syncFilterControls();
+    });
+  }
+  for (const bodyId of ['largeCapBody', 'midCapBody']){
+    const body = document.getElementById(bodyId);
+    const table = body && body.closest('table');
+    if (!table || table.dataset.sortWired) continue;
+    table.dataset.sortWired = '1';
+    table.querySelectorAll('thead th').forEach((th, i) => {
+      const col = SCREENER_COLUMNS[i];
+      if (!col) return;
+      th.classList.add('sortable');
+      th.tabIndex = 0;
+      th.setAttribute('aria-sort', 'none');
+      const go = (e) => {
+        // The glossary marker inside a heading opens its explanation; that tap is not a sort.
+        if (e.target.closest('.gloss')) return;
+        setSort(col.field);
+      };
+      th.addEventListener('click', go);
+      th.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); go(e); } });
+    });
+  }
+  syncFilterControls();
 }
 
 /**
