@@ -81,6 +81,15 @@ suite('built artefact is self-contained', () => {
     expect(existsSync(resolve(process.cwd(), 'dist/sw.js')), 'dist/sw.js missing').toBe(true);
   });
 
+  it('ships the background alert runner as its own file', () => {
+    // The Android app's background runner loads runners/alerts.js from the web assets. It is
+    // a separate script by necessity — a headless engine with no modules — so like
+    // manifest.json it only exists if the build copies it.
+    const path = resolve(process.cwd(), 'dist/runners/alerts.js');
+    expect(existsSync(path), 'dist/runners/alerts.js missing').toBe(true);
+    expect(readFileSync(path, 'utf8')).toContain("addEventListener('checkAlerts'");
+  });
+
   it('ships the NSE equity list beside the page, not inside it', () => {
     // The same trap as manifest.json, the third time a file here is fetched at runtime: the
     // page asks for nse-equities.json by URL, so a build that forgets to copy it passes every

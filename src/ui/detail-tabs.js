@@ -40,7 +40,7 @@ const TABS = [
 ];
 
 const BY_ID = {
-  snapBlock:'overview', profileBlock:'overview',
+  snapBlock:'overview', profileBlock:'overview', alertBlock:'overview',
   intradayBlock:'technicals',
   fundamentalsGrid:'financials', peerBlock:'financials', shareBlock:'financials', compareBlock:'financials',
   facBlock:'valuation', thesisBlock:'valuation', labBlock:'valuation',

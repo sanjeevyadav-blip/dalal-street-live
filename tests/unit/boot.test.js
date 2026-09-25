@@ -134,7 +134,7 @@ describe('page boots', () => {
     expect(panels.length).toBe(5);
 
     const mustBeReachable = [
-      'section.watchlist', '#top20Section', 'section.ipo', '#rankSection',
+      'section.watchlist', '#alertsSection', '#top20Section', 'section.ipo', '#rankSection',
       'section.screener', '#marketNewsSection', '#glossarySection', '#manualSection'
     ];
     for (const sel of mustBeReachable){

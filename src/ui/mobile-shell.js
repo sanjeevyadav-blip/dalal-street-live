@@ -35,7 +35,7 @@ import { loadMarketNews } from './market-news.js';
 
 const TABS = [
   { id:'top20', label:'Top 20',   icon:'◉',
-    sel:['section.search-panel','section.watchlist','#top20Section'],
+    sel:['section.search-panel','section.watchlist','#alertsSection','#top20Section'],
     load: loadTop20 },
   { id:'ipo',   label:'IPO',      icon:'▤',
     sel:['section.ipo'],

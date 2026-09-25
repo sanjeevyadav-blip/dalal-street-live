@@ -30,7 +30,7 @@ import { mountDiagnostics } from './ui/diagnostics-block.js';
 import { mountTop20 } from './ui/top20.js';
 import { mountMarketNews } from './ui/market-news.js';
 import { mountMobileShell, openDetailView } from './ui/mobile-shell.js';
-import { mountDetailTabs } from './ui/detail-tabs.js';
+import { mountDetailTabs, setDetailTab } from './ui/detail-tabs.js';
 import { initNativeShell, shouldRegisterServiceWorker } from './ui/native.js';
 import { initDiagnostics } from './diagnostics.js';
 import { runRanking3, rankCache } from './ui/tables/ranking.js';
@@ -41,6 +41,7 @@ import { renderIntradayDesk, renderIntradayVWAP } from './ui/intraday-desk.js';
 import { renderPeers } from './ui/peers.js';
 import { mountCompare } from './ui/compare.js';
 import { renderShareholding } from './ui/shareholding.js';
+import { mountAlertForm, startAlerts } from './ui/alerts.js';
 import { watchlist, quoteCache, renderIndices, renderWatchlist, renderTicker, addSymbolToWatchlist, wireSearch } from './ui/watchlist.js';
 
 
@@ -147,6 +148,18 @@ async function loadStockDetail(symbol){
   // waiting on fundamentals like the peer table does.
   mountCompare(symbol);
   renderShareholding(symbol);
+  {
+    const m = hist.meta || {};
+    const last = hist.closes && hist.closes.length ? hist.closes[hist.closes.length - 1] : null;
+    mountAlertForm(symbol, m.regularMarketPrice != null ? m.regularMarketPrice : last);
+    const btn = document.getElementById('alertFromDetail');
+    if (btn) btn.addEventListener('click', () => {
+      // The form is on Overview; on a phone that may not be the tab in view.
+      setDetailTab('overview');
+      const input = document.getElementById('alertPrice');
+      if (input){ input.scrollIntoView({ block:'center' }); input.focus(); }
+    });
+  }
 
   // Context the peer + intraday panels need, computed from the 2y history we already have.
   const _c = hist.closes, _h = hist.highs, _l = hist.lows;
@@ -748,6 +761,8 @@ function bootstrap(){
   // last of everything, because it moves nodes that every earlier mount* wired up.
   mountTop20();
   mountMarketNews();
+  // Before the shell, which sorts #alertsSection into the Top 20 tab.
+  startAlerts();
   mountMobileShell();
   // Watches #detailCard, which exists in the static markup, so this can go anywhere after
   // the DOM is ready. It is last only to keep the phone-layout mounts together.

@@ -1,5 +1,7 @@
 ext {
-    minSdkVersion = 22
+    // 23, not 22: @capacitor/background-runner (price alerts) requires Android 6.0.
+    // Android 5.1 is well under 1% of devices in use.
+    minSdkVersion = 23
     compileSdkVersion = 34
     targetSdkVersion = 34
     androidxActivityVersion = '1.8.0'

@@ -6,7 +6,7 @@
 // layout, real canvases and real timers.
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts, expectBlockVisible } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, expectBlockVisible, showTab } from './helpers/fixture-routes.js';
 
 async function openReliance(page) {
   await page.goto('/');
@@ -247,5 +247,55 @@ test.describe('compare two stocks', () => {
     // It must fit a phone without widening the page.
     const docWidth = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(docWidth).toBeLessThanOrEqual(2);
+  });
+});
+
+test.describe('price alerts', () => {
+  test('set from a stock page, listed on Top 20, refused on the wrong side, removable', async ({ page }) => {
+    await stubFonts(page);
+    await installFixtureRoutes(page);
+    await openReliance(page);
+
+    await page.locator('#alertFromDetail').click();
+    const input = page.locator('#alertPrice');
+    await expect(input).toBeVisible();
+    await expect(input).toBeFocused();
+
+    const spot = Number((await page.locator('#detailCard .price-hero .big').innerText()).replace(/[^\d.]/g, ''));
+    expect(spot).toBeGreaterThan(0);
+
+    // "Above" a level below the price would fire on the next check: refused, with a reason.
+    await page.locator('#alertDir').selectOption('above');
+    await input.fill(String(Math.floor(spot * 0.9)));
+    await page.locator('#alertForm button[type="submit"]').click();
+    await expect(page.locator('#alertMsg')).toContainText('already at or below');
+    await expect(page.locator('#alertBlock .al-row')).toHaveCount(0);
+
+    // A sensible one is accepted and shown on the stock page.
+    const level = Math.ceil(spot * 1.1);
+    await input.fill(String(level));
+    await page.locator('#alertForm button[type="submit"]').click();
+    await expect(page.locator('#alertMsg')).toContainText('Alert set');
+    await expect(page.locator('#alertBlock .al-row')).toHaveCount(1);
+    await expect(page.locator('#alertBlock .al-row')).toContainText('above');
+    await expect(page.locator('#alertBlock .al-row')).toContainText('Watching');
+
+    // And in the list on the Top 20 tab (on a phone, behind the Back button).
+    const back = page.locator('.detail-back');
+    if (await back.isVisible().catch(() => false)) await back.click();
+    await showTab(page, 'top20');
+    const row = page.locator('#alertsSection .al-row');
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText('RELIANCE');
+
+    // It survives a reload: stored on the device.
+    await page.reload();
+    await showTab(page, 'top20');
+    await expect(page.locator('#alertsSection .al-row')).toHaveCount(1);
+
+    // Removing it clears it.
+    await page.locator('#alertsSection [data-remove-alert]').click();
+    await expect(page.locator('#alertsSection .al-row')).toHaveCount(0);
+    await expect(page.locator('#alertsSection')).toContainText('No alerts yet');
   });
 });

@@ -21,6 +21,14 @@
       "style": "DARK",
       "backgroundColor": "#0B1520",
       "overlaysWebView": false
+    },
+    "BackgroundRunner": {
+      "label": "dev.dalalstreet.live.alerts",
+      "src": "runners/alerts.js",
+      "event": "checkAlerts",
+      "repeat": true,
+      "interval": 15,
+      "autoStart": true
     }
   }
 }

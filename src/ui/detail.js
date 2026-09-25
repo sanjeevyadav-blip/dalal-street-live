@@ -112,6 +112,7 @@ function renderDetailCore(symbol, hist, niftyHist){
       </div>
       <div class="detail-actions">
         <button id="addFromDetail">+ Watchlist</button>
+        <button id="alertFromDetail">+ Alert</button>
         <button class="close-btn" id="closeDetail">Close ×</button>
       </div>
     </div>
@@ -140,6 +141,8 @@ function renderDetailCore(symbol, hist, niftyHist){
       <div class="stat" id="vwapStat"><div class="k">Intraday VWAP</div><div class="v loading-dots">fetching…</div></div>
       <div class="stat"><div class="k">Market cap</div><div class="v" id="mcapStat">—</div></div>
     </div>
+
+    <div id="alertBlock"></div>
 
     <div class="chart-block">
       <div class="chart-head">

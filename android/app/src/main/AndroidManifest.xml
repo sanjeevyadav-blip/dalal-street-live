@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -32,4 +33,27 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Price alerts (@capacitor/background-runner). Android 13+ needs this to show one. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+      REMOVED on purpose. @capacitor/background-runner declares these in its own manifest for
+      its optional geolocation API, and the manifest merger would otherwise copy every one of
+      them into this app. A stock app has no use for location, and:
+
+        ACCESS_BACKGROUND_LOCATION  triggers Google Play's background-location policy review,
+                                    which rejects apps with no location feature to justify it
+        ACCESS_FINE / COARSE        a location prompt in a market app is a reason to distrust it,
+                                    and the privacy policy says the app requests none
+        SCHEDULE_EXACT_ALARM        restricted on Android 14 to alarm and calendar apps. Alerts
+                                    notify immediately when a check finds a crossing; nothing is
+                                    scheduled for an exact future time
+
+      tests/unit/app-shell.test.js asserts all four stay removed.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" tools:node="remove" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
 </manifest>

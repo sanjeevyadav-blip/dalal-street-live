@@ -177,6 +177,47 @@ describe('Play Store release signing — E6-3', () => {
   });
 });
 
+describe('price alerts in the background', () => {
+  const manifest = () => read('android/app/src/main/AndroidManifest.xml');
+
+  it('strips the location and exact-alarm permissions the plugin would merge in', () => {
+    // @capacitor/background-runner declares these for its optional geolocation API, and the
+    // manifest merger copies them into the app unless told not to. Background location alone
+    // triggers Google Play's background-location review, which rejects apps that have no
+    // location feature to justify it — and a location prompt in a stock app is a reason to
+    // distrust it.
+    const m = manifest();
+    for (const p of ['ACCESS_BACKGROUND_LOCATION', 'ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'SCHEDULE_EXACT_ALARM']){
+      expect(m, p + ' is not removed').toMatch(new RegExp('android\\.permission\\.' + p + '"\\s+tools:node="remove"'));
+    }
+    expect(m).toContain('xmlns:tools="http://schemas.android.com/tools"');
+  });
+
+  it('asks for notifications, which Android 13+ requires to show an alert', () => {
+    expect(manifest()).toMatch(/android\.permission\.POST_NOTIFICATIONS"\s*\/>/);
+  });
+
+  it('targets Android 6+, the plugin’s minimum', () => {
+    expect(read('android/variables.gradle')).toMatch(/minSdkVersion = 23/);
+  });
+
+  it('registers the runner, repeating no faster than Android allows', () => {
+    const br = JSON.parse(read('capacitor.config.json')).plugins.BackgroundRunner;
+    expect(br.src).toBe('runners/alerts.js');
+    expect(br.event).toBe('checkAlerts');
+    expect(br.repeat).toBe(true);
+    // Android's floor for repeating background work is 15 minutes. Asking for less is not
+    // an error, it is just silently ignored — which would make the UI's promise a lie.
+    expect(br.interval).toBeGreaterThanOrEqual(15);
+    expect(existsSync(root('src/public/runners/alerts.js'))).toBe(true);
+  });
+
+  it('the runner and the app name the runner the same way', () => {
+    const label = JSON.parse(read('capacitor.config.json')).plugins.BackgroundRunner.label;
+    expect(read('src/data/alerts.js')).toContain("'" + label + "'");
+  });
+});
+
 describe('Play Store listing graphics — E6-3', () => {
   it('uses the same two design tokens as everything else', () => {
     const script = read('scripts/make-play-assets.mjs');

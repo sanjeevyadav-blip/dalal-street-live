@@ -177,7 +177,8 @@ figure. A filled cell is a real cell.
 DATA AND PRIVACY
 
 No account, no sign-in, no advertising, no analytics and no tracking. Your
-watchlist lives in memory for the session and is never uploaded anywhere. Market
+price alerts and screener choices are saved on your phone and never uploaded
+anywhere. Market
 data is fetched live and never cached, so a figure on screen is a figure just
 retrieved — the app needs a network connection to be useful.
 
@@ -212,8 +213,18 @@ is no account, no sign-in, no advertising and no analytics.
 ## What the app stores
 
 Your watchlist is held in the app's memory for as long as it is open and is lost
-when you close it. It is never transmitted anywhere. The app has no database, no
-backend account system and no server-side storage of anything you do.
+when you close it.
+
+Two things are saved on your device so they are still there next time: your price
+alerts (the stock, whether above or below, and the price you chose), and your screener
+sort and filter choices. They are stored only on the phone, in the app's own storage.
+In the Android app, the alert list is also copied into the storage of the app's own
+background checker on the same phone, which is what lets an alert work while the app is
+closed. None of it is ever sent to the developer or to anyone else, and uninstalling the
+app deletes it.
+
+The app has no database, no backend account system and no server-side storage of
+anything you do.
 
 ## What the app sends
 
@@ -241,8 +252,13 @@ browser, where that publisher's privacy policy applies.
 
 ## Permissions
 
-The app requests internet access only. It does not request location, contacts,
-camera, microphone, storage or any other sensitive permission.
+The app requests internet access, and permission to show notifications, which it
+uses only to tell you that a price alert you set has been crossed. It does not request
+location, contacts, camera, microphone, storage or any other sensitive permission.
+
+The background-task library the app uses for alerts declares location permissions for
+a feature this app does not use. They are removed from the app before it is built, and
+the app never asks for them.
 
 ## Children
 
@@ -285,9 +301,10 @@ The defensible position, and it is a genuine one:
   to a Chrome Custom Tab, and a tab-based phone layout distinct from the desktop site.
 - It works as an installed app rather than a bookmark.
 
-If it is rejected on this ground, the appeal should say those three things plainly. Consider
-also adding something the web version cannot do — a price alert with a local notification is
-the usual answer and is a genuinely useful feature rather than a box-tick.
+If it is rejected on this ground, the appeal should say those three things plainly, and the
+fourth that now exists: **price alerts that notify you while the app is closed**, checked by a
+native background task. A website cannot do that, and it is the strongest single answer to
+this policy.
 
 ### 6.2 Financial-services declarations
 
@@ -318,7 +335,9 @@ strangers. Consider whether you want that before promoting past the closed test.
 6. Publish the privacy policy at a public URL
 7. Fill in the store listing from §5, upload the icon and feature graphic
 8. Take screenshots on the phone
-9. Complete Data safety (**no data collected**), the content rating questionnaire, the
+9. Complete Data safety — **no data collected or shared**. Alerts and screener choices
+   stay on the device, and Play's definition of collection covers data sent off it. The
+   notification permission needs no declaration. Then the content rating questionnaire, the
    target audience, and the financial features declaration
 10. Upload the AAB to a **closed test**, recruit 12 testers, and let it run 14 days
 11. Promote to production
