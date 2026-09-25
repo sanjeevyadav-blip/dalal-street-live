@@ -391,3 +391,11 @@
     table.book tbody tr.rowlink:active{ background:rgba(255,255,255,0.055); }
   }
   @media (prefers-reduced-motion: reduce){ .ticker-track{ animation:none; } .dot.open{ animation:none; } }
+
+  /* Shareholding table: four columns fit a phone, so it opts out of the scroller's width. */
+  .rank-scroll table.book.share-table{ min-width:0; width:100%; }
+  table.share-table td.num{ font-family:var(--mono); text-align:right; font-variant-numeric:tabular-nums; }
+  table.share-table th{ text-align:right; }
+  table.share-table th:first-child{ text-align:left; }
+  .retry-btn{ margin-left:8px; background:none; border:1px solid var(--gold-dim); color:var(--gold); border-radius:7px; padding:5px 12px; font-family:var(--sans); font-size:12px; cursor:pointer; min-height:32px; }
+  .retry-btn:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }

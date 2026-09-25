@@ -194,6 +194,9 @@ function renderDetailCore(symbol, hist, niftyHist){
     <div class="section-label"><span>Peer comparison</span><span class="rule-line"></span></div>
     <div id="peerBlock"><div class="note-inline">Loading industry peers…</div></div>
 
+    <div class="section-label"><span>Shareholding</span><span class="rule-line"></span></div>
+    <div id="shareBlock"><div class="note-inline">Fetching NSE shareholding filings…</div></div>
+
     <div class="section-label"><span>Compare</span><span class="rule-line"></span></div>
     <div id="compareBlock"></div>
 

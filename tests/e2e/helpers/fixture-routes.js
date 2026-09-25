@@ -162,6 +162,15 @@ export async function installFixtureRoutes(page, opts = {}) {
     if (path.includes('/api/option-chain-v3')) {
       return json(readFixture('reliance/option-chain'));
     }
+    // Shareholding and pledge exist for RELIANCE only. Any other symbol gets the same body,
+    // which is fine for layout tests and wrong for anything that reads the numbers — a spec
+    // asserting figures must open RELIANCE.
+    if (path.includes('/api/corporate-share-holdings-master')) {
+      return json(readFixture('reliance/shareholding'));
+    }
+    if (path.includes('/api/corporate-pledgedata')) {
+      return json(readFixture('reliance/pledge'));
+    }
     if (path.includes('/api/all-upcoming-issues')) {
       return json([]);
     }

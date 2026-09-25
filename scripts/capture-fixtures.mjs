@@ -60,6 +60,10 @@ const nseContractInfoUrl = (t) =>
 const nseChainUrl = (t, expiry) =>
   `https://www.nseindia.com/api/option-chain-v3?type=Equity&symbol=${encodeURIComponent(t)}` +
   `&expiry=${encodeURIComponent(expiry)}`;
+const nseShareholdingUrl = (t) =>
+  `https://www.nseindia.com/api/corporate-share-holdings-master?index=equities&symbol=${encodeURIComponent(t)}`;
+const nsePledgeUrl = (t) =>
+  `https://www.nseindia.com/api/corporate-pledgedata?index=equities&symbol=${encodeURIComponent(t)}`;
 const newsUrl = (name) =>
   `https://www.bing.com/news/search?q=${encodeURIComponent(name + ' stock')}&format=RSS`;
 
@@ -151,6 +155,29 @@ async function captureOptions(ticker) {
   return out;
 }
 
+// Shareholding pattern and promoter pledge. Both are NSE and share its intermittent 520s from
+// Cloudflare's edge, so each is captured independently: one failing must not cost the other.
+async function captureShareholding(ticker) {
+  console.log(`
+NSE shareholding: ${ticker}`);
+  const key = ticker.toLowerCase();
+  const out = [];
+  for (const [name, url, check] of [
+    ['shareholding', nseShareholdingUrl(ticker), (b) => Array.isArray(b) && b.length],
+    ['pledge', nsePledgeUrl(ticker), (b) => b && Array.isArray(b.data)]
+  ]) {
+    try {
+      const body = await fetchUpstream(url);
+      if (!check(body)) throw new Error('unexpected shape');
+      out.push(await save(`${key}/${name}`, envelope(url, body)));
+    } catch (err) {
+      console.log(`  ${name} FAILED: ${err.message}`);
+      out.push({ name: `${key}/${name}`, error: err.message });
+    }
+  }
+  return out;
+}
+
 async function captureNews(name) {
   console.log(`\nNews RSS: ${name}`);
   try {
@@ -178,6 +205,7 @@ async function main() {
   if (!only) {
     all.push(...await captureSymbol(BENCHMARK));
     all.push(...await captureOptions('RELIANCE'));
+    all.push(...await captureShareholding('RELIANCE'));
     all.push(...await captureNews('Reliance Industries'));
   }
 

@@ -205,6 +205,25 @@ test.describe('valuation refusals', () => {
   });
 });
 
+test.describe('shareholding', () => {
+  test('shows the promoter trend by quarter and the pledge as a share of the promoter stake', async ({ page }) => {
+    await stubFonts(page);
+    await installFixtureRoutes(page);
+    await openReliance(page);
+
+    const block = await expectBlockVisible(page, '#shareBlock', 20000);
+    await expect(block.locator('.share-table')).toBeVisible({ timeout: 20000 });
+    // Eight quarters, newest first, one per quarter even though RELIANCE filed off-cycle.
+    await expect(block.locator('.share-table tbody tr')).toHaveCount(8);
+    await expect(block.locator('.share-table tbody tr').first()).toContainText('Jun 2026');
+    // The fixture's pledge is 2.6% of the promoter's stake and 1.35% of all shares.
+    await expect(block).toContainText(/2\.6%/);
+    await expect(block).toContainText(/of the promoter’s stake/);
+    // The gap in the data is stated, not left as an empty column.
+    await expect(block).toContainText(/foreign and domestic institutions/);
+  });
+});
+
 test.describe('compare two stocks', () => {
   test('picks a second stock and shows both side by side, with no winner', async ({ page }) => {
     await stubFonts(page);
