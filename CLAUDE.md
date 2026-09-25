@@ -25,7 +25,7 @@ Static site on GitHub Pages + one Cloudflare Worker as a CORS proxy. No backend,
 | `docs/07-DESIGN-SYSTEM-UX.md` | Tokens, components, mobile spec, PWA, native app routes |
 | `docs/08-SECURITY-COMPLIANCE.md` | Worker allowlist, privacy, SEBI position |
 | `docs/09-SDLC-PROCESS.md` | Branching, commits, definition of done, review checklist |
-| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 379 offline, 10 live-API, 57 E2E (114 runs) |
+| `docs/10-TEST-PLAN.md` | Test plan. All of §10.2–§10.5 **done**: 480 offline, 10 live-API, 62 E2E (124 runs) |
 | `docs/11-DEPLOYMENT-RUNBOOK.md` | Deploy, verify, health checks, failure playbook |
 | `docs/12-MAINTENANCE-SUPPORT.md` | Fragilities ranked, fallbacks if a feed dies |
 | `docs/13-RISK-REGISTER.md` | 15 risks; top three to act on |
@@ -64,15 +64,21 @@ src/public/     manifest.json sw.js    PWA — COPIED to dist, not inlined (see 
 src/ui/native.js                        Capacitor shell behaviour; a no-op on the web
 src/ui/mobile-shell.js                  the phone app: 5 tabs, sticky summary, per-tab load
 src/ui/top20.js  src/ui/market-news.js   the two sections the phone shell added
+src/ui/detail-tabs.js                   the stock page's six sub-tabs, on a phone
+src/ui/compare.js  src/ui/shareholding.js  two-stock compare; NSE shareholding + pledge
+src/data/search.js                      search over every NSE company, Yahoo as fallback
+src/data/alerts.js  src/ui/alerts.js    price alerts: storage, in-app check, UI
+src/public/nse-equities.json            2,585 NSE equities, fetched on first search focus
+src/public/runners/alerts.js            the Android background alert check (not bundled)
 worker/worker.js  worker/wrangler.toml  the CORS proxy
 capacitor.config.json  android/          the native Android shell (EPIC-6)
-tests/          379 offline tests against 31 committed API fixtures
+tests/          480 offline tests against 33 committed API fixtures
 tests/integration/  10 live-API checks (§10.4) — opt-in, hits the real Worker
-tests/e2e/      57 Playwright specs, desktop + mobile (114 runs), fixture-routed
+tests/e2e/      62 Playwright specs, desktop + mobile (124 runs), fixture-routed
 scripts/        capture-fixtures.mjs, check-invariants.sh
 ```
 
-Run `npm run verify:full` — lint, invariants, build, 379 offline tests, then 114 Playwright
+Run `npm run verify:full` — lint, invariants, build, 480 offline tests, then 124 Playwright
 runs — before and after any change. `npm run verify` alone skips the browser and is the
 faster inner loop.
 Regenerate fixtures with `node scripts/capture-fixtures.mjs` (read-only; hits the Worker).
@@ -103,10 +109,19 @@ Each tab loads itself on first view, not at boot: the ranking alone scores a 55-
 universe. The Load and Re-run buttons stay, because "fetch again with fresh prices" is a
 real thing to want.
 
+**The stock page has its own six sub-tabs** on a phone (`src/ui/detail-tabs.js`): Overview,
+Technicals, Financials, Valuation, Options, News. Same CSS-driven approach, but the card is
+assembled in stages as data arrives, so a MutationObserver re-classifies it. The chart is on
+Overview deliberately — a canvas in a hidden tab has zero width and draws blank. A block the
+file does not know inherits the tab of the section label above it; it is never hidden from
+every tab. Do not defer that observer to `requestAnimationFrame`: rAF does not fire while the
+page is hidden, and a card rendered in the background got no tab bar at all.
+
 **E2E specs must switch tabs.** `showTab(page, id)` in `tests/e2e/helpers/fixture-routes.js`
 clicks the nav on mobile and is a no-op on desktop, so one spec body serves both projects.
 A spec that reaches straight for `#rankLargeBtn` finds a hidden element under the mobile
-project only.
+project only. For blocks on the stock page use `expectBlockVisible(page, selector)`, which
+reads the block's own `data-dtab` and opens that tab — the mapping lives in one place.
 
 ## Hard rules — these are deliberate, do not "fix" them
 
@@ -139,6 +154,21 @@ project only.
   error, which reads as an interactive prompt hanging in CI. It is not — the next line is
   `All SDK package licenses accepted`. Read past the licence dump to
   `Warning: Failed to find package 'tools'`.
+- **`@capacitor/background-runner` is pinned to exactly 2.0.0.** 2.1.0 onward hard-codes
+  Java 21 while Capacitor 6 and this app target Java 17, and the APK build fails with
+  "Inconsistent JVM-target compatibility". Its peerDependency says `>=6.0.0`, so npm
+  happily installs the newer one — the mismatch only appears at compile time.
+- **That plugin's manifest merges location permissions into the app** —
+  `ACCESS_BACKGROUND_LOCATION`, fine, coarse — plus `SCHEDULE_EXACT_ALARM`. Background
+  location alone triggers Play's background-location review. `AndroidManifest.xml` removes
+  all four with `tools:node="remove"`; after any plugin change, check the BUILT APK's
+  permissions, not the source manifest, because the merge happens at build time.
+- **NSE drops connections from Cloudflare's edge** in bad spells — Cloudflare 520s on every
+  NSE endpoint, measured at about half of requests, the option chain included. Not a bug in
+  whatever you just changed. Blocks that depend on NSE offer a Retry button.
+- **Three files are fetched by URL at runtime**, not inlined: `manifest.json`, `sw.js` and
+  `nse-equities.json`, plus `runners/alerts.js` inside the Android app. Each lives in
+  `src/public/`, and `tests/unit/build-output.test.js` asserts every one reaches `dist/`.
 - **A green build does not mean a complete `dist/`.** Vite emitted only `index.html` while
   the page went on referencing `manifest.json` and `sw.js`, silently killing the PWA. All 217
   offline tests passed — none of them looked past `index.html`. `publicDir: 'public'` fixes
@@ -169,8 +199,8 @@ a branch push is routine, `main` is not.
 `wrangler deploy` is no longer forbidden outright either — E4-5 was deployed on the same
 day — but each deploy needs its own approval. Do not treat the last yes as a standing one.
 
-**`npm run verify:full` is still the gate** — lint, invariants, build, 379 offline tests,
-then 114 Playwright runs. Run it before and after any change. CI builds the APK and nothing
+**`npm run verify:full` is still the gate** — lint, invariants, build, 480 offline tests,
+then 124 Playwright runs. Run it before and after any change. CI builds the APK and nothing
 else; it is not a substitute for verifying locally, and there is no test job to watch.
 `npm run test:integration` is the weekly live-feed check, run by hand.
 

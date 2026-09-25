@@ -256,6 +256,12 @@ The app requests internet access, and permission to show notifications, which it
 uses only to tell you that a price alert you set has been crossed. It does not request
 location, contacts, camera, microphone, storage or any other sensitive permission.
 
+To check alerts while the app is closed, it also declares the standard permissions
+Android's own task scheduler (WorkManager) needs: to run a scheduled check, to keep the
+phone awake for the few seconds a check takes, to see whether there is a network
+connection, and to reschedule checks after the phone restarts. None of these is shown to
+you as a prompt, and none gives access to any of your data.
+
 The background-task library the app uses for alerts declares location permissions for
 a feature this app does not use. They are removed from the app before it is built, and
 the app never asks for them.

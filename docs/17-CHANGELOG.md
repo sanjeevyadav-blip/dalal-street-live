@@ -5,9 +5,35 @@ Reverse chronological. Format: Conventional Commits categories.
 ## Unreleased
 - `refactor` EPIC-1: the 3,888-line monolithic `index.html` became 39 ES modules built by
   Vite into one `dist/index.html`. Behaviour proven unchanged against the deployed file.
-- `test` 379 offline tests against 31 committed API fixtures, including 33 golden snapshots.
+- `feat(search)` **suggestions cover every NSE company**, 2,585 of them, instead of 109.
+  Typing "zyd" or "polyc" used to return nothing. NSE's own list is fetched on first focus of
+  a search box (`src/public/nse-equities.json`), with Yahoo's search as a live fallback for
+  BSE-only names. Well-known names win ties — alphabetical ordering had put a microcap,
+  RELIABLE, above RELIANCE.
+- `feat(screener)` tap a heading to sort; filter chips for P/E, ROE and debt/equity, saved
+  on the device. A missing value sorts last and fails a filter: a loss-maker with no P/E
+  never reads as the cheapest stock, and the summary says how many rows were hidden and why.
+- `feat(mobile)` the stock page is six tabs on a phone — Overview, Technicals, Financials,
+  Valuation, Options, News — instead of twenty-five blocks in one scroll.
+- `feat(detail)` peers for every stock. Unmapped ones use Yahoo's "viewed alongside" list,
+  tagged same-industry or not, and the peer medians use only the same-industry rows. The peer
+  table no longer breaks into stacked lines on a phone, and gains a revenue-growth column.
+- `feat(detail)` compare any two stocks side by side, deliberately without a "better" column.
+- `feat(detail)` shareholding trend — promoter and public holding over eight quarters, and
+  the promoter pledge computed from raw share counts, because NSE's own percentage field is
+  over total shares, not the promoter's stake. The FII/DII split is not available from this
+  NSE summary, and the block says so.
+- `feat(alerts)` price alerts, checked every minute while the app is open and about every 15
+  minutes in the background on Android. The user sets every level; the app suggests none.
+- `fix(native)` the alert plugin's manifest would have merged background-location
+  permissions into the app. Removed; the built APK was checked to confirm.
+- `fix(native)` `@capacitor/background-runner` pinned to 2.0.0; 2.1.0+ targets Java 21 and
+  broke the build with an inconsistent JVM-target error.
+- `perf` `index.html` 409,672 → 336,923 bytes, by fetching the equity list instead of
+  bundling it, rather than raising the 400 KB budget.
+- `test` 480 offline tests against 33 committed API fixtures, including 33 golden snapshots.
 - `test` §10.4: 10 live-API integration checks (`npm run test:integration`), opt-in.
-- `test` §10.5: 57 Playwright E2E specs on desktop and mobile — 114 runs
+- `test` §10.5: 62 Playwright E2E specs on desktop and mobile — 124 runs
   (`npm run test:e2e`), routed through the committed fixtures so they run deterministically
   and offline.
 - `fix(pwa)` **the build stopped shipping the PWA.** `publicDir: false` meant Vite emitted
