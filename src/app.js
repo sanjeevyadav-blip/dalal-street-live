@@ -39,6 +39,7 @@ import { renderFundamentals, renderFundamentalsUnavailable } from './ui/fundamen
 import { renderNews, renderNewsUnavailable } from './ui/news-block.js';
 import { renderIntradayDesk, renderIntradayVWAP } from './ui/intraday-desk.js';
 import { renderPeers } from './ui/peers.js';
+import { mountCompare } from './ui/compare.js';
 import { watchlist, quoteCache, renderIndices, renderWatchlist, renderTicker, addSymbolToWatchlist, wireSearch } from './ui/watchlist.js';
 
 
@@ -141,6 +142,9 @@ async function loadStockDetail(symbol){
   if (detailState.symbol !== symbol) return; // a newer search superseded this one
 
   renderDetail(symbol, hist, niftyHist);
+  // Needs only the symbol and the search index, so it can render straight away rather than
+  // waiting on fundamentals like the peer table does.
+  mountCompare(symbol);
 
   // Context the peer + intraday panels need, computed from the 2y history we already have.
   const _c = hist.closes, _h = hist.highs, _l = hist.lows;

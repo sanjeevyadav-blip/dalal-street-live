@@ -194,6 +194,9 @@ function renderDetailCore(symbol, hist, niftyHist){
     <div class="section-label"><span>Peer comparison</span><span class="rule-line"></span></div>
     <div id="peerBlock"><div class="note-inline">Loading industry peers…</div></div>
 
+    <div class="section-label"><span>Compare</span><span class="rule-line"></span></div>
+    <div id="compareBlock"></div>
+
     <div class="section-label"><span>Recent news</span><span class="rule-line"></span></div>
     <div id="newsBlock" class="news-list"><div class="note-inline">Fetching recent headlines…</div></div>
 

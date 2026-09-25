@@ -42,7 +42,7 @@ const TABS = [
 const BY_ID = {
   snapBlock:'overview', profileBlock:'overview',
   intradayBlock:'technicals',
-  fundamentalsGrid:'financials', peerBlock:'financials', shareBlock:'financials',
+  fundamentalsGrid:'financials', peerBlock:'financials', shareBlock:'financials', compareBlock:'financials',
   facBlock:'valuation', thesisBlock:'valuation', labBlock:'valuation',
   optBlock:'options',
   newsBlock:'news'
@@ -57,7 +57,7 @@ const BY_LABEL = [
   ['Technicals', 'technicals'], ['Risk & momentum', 'technicals'], ['Day-trading desk', 'technicals'],
   ['Price action', 'technicals'], ['Candlestick patterns', 'technicals'],
   ['Fundamentals', 'financials'], ['Earnings quality', 'financials'],
-  ['Peer comparison', 'financials'], ['Shareholding', 'financials'],
+  ['Peer comparison', 'financials'], ['Compare', 'financials'], ['Shareholding', 'financials'],
   ['Intrinsic value', 'valuation'],
   ['Recent news', 'news'],
   ['Company profile', 'overview']

@@ -204,3 +204,29 @@ test.describe('valuation refusals', () => {
     await expect(page.locator('#dcfBlock')).toContainText('Intrinsic value', { timeout: 25000 });
   });
 });
+
+test.describe('compare two stocks', () => {
+  test('picks a second stock and shows both side by side, with no winner', async ({ page }) => {
+    await stubFonts(page);
+    await installFixtureRoutes(page);
+    await openReliance(page);
+
+    await expectBlockVisible(page, '#compareBlock', 20000);
+    await page.locator('#cmpInput').fill('tcs');
+    const pick = page.locator('#cmpSuggest .item').first();
+    await expect(pick.locator('.sy')).toHaveText('TCS');
+    await pick.click();
+
+    const table = page.locator('#cmpOut .compare-table');
+    await expect(table).toBeVisible({ timeout: 25000 });
+    await expect(table.locator('thead th')).toHaveCount(3);
+    await expect(table.locator('thead th').nth(1)).toContainText('RELIANCE');
+    await expect(table.locator('thead th').nth(2)).toContainText('TCS');
+    // Neutral by design: the only colouring is the sign of a return.
+    await expect(page.locator('#cmpOut')).not.toContainText(/winner|recommend/i);
+
+    // It must fit a phone without widening the page.
+    const docWidth = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(docWidth).toBeLessThanOrEqual(2);
+  });
+});
