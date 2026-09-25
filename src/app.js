@@ -30,6 +30,7 @@ import { mountDiagnostics } from './ui/diagnostics-block.js';
 import { mountTop20 } from './ui/top20.js';
 import { mountMarketNews } from './ui/market-news.js';
 import { mountMobileShell, openDetailView } from './ui/mobile-shell.js';
+import { mountDetailTabs } from './ui/detail-tabs.js';
 import { initNativeShell, shouldRegisterServiceWorker } from './ui/native.js';
 import { initDiagnostics } from './diagnostics.js';
 import { runRanking3, rankCache } from './ui/tables/ranking.js';
@@ -742,6 +743,9 @@ function bootstrap(){
   mountTop20();
   mountMarketNews();
   mountMobileShell();
+  // Watches #detailCard, which exists in the static markup, so this can go anywhere after
+  // the DOM is ready. It is last only to keep the phone-layout mounts together.
+  mountDetailTabs();
 }
 
 bootstrap();

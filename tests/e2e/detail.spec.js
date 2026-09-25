@@ -6,7 +6,7 @@
 // layout, real canvases and real timers.
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, expectBlockVisible } from './helpers/fixture-routes.js';
 
 async function openReliance(page) {
   await page.goto('/');
@@ -32,10 +32,14 @@ test.describe('detail panel', () => {
     await expect(page.locator('#detailCard .price-hero .big')).toHaveText(/₹\s*[\d,]/);
   });
 
-  test('typing fewer than three letters offers no suggestions', async ({ page }) => {
+  test('one letter offers nothing; two letters find a two-letter ticker', async ({ page }) => {
+    // The threshold was three. It is two now, because LT and MM are real tickers and an
+    // exact-ticker match ranks first, so a short query no longer buries the right answer.
     await page.goto('/');
-    await page.locator('#searchInput').fill('re');
+    await page.locator('#searchInput').fill('l');
     await expect(page.locator('#suggestions .item')).toHaveCount(0);
+    await page.locator('#searchInput').fill('lt');
+    await expect(page.locator('#suggestions .item').first().locator('.sy')).toHaveText('LT');
   });
 
   test('renders every block: chart, snapshot, DCF, earnings quality, options, factors, thesis', async ({ page }) => {
@@ -50,12 +54,12 @@ test.describe('detail panel', () => {
       expect(box.height, id + ' has zero height').toBeGreaterThan(0);
     }
 
-    await expect(page.locator('#snapBlock')).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('#dcfBlock')).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('#eqBlock')).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('#optBlock')).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('#facBlock')).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('#thesisBlock')).toBeVisible({ timeout: 20000 });
+    await expectBlockVisible(page, '#snapBlock', 20000);
+    await expectBlockVisible(page, '#dcfBlock', 20000);
+    await expectBlockVisible(page, '#eqBlock', 20000);
+    await expectBlockVisible(page, '#optBlock', 20000);
+    await expectBlockVisible(page, '#facBlock', 20000);
+    await expectBlockVisible(page, '#thesisBlock', 20000);
 
     // None of them may still be sitting on their placeholder text.
     await expect(page.locator('#dcfBlock')).not.toContainText('Pulling multi-year cash flows', { timeout: 20000 });
@@ -64,7 +68,7 @@ test.describe('detail panel', () => {
 
   test('the snapshot sits above the chart, not appended below it', async ({ page }) => {
     await openReliance(page);
-    await expect(page.locator('#snapBlock')).toBeVisible({ timeout: 20000 });
+    await expectBlockVisible(page, '#snapBlock', 20000);
     // renderSnapshot inserts itself before .chart-block rather than appending, so its
     // position does not depend on how long its fetches took. §22 REFACTOR-PLAN §4 spells
     // this out after §2.2 got it wrong; this is the assertion that keeps it honest.
@@ -80,7 +84,7 @@ test.describe('detail panel', () => {
 
   test('the verdict panel reports pillars separately and refuses to synthesise one', async ({ page }) => {
     await openReliance(page);
-    await expect(page.locator('#thesisBlock')).toBeVisible({ timeout: 20000 });
+    await expectBlockVisible(page, '#thesisBlock', 20000);
     // Every block appends its placeholder synchronously and fills in after its fetches, so
     // the element being visible is not the same as the element being finished. Waiting on
     // the placeholder clearing is what makes this deterministic on a slower mobile run.
@@ -116,14 +120,15 @@ test.describe('detail panel', () => {
     const suggestion = page.locator('#suggestions .item').first();
     await expect(suggestion).toBeVisible({ timeout: 5000 });
     await suggestion.click();
-    await expect(page.locator('#optBlock')).toBeVisible({ timeout: 20000 });
+    await expectBlockVisible(page, '#optBlock', 20000);
     await expect(page.locator('#optBody')).toContainText('No F&O contracts listed', { timeout: 20000 });
     await expect(page.locator('#optBlock table')).toHaveCount(0);
   });
 
   test('position sizing: 500000 capital at 1% risk with a stop below price gives a plausible size', async ({ page }) => {
     await openReliance(page);
-    await expect(page.locator('#psCalc')).toBeVisible({ timeout: 20000 });
+    // Inside the thesis walkthrough, which is on the Valuation tab on a phone.
+    await expectBlockVisible(page, '#psCalc', 20000);
 
     const price = await page.locator('#detailCard .price-hero .big').innerText();
     const spot = Number(price.replace(/[^\d.]/g, ''));
@@ -179,7 +184,7 @@ test.describe('valuation refusals', () => {
     await page.goto('/');
     await page.locator('#searchInput').fill('hdfcbank');
     await page.locator('#suggestions .item').first().click();
-    await expect(page.locator('#dcfBlock')).toBeVisible({ timeout: 25000 });
+    await expectBlockVisible(page, '#dcfBlock', 25000);
     await expect(page.locator('#dcfBlock')).not.toContainText('Pulling multi-year cash flows', { timeout: 25000 });
 
     const dcf = await page.locator('#dcfBlock').innerText();

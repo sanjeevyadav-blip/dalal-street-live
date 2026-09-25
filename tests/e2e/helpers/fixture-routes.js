@@ -12,6 +12,7 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { expect } from '@playwright/test';
 
 const FIXTURES = resolve(process.cwd(), 'tests/fixtures');
 
@@ -204,4 +205,29 @@ export async function showTab(page, id) {
     await link.click();
     await page.locator(`.tabpanel[data-tab="${id}"]`).waitFor({ state: 'visible' });
   }
+}
+
+/**
+ * Assert a detail-panel block is visible, switching to whichever sub-tab it lives on first.
+ *
+ * On a phone the stock page is split into Overview / Technicals / Financials / Valuation /
+ * Options / News (ui/detail-tabs.js), so a block like #optBlock exists but is hidden until
+ * its tab is chosen. The block announces its own tab through data-dtab — or, for a
+ * sub-section of #deepBlock, through its nearest ancestor that has one — so this follows
+ * the page rather than keeping a second copy of the mapping here. On desktop there is no
+ * tab bar and this is exactly toBeVisible.
+ */
+export async function expectBlockVisible(page, selector, timeout = 20000) {
+  const loc = page.locator(selector);
+  await loc.waitFor({ state: 'attached', timeout });
+  const tab = await loc.evaluate((el) => {
+    const owner = el.closest('[data-dtab]') || el.querySelector('[data-dtab]');
+    return owner ? owner.getAttribute('data-dtab') : null;
+  });
+  if (tab) {
+    const btn = page.locator(`#detailCard .dtabs [data-dtab-btn="${tab}"]`);
+    if (await btn.isVisible().catch(() => false)) await btn.click();
+  }
+  await expect(loc).toBeVisible({ timeout });
+  return loc;
 }

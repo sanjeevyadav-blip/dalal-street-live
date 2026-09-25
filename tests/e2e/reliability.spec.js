@@ -5,7 +5,7 @@
 // user report".
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts, PROXY_GLOB, showTab } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, PROXY_GLOB, showTab, expectBlockVisible } from './helpers/fixture-routes.js';
 
 test.describe('E4-2 — one dead feed never blanks the page', () => {
   test('the panel still renders when the option chain is down', async ({ page }) => {
@@ -20,12 +20,12 @@ test.describe('E4-2 — one dead feed never blanks the page', () => {
 
     // The blocks that do not depend on NSE must be completely unaffected.
     await expect(page.locator('#detailCard .price-hero .big')).toHaveText(/₹\s*[\d,]/, { timeout: 20000 });
-    await expect(page.locator('#snapBlock')).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('#thesisBlock')).toBeVisible({ timeout: 25000 });
-    await expect(page.locator('#facBlock')).toBeVisible({ timeout: 25000 });
+    await expectBlockVisible(page, '#snapBlock', 20000);
+    await expectBlockVisible(page, '#thesisBlock', 25000);
+    await expectBlockVisible(page, '#facBlock', 25000);
 
     // And the options block says what happened, rather than vanishing or showing zeros.
-    await expect(page.locator('#optBlock')).toBeVisible({ timeout: 20000 });
+    await expectBlockVisible(page, '#optBlock', 20000);
     await expect(page.locator('#optBlock')).not.toContainText('Pulling the live NSE option chain', { timeout: 20000 });
   });
 
@@ -41,7 +41,7 @@ test.describe('E4-2 — one dead feed never blanks the page', () => {
 
     await expect(page.locator('#detailCard .price-hero .big')).toHaveText(/₹\s*[\d,]/, { timeout: 20000 });
     // The page must still be a working page.
-    await expect(page.locator('#snapBlock')).toBeVisible({ timeout: 25000 });
+    await expectBlockVisible(page, '#snapBlock', 25000);
     await expect(page.locator('#priceChart')).toBeVisible();
   });
 });
@@ -68,7 +68,7 @@ test.describe('E4-4 — errors visible without a user report', () => {
 
     await page.locator('#searchInput').fill('reli');
     await page.locator('#suggestions .item').first().click();
-    await expect(page.locator('#optBlock')).toBeVisible({ timeout: 20000 });
+    await expectBlockVisible(page, '#optBlock', 20000);
 
     // The NSE failure must be readable here, with no console and no repro.
     const rows = page.locator('#diagRows');
@@ -101,7 +101,7 @@ test.describe('E4-4 — errors visible without a user report', () => {
     await page.goto('/?diag=0');
     await page.locator('#searchInput').fill('reli');
     await page.locator('#suggestions .item').first().click();
-    await expect(page.locator('#optBlock')).toBeVisible({ timeout: 20000 });
+    await expectBlockVisible(page, '#optBlock', 20000);
 
     await showTab(page, 'more');
     await page.locator('#diagToggle').check();

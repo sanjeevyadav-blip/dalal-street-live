@@ -6,7 +6,7 @@
 // This is the one part of the suite that genuinely needs a browser.
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, expectBlockVisible } from './helpers/fixture-routes.js';
 
 const PHONE = { width: 390, height: 844 };
 
@@ -178,12 +178,34 @@ test.describe('mobile layout at 390×844', () => {
     await expect(page.locator('.tabpanel[data-tab="top20"]')).toBeVisible();
   });
 
+  test('the stock page is split into six tabs, opening on Overview', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#searchInput').fill('reli');
+    await page.locator('#suggestions .item').first().click();
+    const tabs = page.locator('#detailCard .dtabs button');
+    await expect(tabs).toHaveCount(6, { timeout: 20000 });
+    await expect(tabs).toHaveText(['Overview', 'Technicals', 'Financials', 'Valuation', 'Options', 'News']);
+    await expect(tabs.first()).toHaveAttribute('aria-selected', 'true');
+
+    // Price stays on screen whichever tab is chosen; the chart is on Overview only.
+    await expect(page.locator('#detailCard .price-hero')).toBeVisible();
+    await expect(page.locator('#detailCard .chart-block')).toBeVisible();
+
+    // The option chain is a real block, hidden until its tab is chosen.
+    await page.locator('#optBlock').waitFor({ state: 'attached', timeout: 20000 });
+    await expect(page.locator('#optBlock')).toBeHidden();
+    await page.locator('#detailCard [data-dtab-btn="options"]').click();
+    await expect(page.locator('#optBlock')).toBeVisible();
+    await expect(page.locator('#detailCard .chart-block')).toBeHidden();
+    await expect(page.locator('#detailCard .price-hero')).toBeVisible();
+  });
+
   test('the detail panel stays within the viewport', async ({ page }) => {
     await page.goto('/');
     await page.locator('#searchInput').fill('reli');
     await page.locator('#suggestions .item').first().click();
     await expect(page.locator('#detailCard .detail-head')).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('#thesisBlock')).toBeVisible({ timeout: 25000 });
+    await expectBlockVisible(page, '#thesisBlock', 25000);
 
     const docWidth = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(docWidth, 'the detail panel overflows the phone viewport').toBeLessThanOrEqual(PHONE.width + 2);

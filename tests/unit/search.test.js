@@ -59,6 +59,12 @@ describe('ranking', () => {
     if (firstInnerHit >= 0) expect(firstWordHit).toBeLessThan(firstInnerHit);
   });
 
+  it('a well-known name beats an obscure one that sorts earlier', () => {
+    // The regression the E2E suite caught: with 2,600 names and an alphabetical
+    // tie-break, "reli" suggested RELIABLE, a microcap, above RELIANCE.
+    expect(syms(localMatches('reli'))[0]).toBe('RELIANCE');
+  });
+
   it('returns nothing for one character, and respects the limit', () => {
     expect(localMatches('a')).toEqual([]);
     expect(localMatches('in', 5).length).toBe(5);

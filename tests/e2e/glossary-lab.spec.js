@@ -10,7 +10,7 @@
 // a long-standing finding in CLAUDE.md. New terms must not join it.
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts, showTab } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, showTab, expectBlockVisible } from './helpers/fixture-routes.js';
 
 const LAB_TERMS = [
   'Geometric Brownian motion',
@@ -112,7 +112,7 @@ test.describe('probability lab glossary', () => {
     await page.goto('/');
     await page.locator('#searchInput').fill('reli');
     await page.locator('#suggestions .item').first().click();
-    await expect(page.locator('#labBlock')).toBeVisible({ timeout: 25000 });
+    await expectBlockVisible(page, '#labBlock', 25000);
     await expect(page.locator('#labBody')).not.toContainText('Running the models', { timeout: 30000 });
 
     // annotateGlossary runs on a debounce after the block renders, and matches by prefix —

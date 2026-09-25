@@ -14,7 +14,7 @@
 // Suggestions previously knew 109 companies. Typing "zyd" or "polyc" returned nothing, and
 // a user who gets no suggestion reasonably concludes the stock is not covered.
 
-import { STOCK_DIRECTORY } from './universes.js';
+import { STOCK_DIRECTORY, UNIV_LARGE, UNIV_MID } from './universes.js';
 import { nseEquities } from './nse-equities.js';
 import { fetchJsonThroughProxy } from './proxy.js';
 
@@ -28,8 +28,14 @@ let index = null;
 export function searchIndex(){
   if (index) return index;
   const bySym = new Map();
-  for (const [sym, name] of nseEquities()) bySym.set(sym, { sym, name, exch: 'NS' });
-  for (const [sym, name] of STOCK_DIRECTORY) bySym.set(sym, { sym, name, exch: 'NS' });
+  for (const [sym, name] of nseEquities()) bySym.set(sym, { sym, name, exch: 'NS', prominent: false });
+  // Prominence: the names people actually look for. Without it, 2,600 names tie-break
+  // alphabetically and "reli" suggested RELIABLE — a microcap — above RELIANCE, because B
+  // sorts before N. The curated directory and the two screener universes are exactly the
+  // well-known names, so membership in any of them wins a tie.
+  const known = new Set([...UNIV_LARGE, ...UNIV_MID]);
+  for (const [sym, name] of STOCK_DIRECTORY) bySym.set(sym, { sym, name, exch: 'NS', prominent: true });
+  for (const row of bySym.values()) if (known.has(row.sym)) row.prominent = true;
   index = [...bySym.values()];
   return index;
 }
@@ -57,9 +63,14 @@ export function localMatches(query, limit = 10){
     else if (n.includes(q)) score = 5;
     if (score >= 0) scored.push([score, row]);
   }
-  // Stable within a tier by ticker length, so RELIANCE comes before RELIANCEPP-type
-  // variants and the shortest, most canonical ticker surfaces first.
-  scored.sort((a, b) => a[0] - b[0] || a[1].sym.length - b[1].sym.length || a[1].sym.localeCompare(b[1].sym));
+  // Within a tier: well-known names first, then the shorter ticker (RELIANCE before a
+  // RELIANCEPP-style variant), then alphabetical. Prominence has to come before length and
+  // alphabet, or an obscure name that happens to sort earlier wins.
+  scored.sort((a, b) =>
+    a[0] - b[0] ||
+    (b[1].prominent - a[1].prominent) ||
+    a[1].sym.length - b[1].sym.length ||
+    a[1].sym.localeCompare(b[1].sym));
   return scored.slice(0, limit).map(([, row]) => row);
 }
 

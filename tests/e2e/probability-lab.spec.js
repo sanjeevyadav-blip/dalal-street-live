@@ -8,13 +8,13 @@
 // rules the block is most likely to breach as it grows: no price target, and no verdict.
 
 import { test, expect } from '@playwright/test';
-import { installFixtureRoutes, stubFonts } from './helpers/fixture-routes.js';
+import { installFixtureRoutes, stubFonts, expectBlockVisible } from './helpers/fixture-routes.js';
 
 async function openLab(page, query = 'reli'){
   await page.goto('/');
   await page.locator('#searchInput').fill(query);
   await page.locator('#suggestions .item').first().click();
-  await expect(page.locator('#labBlock')).toBeVisible({ timeout: 25000 });
+  await expectBlockVisible(page, '#labBlock', 25000);
   await expect(page.locator('#labBody')).not.toContainText('Running the models', { timeout: 30000 });
   return page.locator('#labBlock');
 }
@@ -149,7 +149,7 @@ test.describe('probability lab', () => {
     await page.goto('/');
     await page.locator('#searchInput').fill('reli');
     await page.locator('#suggestions .item').first().click();
-    await expect(page.locator('#labBlock')).toBeVisible({ timeout: 25000 });
+    await expectBlockVisible(page, '#labBlock', 25000);
     await expect(page.locator('#labBody')).toContainText('Not enough price history', { timeout: 30000 });
   });
 });
